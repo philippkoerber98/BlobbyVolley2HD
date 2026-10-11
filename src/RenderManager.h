@@ -111,6 +111,7 @@ class RenderManager : public ObjectCounter<RenderManager>
 		// This swaps the screen buffers and should be called
 		// after all draw calls
 		virtual void refresh() {};
+		float courtWidth() const { return mCourtWidth; }
 
 		// Init with the desired Resolution.
 		// Note: It is not guaranteed that this resolution will be selected
@@ -168,6 +169,7 @@ class RenderManager : public ObjectCounter<RenderManager>
 		SDL_Surface* createEmptySurface(unsigned int width, unsigned int height);
 
 		SDL_Window* mWindow;
+		float mCourtWidth = 800.f;
 
 		Vector2 blobShadowPosition(const Vector2& position);
 		Vector2 ballShadowPosition(const Vector2& position);

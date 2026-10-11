@@ -24,6 +24,9 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 /* includes */
 #include <cassert>
 #include <iostream>
+#include <algorithm>
+#include "DisplayViewport.h"
+#include "input_device/ReleaseGate.h"
 
 #include <SDL.h>
 
@@ -40,7 +43,7 @@ const unsigned int DOUBLE_CLICK_TIME = 200;
 InputManager::InputManager(BlobbyApp* app) : mApp(app)
 {
 	// joystick
-	SDL_InitSubSystem(SDL_INIT_JOYSTICK);
+	SDL_InitSubSystem(SDL_INIT_GAMECONTROLLER);
 	SDL_JoystickEventState(SDL_ENABLE);
 	mJoystickPool = std::unique_ptr<JoystickPool>{new JoystickPool()};
 	mJoystickPool->probeJoysticks();
@@ -52,6 +55,7 @@ InputManager::InputManager(BlobbyApp* app) : mApp(app)
 	mLastTextKey = "";
 	mLastClickTime = 0;
 	mMouseCaptured = false;
+	clearTransientInput();
 }
 
 InputManager::~InputManager() = default;
@@ -94,6 +98,13 @@ std::unique_ptr<InputDevice> InputManager::beginGame(PlayerSide side)
 		return createKeyboardInput(this, lkey, rkey, jkey);
 	}
 	// load config for joystick
+	else if (device == "gamepad")
+	{
+		return createControllerInput(this,
+			config.getInteger(prefix + "controller_slot", side == LEFT_PLAYER ? 0 : 1),
+			config.getInteger(prefix + "controller_deadzone", 10000),
+			config.getInteger(prefix + "controller_jump", SDL_CONTROLLER_BUTTON_A));
+	}
 	else if (device == "joystick")
 	{
 		JoystickAction laction(config.getString(prefix + "joystick_left"));
@@ -112,8 +123,9 @@ std::unique_ptr<InputDevice> InputManager::beginGame(PlayerSide side)
 	return nullptr;
 }
 
-void InputManager::updateInput()
+void InputManager::clearTransientInput()
 {
+	mPreviousTab = mNextTab = false;
 	mUp = false;
 	mDown = false;
 	mLeft = false;
@@ -121,6 +133,7 @@ void InputManager::updateInput()
 	mSelect = false;
 	mExit = false;
 	mClick = false;
+	mDoubleClick = false;
 	mMouseWheelUp = false;
 	mMouseWheelDown = false;
 	mUnclick = false;
@@ -130,6 +143,12 @@ void InputManager::updateInput()
 
 	mLastTextKey = "";
 	mLastJoyAction = "";
+
+}
+
+void InputManager::updateInput(bool clearPrevious)
+{
+	if (clearPrevious) clearTransientInput();
 	// Init GUI Events for buffered Input
 	SDL_PumpEvents();
 	SDL_Event event;
@@ -148,6 +167,37 @@ void InputManager::updateInput()
 				break;
 			case SDL_JOYDEVICEREMOVED:
 				mJoystickPool->closeJoystick(event.jdevice.which);
+				for (auto it = mControllerDirections.begin(); it != mControllerDirections.end();)
+					if (it->first.first == event.jdevice.which) it = mControllerDirections.erase(it);
+					else ++it;
+				break;
+			case SDL_CONTROLLERBUTTONDOWN:
+				switch (event.cbutton.button)
+				{
+					case SDL_CONTROLLER_BUTTON_DPAD_UP: mUp = true; break;
+					case SDL_CONTROLLER_BUTTON_DPAD_DOWN: mDown = true; break;
+					case SDL_CONTROLLER_BUTTON_DPAD_LEFT: mLeft = true; break;
+					case SDL_CONTROLLER_BUTTON_DPAD_RIGHT: mRight = true; break;
+					case SDL_CONTROLLER_BUTTON_A: mSelect = true; mLastTextKey = "return"; break;
+					case SDL_CONTROLLER_BUTTON_LEFTSHOULDER: mPreviousTab = true; break;
+					case SDL_CONTROLLER_BUTTON_RIGHTSHOULDER: mNextTab = true; break;
+					case SDL_CONTROLLER_BUTTON_B:
+					case SDL_CONTROLLER_BUTTON_START: mExit = true; break;
+				}
+				break;
+			case SDL_CONTROLLERAXISMOTION:
+				if (event.caxis.axis == SDL_CONTROLLER_AXIS_LEFTX || event.caxis.axis == SDL_CONTROLLER_AXIS_LEFTY)
+				{
+					auto key = std::make_pair(int(event.caxis.which), int(event.caxis.axis));
+					int direction = event.caxis.value < -15000 ? -1 : event.caxis.value > 15000 ? 1 : 0;
+					if (direction && direction != mControllerDirections[key])
+					{
+						if (event.caxis.axis == SDL_CONTROLLER_AXIS_LEFTX)
+						{ mLeft |= direction < 0; mRight |= direction > 0; }
+						else { mUp |= direction < 0; mDown |= direction > 0; }
+					}
+					mControllerDirections[key] = direction;
+				}
 				break;
 			case SDL_KEYDOWN:
 				mLastActionKey = event.key.keysym.sym;
@@ -156,6 +206,8 @@ void InputManager::updateInput()
 					case SDLK_UP:
 						mUp = true;
 						break;
+					case SDLK_PAGEUP: mPreviousTab = true; break;
+					case SDLK_PAGEDOWN: mNextTab = true; break;
 
 					case SDLK_DOWN:
 						mDown = true;
@@ -274,6 +326,7 @@ void InputManager::updateInput()
 					mLastJoyAction = joyAction.toString();
 				}
 
+				if (mJoystickPool->isController(event.jbutton.which)) break;
 				switch (joyAction.toKeyAction())
 				{
 					case KeyAction::UP:
@@ -360,8 +413,14 @@ Vector2 InputManager::position()
 	SDL_GetMouseState(&mMouseX, &mMouseY);
 
 	SDL_GetWindowSize(mApp->getWindow(), &windowX, &windowY);
-	mMouseX = (int)((((float)mMouseX) * ((float)BASE_RESOLUTION_X)) / windowX);
-	mMouseY = (int)((((float)mMouseY) * ((float)BASE_RESOLUTION_Y)) / windowY);
+	auto viewport = fitGameViewport(windowX, windowY,courtWidth());
+	if (!viewport.w || !viewport.h) return Vector2(-1, -1);
+	if (mMouseX < viewport.x || mMouseX >= viewport.x + viewport.w ||
+		mMouseY < viewport.y || mMouseY >= viewport.y + viewport.h)
+		return Vector2(-1, -1);
+	// Keep pointer positions in the borders outside all menu widgets.
+	mMouseX = int((mMouseX - viewport.x) * courtWidth() / viewport.w - (courtWidth()-800.f)/2);
+	mMouseY = int((mMouseY - viewport.y) * float(BASE_RESOLUTION_Y) / viewport.h);
 
 	return Vector2(mMouseX, mMouseY);
 }
@@ -453,6 +512,19 @@ bool InputManager::isKeyPressed(SDL_Keycode code) const
 	return keyState[SDL_GetScancodeFromKey(code)];
 }
 
+PlayerInputAbs InputManager::controllerInput(int slot, int deadzone, int jumpButton, ReleaseGate& gate) const
+{
+	auto* c = mJoystickPool->getController(slot);
+	if (!c || !SDL_GameControllerGetAttached(c) || !mWindowFocus) return {false, false, false};
+	deadzone = std::max(1000, std::min(30000, deadzone));
+	if (jumpButton != SDL_CONTROLLER_BUTTON_X && jumpButton != SDL_CONTROLLER_BUTTON_Y)
+		jumpButton = SDL_CONTROLLER_BUTTON_A;
+	int x = SDL_GameControllerGetAxis(c, SDL_CONTROLLER_AXIS_LEFTX);
+	return {x < -deadzone || SDL_GameControllerGetButton(c, SDL_CONTROLLER_BUTTON_DPAD_LEFT),
+		x > deadzone || SDL_GameControllerGetButton(c, SDL_CONTROLLER_BUTTON_DPAD_RIGHT),
+		gate.update(SDL_GameControllerGetButton(c, SDL_GameControllerButton(jumpButton)) != 0)};
+}
+
 bool InputManager::isJoyActionActive(const JoystickAction& action) const
 {
 	SDL_Joystick* joystick = mJoystickPool->getJoystick(action.joyid);
@@ -480,3 +552,5 @@ bool InputManager::isJoyActionActive(const JoystickAction& action) const
 	}
 	return false;
 }
+
+float InputManager::courtWidth() const { return mApp->getRenderManager().courtWidth(); }

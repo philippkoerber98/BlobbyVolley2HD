@@ -24,6 +24,8 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #include <string>
 
 #include <SDL_events.h>
+#include <SDL_gamecontroller.h>
+#include <array>
 
 #include "BlobbyDebug.h"
 
@@ -39,10 +41,13 @@ class JoystickPool : public ObjectCounter<JoystickPool>
 		void openJoystick(const int joyId);
 		void closeJoystick(const int joyId);
 		void probeJoysticks();
+		SDL_GameController* getController(int slot) const;
+		bool isController(int id) const;
 
 	private:
 		typedef std::map<int, SDL_Joystick*> JoyMap;
 		JoyMap mJoyMap;
+		std::array<SDL_GameController*, 2> mControllers{{nullptr, nullptr}};
 };
 
 struct JoystickAction : public ObjectCounter<JoystickAction>

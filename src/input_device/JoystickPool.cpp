@@ -12,6 +12,7 @@
 // Joystick Pool
 JoystickPool::~JoystickPool()
 {
+	for (auto* c : mControllers) if (c) SDL_GameControllerClose(c);
 	for (auto& iter : mJoyMap)
 	{
 		SDL_JoystickClose(iter.second);
@@ -21,46 +22,35 @@ JoystickPool::~JoystickPool()
 
 SDL_Joystick* JoystickPool::getJoystick(int id)
 {
-	SDL_Joystick* joy =  mJoyMap[id];
-
-	if (joy == nullptr)
-	{
-		std::cerr << "Warning: could not find joystick number " << id << "!" << std::endl;
-		mJoyMap.erase(id);
-	}
-
-	return joy;
+	auto it = mJoyMap.find(id);
+	return it == mJoyMap.end() ? nullptr : it->second;
 }
 
 void JoystickPool::probeJoysticks()
 {
-#ifdef __SWITCH__
 	int numJoysticks = SDL_NumJoysticks();
-	SDL_Joystick* lastjoy;
 	for(int i = 0; i < numJoysticks; i++)
-	{
-		lastjoy = SDL_JoystickOpen(i);
-
-		if (lastjoy == NULL)
-			continue;
-
-		mJoyMap[SDL_JoystickInstanceID(lastjoy)] = lastjoy;
-	}
-#endif
+		openJoystick(i);
 }
 
 void JoystickPool::openJoystick(const int joyIndex)
 {
+	if (mJoyMap.count(SDL_JoystickGetDeviceInstanceID(joyIndex))) return;
 	SDL_Joystick* joystickInstance = SDL_JoystickOpen(joyIndex);
 	if (joystickInstance != nullptr)
 	{
 		mJoyMap[SDL_JoystickInstanceID(joystickInstance)] = joystickInstance;
+		if (SDL_IsGameController(joyIndex))
+			for (auto& c : mControllers) if (!c) { c = SDL_GameControllerOpen(joyIndex); break; }
 	}
 }
 
 void JoystickPool::closeJoystick(const int joyId)
 {
-	SDL_Joystick* joystickInstance = mJoyMap[joyId];
+	for (auto& c : mControllers)
+		if (c && SDL_JoystickInstanceID(SDL_GameControllerGetJoystick(c)) == joyId)
+		{ SDL_GameControllerClose(c); c = nullptr; }
+	SDL_Joystick* joystickInstance = getJoystick(joyId);
 	if (joystickInstance != nullptr)
 	{
 		SDL_JoystickClose(joystickInstance);
@@ -69,6 +59,15 @@ void JoystickPool::closeJoystick(const int joyId)
 }
 
 // Joystick Action
+SDL_GameController* JoystickPool::getController(int slot) const
+{
+	return slot >= 0 && slot < 2 ? mControllers[slot] : nullptr;
+}
+
+bool JoystickPool::isController(int id) const
+{
+	return SDL_GameControllerFromInstanceID(id) != nullptr;
+}
 
 JoystickAction::JoystickAction(std::string string)
 {

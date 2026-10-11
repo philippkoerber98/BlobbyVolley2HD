@@ -42,6 +42,7 @@ class InputDevice : public ObjectCounter<InputDevice>
 };
 
 struct JoystickAction;
+std::unique_ptr<InputDevice> createControllerInput(InputManager* manager, int slot, int deadzone, int jumpButton);
 
 
 std::unique_ptr<InputDevice> createKeyboardInput(InputManager* inputMgr, SDL_Keycode left, SDL_Keycode right, SDL_Keycode jump);

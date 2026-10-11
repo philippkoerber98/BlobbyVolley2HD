@@ -24,6 +24,24 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 /* other includes */
 #include "JoystickPool.h"
 #include "InputManager.h"
+#include "ReleaseGate.h"
+
+class ControllerInputDevice : public InputDevice
+{
+public:
+	ControllerInputDevice(InputManager* manager, int slot, int deadzone, int jumpButton)
+		: InputDevice(manager), mSlot(slot), mDeadzone(deadzone), mJumpButton(jumpButton) {}
+	PlayerInputAbs transferInput() override
+	{ return mInputManager->controllerInput(mSlot, mDeadzone, mJumpButton, mGate); }
+private:
+	int mSlot, mDeadzone, mJumpButton;
+	ReleaseGate mGate;
+};
+
+std::unique_ptr<InputDevice> createControllerInput(InputManager* manager, int slot, int deadzone, int jumpButton)
+{
+	return std::unique_ptr<InputDevice>{new ControllerInputDevice(manager, slot, deadzone, jumpButton)};
+}
 
 // ********************************************************************************************************
 // 		Interface Definition

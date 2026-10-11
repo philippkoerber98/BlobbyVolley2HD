@@ -21,6 +21,8 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #pragma once
 
 #include <memory>
+#include <map>
+#include <utility>
 
 #include <SDL_keycode.h>
 
@@ -40,6 +42,7 @@ enum class KeyAction
 };
 
 class JoystickPool;
+class ReleaseGate;
 class InputDevice;
 class BlobbyApp;
 struct _SDL_Joystick;
@@ -55,9 +58,11 @@ class InputManager : public ObjectCounter<InputManager>
 
 		std::unique_ptr<InputDevice> beginGame(PlayerSide side);
 
+		float courtWidth() const;
 		bool running() const;
 		void setEndBlobby();	// call to trigger the event that ends blobby, i.e. running will return false after this call.
-		void updateInput();
+		void updateInput(bool clearPrevious = true);
+		void clearTransientInput();
 
 		void captureMouse( bool c );		// sets whether the mouse should be captured
 		bool isMouseCaptured() const;
@@ -69,6 +74,8 @@ class InputManager : public ObjectCounter<InputManager>
 		bool right() const;
 		bool select() const;
 		bool exit() const; // extension for mouse included, so that right click = exit
+		bool previousTab() const { return mPreviousTab; }
+		bool nextTab() const { return mNextTab; }
 
 		std::string getLastTextKey();
 		std::string getLastActionKey() const;
@@ -89,6 +96,7 @@ class InputManager : public ObjectCounter<InputManager>
 		// In-game input
 		bool isKeyPressed(SDL_Keycode code) const;
 		bool isJoyActionActive(const JoystickAction& action) const;
+		PlayerInputAbs controllerInput(int slot, int deadzone, int jumpButton, ReleaseGate& gate) const;
 
 		bool windowFocus() const;
 
@@ -109,6 +117,7 @@ class InputManager : public ObjectCounter<InputManager>
 		bool mMouseWheelUp;
 		bool mMouseWheelDown;
 		bool mUnclick;
+		bool mPreviousTab = false, mNextTab = false;
 
 		bool mWindowFocus;
 
@@ -128,4 +137,5 @@ class InputManager : public ObjectCounter<InputManager>
 
 		BlobbyApp* mApp;
 		std::unique_ptr<JoystickPool> mJoystickPool;
+		std::map<std::pair<int, int>, int> mControllerDirections;
 };
