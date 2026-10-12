@@ -1,0 +1,189 @@
+<?xml version='1.0' encoding='utf-8'?>
+<translations>
+  <string english="  /  TARGET " en="  /  TARGET " de="  /  ZIEL " cs="  /  CÍL " es="  /  OBJETIVO " fr="  /  OBJECTIF " it="  /  OBIETTIVO " />
+  <string english="100% is the original game speed. Rendering FPS does not affect it." en="100% is the original game speed. Rendering FPS does not affect it." de="100 % ist das klassische Spieltempo. Die Bildrate verändert es nicht." cs="100 % je původní rychlost hry. Snímková frekvence ji nemění." es="El 100 % es la velocidad original. Los FPS no la modifican." fr="100 % correspond à la vitesse d'origine. Les FPS ne la modifient pas." it="Il 100% è la velocità originale. Gli FPS non la modificano." />
+  <string english="16:9 Widescreen" en="16:9 Widescreen" de="16:9 Breitbild" cs="16:9 Širokoúhlé" es="16:9 Panorámico" fr="16:9 Écran large" it="16:9 Panoramico" />
+  <string english="4:3 Classic" en="4:3 Classic" de="4:3 Klassik" cs="4:3 Klasika" es="4:3 Clásico" fr="4:3 Classique" it="4:3 Classico" />
+  <string english="4:3: classic view and court. 16:9: wider court and longer runs, 20% faster running. Network stays 4:3. From next match." en="4:3: classic view and court. 16:9: wider court and longer runs, 20% faster running. Network stays 4:3. From next match." de="4:3: klassischer Bildausschnitt und Spielfeld. 16:9: mehr Spielfeld und längere Laufwege, 20 % mehr Lauftempo. Netzwerk bleibt 4:3. Ab nächstem Match." cs="4:3: klasický výřez a hřiště. 16:9: širší hřiště, delší dráhy a o 20 % rychlejší běh. Síťová hra zůstává 4:3. Platí od dalšího zápasu." es="4:3: vista y campo clásicos. 16:9: campo más ancho y recorridos más largos, con un 20 % más de velocidad. En red se mantiene 4:3. Desde el próximo partido." fr="4:3 : cadrage et terrain classiques. 16:9 : terrain plus large, trajets plus longs et course 20 % plus rapide. Le réseau reste en 4:3. Dès le prochain match." it="4:3: visuale e campo classici. 16:9: campo più largo, tragitti più lunghi e corsa più veloce del 20%. In rete resta 4:3. Dalla prossima partita." />
+  <string english="A  Select     B  Back to game" en="A  Select     B  Back to game" de="A  Auswählen     B  Zurück zum Spiel" cs="A: vybrat   B: zpět do hry" es="A: elegir   B: volver al juego" fr="A : choisir   B : retour au jeu" it="A: scegli   B: torna al gioco" />
+  <string english="A  Select     B  Cancel" en="A  Select     B  Cancel" de="A  Auswählen     B  Abbrechen" cs="A: vybrat   B: zrušit" es="A: elegir   B: cancelar" fr="A : choisir   B : annuler" it="A: scegli   B: annulla" />
+  <string english="A / Enter  Select     B / Esc  Quit" en="A / Enter  Select     B / Esc  Quit" de="A / Enter  Auswählen     B / Esc  Beenden" cs="A / Enter: vybrat   B / Esc: ukončit" es="A / Intro: elegir   B / Esc: salir" fr="A / Entrée : choisir   B / Échap : quitter" it="A / Invio: scegli   B / Esc: esci" />
+  <string english="A / Enter: reset     B / Esc: cancel" en="A / Enter: reset     B / Esc: cancel" de="A / Enter: zurücksetzen     B / Esc: abbrechen" cs="A / Enter: obnovit   B / Esc: zrušit" es="A / Intro: restaurar   B / Esc: cancelar" fr="A / Entrée : réinitialiser   B / Échap : annuler" it="A / Invio: ripristina   B / Esc: annulla" />
+  <string english="A match on your local network" en="A match on your local network" de="Ein Match im lokalen Netzwerk" cs="Zápas v místní síti" es="Un partido en tu red local" fr="Un match en réseau local" it="Una partita in rete locale" />
+  <string english="Adjust gameplay, players and display." en="Adjust gameplay, players and display." de="Passe Spiel, Spieler und Anzeige an." cs="Upravte hru, hráče a zobrazení." es="Ajusta el juego, los jugadores y la imagen." fr="Réglez le jeu, les joueurs et l'affichage." it="Regola gioco, giocatori e visualizzazione." />
+  <string english="Arrows  Navigate     B / Esc  Cancel" en="Arrows  Navigate     B / Esc  Cancel" de="Pfeiltasten  Navigieren     B / Esc  Abbrechen" cs="Šipky: pohyb   B / Esc: zrušit" es="Flechas: navegar   B / Esc: cancelar" fr="Flèches : naviguer   B / Échap : annuler" it="Frecce: naviga   B / Esc: annulla" />
+  <string english="Audio" en="Audio" de="Audio" cs="Zvuk" es="Audio" fr="Audio" it="Audio" />
+  <string english="Automatic" en="Automatic" de="Automatisch" cs="Automaticky" es="Automático" fr="Automatique" it="Automatica" />
+  <string english="Automatic follows the monitor. Game speed stays independent." en="Automatic follows the monitor. Game speed stays independent." de="Automatisch folgt dem Bildschirm. Das Spieltempo bleibt unabhängig." cs="Automaticky podle monitoru. Rychlost hry se nemění." es="Sigue al monitor automáticamente. La velocidad del juego es independiente." fr="Le mode automatique suit l'écran. La vitesse du jeu reste indépendante." it="La modalità automatica segue il monitor. La velocità di gioco resta indipendente." />
+  <string english="B remains reserved for Back." en="B remains reserved for Back." de="B bleibt zum Zurückgehen reserviert." cs="B je vyhrazeno pro návrat." es="B queda reservado para volver." fr="B reste réservé au retour." it="B rimane riservato per tornare indietro." />
+  <string english="Back" en="Back" de="Zurück" cs="Zpět" es="Volver" fr="Retour" it="Indietro" />
+  <string english="Back to the beach!" en="Back to the beach!" de="Ab auf den Sand!" cs="Zpátky na pláž!" es="¡De vuelta a la playa!" fr="Retour à la plage !" it="Si torna in spiaggia!" />
+  <string english="Background" en="Background" de="Hintergrund" cs="Pozadí" es="Fondo" fr="Arrière-plan" it="Sfondo" />
+  <string english="Bindings for" en="Bindings for" de="Belegung für" cs="Ovládání pro" es="Asignaciones de" fr="Commandes de" it="Comandi per" />
+  <string english="Blob RGB colour. The preview updates immediately." en="Blob RGB colour. The preview updates immediately." de="RGB-Farbe des Blobs. Die Vorschau aktualisiert sich sofort." cs="RGB barva bloba. Náhled se aktualizuje okamžitě." es="Color RGB del blob. La vista previa cambia al instante." fr="Couleur RVB du blob. L'aperçu est mis à jour immédiatement." it="Colore RGB del blob. L'anteprima si aggiorna subito." />
+  <string english="Blood" en="Blood" de="Blut" cs="Krev" es="Sangre" fr="Sang" it="Sangue" />
+  <string english="Blue" en="Blue" de="Blau" cs="Modrá" es="Azul" fr="Bleu" it="Blu" />
+  <string english="Bot strength" en="Bot strength" de="Bot-Stärke" cs="Síla bota" es="Nivel del bot" fr="Niveau du bot" it="Livello del bot" />
+  <string english="Button " en="Button " de="Taste " cs="Tlačítko " es="Botón " fr="Bouton " it="Pulsante " />
+  <string english="Cancel" en="Cancel" de="Abbrechen" cs="Zrušit" es="Cancelar" fr="Annuler" it="Annulla" />
+  <string english="Close Blobby Volley 2 HD." en="Close Blobby Volley 2 HD." de="Schließe Blobby Volley 2 HD." cs="Ukončete Blobby Volley 2 HD." es="Cierra Blobby Volley 2 HD." fr="Fermez Blobby Volley 2 HD." it="Chiudi Blobby Volley 2 HD." />
+  <string english="Colour cycling" en="Colour cycling" de="Farbwechsel" cs="Střídání barev" es="Cambio de color" fr="Cycle des couleurs" it="Cambio colore" />
+  <string english="Continue" en="Continue" de="Weiterspielen" cs="Pokračovat" es="Continuar" fr="Continuer" it="Continua" />
+  <string english="Controller" en="Controller" de="Controller" cs="Ovladač" es="Mando" fr="Manette" it="Controller" />
+  <string english="Controller slot: 0 is the first controller." en="Controller slot: 0 is the first controller." de="Controller-Slot: 0 ist der erste Controller." cs="Slot ovladače: 0 je první ovladač." es="Índice del mando: 0 es el primero." fr="Indice de manette : 0 désigne la première." it="Indice del controller: 0 è il primo." />
+  <string english="Controls" en="Controls" de="Steuerung" cs="Ovládání" es="Controles" fr="Commandes" it="Comandi" />
+  <string english="Could not save settings." en="Could not save settings." de="Speichern fehlgeschlagen." cs="Nastavení nelze uložit." es="No se pudieron guardar los ajustes." fr="Impossible d'enregistrer les réglages." it="Impossibile salvare le impostazioni." />
+  <string english="Could not update: " en="Could not update: " de="Änderung fehlgeschlagen: " cs="Aktualizace selhala: " es="No se pudo actualizar: " fr="Mise à jour impossible : " it="Impossibile aggiornare: " />
+  <string english="Court" en="Court" de="Spielfeld" cs="Hřiště" es="Campo" fr="Terrain" it="Campo" />
+  <string english="Credits" en="Credits" de="Mitwirkende" cs="Autoři" es="Créditos" fr="Crédits" it="Riconoscimenti" />
+  <string english="Cycle the blob colour automatically." en="Cycle the blob colour automatically." de="Blob-Farbe automatisch wechseln lassen." cs="Automaticky mění barvu bloba." es="Cambia el color del blob automáticamente." fr="Change automatiquement la couleur du blob." it="Cambia automaticamente il colore del blob." />
+  <string english="D-pad: select / change    A: edit" en="D-pad: select / change    A: edit" de="Steuerkreuz: Auswahl / Wert    A: Ändern" cs="Směrový kříž: výběr / změna   A: upravit" es="Cruceta: elegir / cambiar   A: editar" fr="Croix : choisir / modifier   A : éditer" it="Croce: scegli / cambia   A: modifica" />
+  <string english="DEVICES" en="DEVICES" de="GERÄTE" cs="ZAŘÍZENÍ" es="DISPOSITIVOS" fr="PÉRIPHÉRIQUES" it="DISPOSITIVI" />
+  <string english="DISPLAY" en="DISPLAY" de="ANZEIGE" cs="ZOBRAZENÍ" es="PANTALLA" fr="AFFICHAGE" it="SCHERMO" />
+  <string english="Default settings restored." en="Default settings restored." de="Standardwerte wiederhergestellt." cs="Výchozí nastavení obnoveno." es="Ajustes predeterminados restaurados." fr="Réglages par défaut restaurés." it="Impostazioni predefinite ripristinate." />
+  <string english="Display ball and blob shadows." en="Display ball and blob shadows." de="Schatten von Ball und Blobs anzeigen." cs="Zobrazí stíny míče a blobů." es="Muestra las sombras del balón y los blobs." fr="Affiche les ombres du ballon et des blobs." it="Mostra le ombre della palla e dei blob." />
+  <string english="Display mode" en="Display mode" de="Anzeigemodus" cs="Režim zobrazení" es="Modo de pantalla" fr="Mode d'affichage" it="Modalità schermo" />
+  <string english="Display the current rendering FPS." en="Display the current rendering FPS." de="Aktuelle Darstellungsrate anzeigen." cs="Zobrazí aktuální snímkovou frekvenci." es="Muestra los FPS actuales." fr="Affiche la fréquence d'images actuelle." it="Mostra gli FPS attuali." />
+  <string english="Each bot uses its widescreen variant in 16:9. Original 4:3 scripts stay unchanged." en="Each bot uses its widescreen variant in 16:9. Original 4:3 scripts stay unchanged." de="Jeder Bot nutzt in 16:9 seine Breitbild-Variante. Die Originalskripte für 4:3 bleiben unverändert." cs="V 16:9 používají boti širokoúhlou variantu. Původní skripty pro 4:3 zůstávají stejné." es="En 16:9 cada bot usa su variante panorámica. Los scripts originales de 4:3 no cambian." fr="En 16:9, chaque bot utilise sa variante écran large. Les scripts 4:3 d'origine restent inchangés." it="In 16:9 ogni bot usa la variante panoramica. Gli script originali 4:3 restano invariati." />
+  <string english="Edit name" en="Edit name" de="Namen bearbeiten" cs="Upravit jméno" es="Editar nombre" fr="Modifier le nom" it="Modifica nome" />
+  <string english="Edit this player's bindings." en="Edit this player's bindings." de="Tastenbelegung des jeweiligen Spielers bearbeiten." cs="Upravte ovládání tohoto hráče." es="Edita los controles de este jugador." fr="Modifiez les commandes de ce joueur." it="Modifica i comandi di questo giocatore." />
+  <string english="Enable or disable blood particles." en="Enable or disable blood particles." de="Blutpartikel ein- oder ausschalten." cs="Zapne nebo vypne částice krve." es="Activa o desactiva las partículas de sangre." fr="Active ou désactive les particules de sang." it="Attiva o disattiva le particelle di sangue." />
+  <string english="Enter a name; Enter confirms, Esc cancels." en="Enter a name; Enter confirms, Esc cancels." de="Namen eingeben; Enter bestätigt, Esc bricht ab." cs="Zadejte jméno; Enter potvrdí, Esc zruší." es="Escribe un nombre; Intro confirma, Esc cancela." fr="Saisissez un nom ; Entrée valide, Échap annule." it="Inserisci un nome; Invio conferma, Esc annulla." />
+  <string english="Enter: confirm     Esc: cancel" en="Enter: confirm     Esc: cancel" de="Enter: bestätigen     Esc: abbrechen" cs="Enter: potvrdit   Esc: zrušit" es="Intro: confirmar   Esc: cancelar" fr="Entrée : valider   Échap : annuler" it="Invio: conferma   Esc: annulla" />
+  <string english="Esc / B: cancel" en="Esc / B: cancel" de="Esc / B: abbrechen" cs="Esc / B: zrušit" es="Esc / B: cancelar" fr="Échap / B : annuler" it="Esc / B: annulla" />
+  <string english="Existing touch configuration is preserved." en="Existing touch configuration is preserved." de="Bestehende Touch-Konfiguration bleibt erhalten." cs="Stávající dotykové ovládání se zachová." es="Se conserva la configuración táctil actual." fr="La configuration tactile existante est conservée." it="La configurazione touch esistente viene mantenuta." />
+  <string english="Fast" en="Fast" de="Schnell" cs="Rychle" es="Rápido" fr="Rapide" it="Veloce" />
+  <string english="Find other players online." en="Find other players online." de="Finde Mitspieler im Internet." cs="Najděte další hráče online." es="Encuentra jugadores en línea." fr="Trouvez des joueurs en ligne." it="Trova altri giocatori online." />
+  <string english="Frame rate" en="Frame rate" de="Bildrate" cs="Snímková frekvence" es="Fotogramas por segundo" fr="Fréquence d'images" it="Frequenza fotogrammi" />
+  <string english="Fullscreen" en="Fullscreen" de="Vollbild" cs="Celá obrazovka" es="Pantalla completa" fr="Plein écran" it="Schermo intero" />
+  <string english="Fullscreen uses desktop mode. Windowed mode keeps its title bar." en="Fullscreen uses desktop mode. Windowed mode keeps its title bar." de="Fullscreen nutzt den Desktopmodus. Fenster behalten ihre Titelleiste." cs="Celá obrazovka používá režim plochy. Okno má záhlaví." es="La pantalla completa usa el modo del escritorio. La ventana conserva su barra de título." fr="Le plein écran utilise le mode du bureau. La fenêtre conserve sa barre de titre." it="Lo schermo intero usa la modalità del desktop. La finestra mantiene la barra del titolo." />
+  <string english="Fullscreen uses the desktop resolution." en="Fullscreen uses the desktop resolution." de="Wird im Vollbild vom Desktop übernommen." cs="Celá obrazovka používá rozlišení plochy." es="La pantalla completa usa la resolución del escritorio." fr="Le plein écran utilise la résolution du bureau." it="Lo schermo intero usa la risoluzione del desktop." />
+  <string english="GAME RULES" en="GAME RULES" de="SPIELREGELN" cs="PRAVIDLA HRY" es="REGLAS DEL JUEGO" fr="RÈGLES DU JEU" it="REGOLE DI GIOCO" />
+  <string english="GENERAL" en="GENERAL" de="ALLGEMEIN" cs="OBECNÉ" es="GENERAL" fr="GÉNÉRAL" it="GENERALE" />
+  <string english="Game" en="Game" de="Spiel" cs="Hra" es="Juego" fr="Jeu" it="Gioco" />
+  <string english="Game speed" en="Game speed" de="Spieltempo" cs="Rychlost hry" es="Velocidad del juego" fr="Vitesse du jeu" it="Velocità di gioco" />
+  <string english="Graphics" en="Graphics" de="Grafik" cs="Grafika" es="Gráficos" fr="Graphismes" it="Grafica" />
+  <string english="Green" en="Green" de="Grün" cs="Zelená" es="Verde" fr="Vert" it="Verde" />
+  <string english="Human" en="Human" de="Mensch" cs="Člověk" es="Persona" fr="Humain" it="Umano" />
+  <string english="Ideas, development and artwork." en="Ideas, development and artwork." de="Ideen, Entwicklung und Gestaltung." cs="Nápady, vývoj a grafika." es="Ideas, desarrollo y gráficos." fr="Idées, développement et graphismes." it="Idee, sviluppo e grafica." />
+  <string english="Increase for stick drift. Lower values respond sooner." en="Increase for stick drift. Lower values respond sooner." de="Bei Stick-Drift erhöhen. Kleinere Werte reagieren früher." cs="Při driftu páčky zvyšte hodnotu. Nižší hodnoty reagují dříve." es="Auméntala si hay deriva del stick. Valores bajos responden antes." fr="Augmentez en cas de dérive du stick. Une valeur basse réagit plus tôt." it="Aumenta in caso di deriva dello stick. Valori bassi rispondono prima." />
+  <string english="Joystick" en="Joystick" de="Joystick" cs="Joystick" es="Joystick" fr="Joystick" it="Joystick" />
+  <string english="Jump" en="Jump" de="Springen" cs="Skok" es="Saltar" fr="Sauter" it="Salta" />
+  <string english="Keyboard" en="Keyboard" de="Tastatur" cs="Klávesnice" es="Teclado" fr="Clavier" it="Tastiera" />
+  <string english="LB / RB: category    Page Up / Down: category    Changes apply immediately" en="LB / RB: category    Page Up / Down: category    Changes apply immediately" de="LB / RB: Kategorie    Bild auf / ab: Kategorie    Änderungen gelten sofort" cs="LB / RB: kategorie   Page Up / Down: kategorie   Změny platí ihned" es="LB / RB: categoría   Re Pág / Av Pág: categoría   Cambios inmediatos" fr="LB / RB : catégorie   Page préc. / suiv. : catégorie   Effet immédiat" it="LB / RB: categoria   Pag su / giù: categoria   Modifiche immediate" />
+  <string english="Language" en="Language" de="Sprache" cs="Jazyk" es="Idioma" fr="Langue" it="Lingua" />
+  <string english="Leave match" en="Leave match" de="Spiel verlassen" cs="Opustit zápas" es="Salir del partido" fr="Quitter le match" it="Lascia partita" />
+  <string english="Leave match?" en="Leave match?" de="Spiel verlassen?" cs="Opustit zápas?" es="¿Salir del partido?" fr="Quitter le match ?" it="Lasciare la partita?" />
+  <string english="Left" en="Left" de="Links" cs="Vlevo" es="Izquierda" fr="Gauche" it="Sinistra" />
+  <string english="MATCH WON" en="MATCH WON" de="MATCH GEWONNEN" cs="VÍTĚZSTVÍ" es="VICTORIA" fr="VICTOIRE" it="VITTORIA" />
+  <string english="Main menu" en="Main menu" de="Hauptmenü" cs="Hlavní nabídka" es="Menú principal" fr="Menu principal" it="Menu principale" />
+  <string english="Master volume" en="Master volume" de="Gesamtlautstärke" cs="Celková hlasitost" es="Volumen general" fr="Volume général" it="Volume generale" />
+  <string english="Match time " en="Match time " de="Spielzeit " cs="Doba zápasu " es="Duración " fr="Durée du match " it="Durata partita " />
+  <string english="Mouse" en="Mouse" de="Maus" cs="Myš" es="Ratón" fr="Souris" it="Mouse" />
+  <string english="Mouse movement sensitivity." en="Mouse movement sensitivity." de="Empfindlichkeit der Maussteuerung." cs="Citlivost pohybu myši." es="Sensibilidad del movimiento del ratón." fr="Sensibilité du déplacement de la souris." it="Sensibilità del movimento del mouse." />
+  <string english="Move" en="Move" de="Bewegen" cs="Pohyb" es="Mover" fr="Déplacement" it="Movimento" />
+  <string english="Move left" en="Move left" de="Nach links" cs="Doleva" es="Mover a la izquierda" fr="Aller à gauche" it="Muovi a sinistra" />
+  <string english="Move right" en="Move right" de="Nach rechts" cs="Doprava" es="Mover a la derecha" fr="Aller à droite" it="Muovi a destra" />
+  <string english="Move using the left stick or D-pad." en="Move using the left stick or D-pad." de="Linker Stick und Steuerkreuz bewegen den Blob." cs="Pohyb levou páčkou nebo směrovým křížem." es="Muévete con el stick izquierdo o la cruceta." fr="Déplacez-vous avec le stick gauche ou la croix directionnelle." it="Muoviti con lo stick sinistro o la croce direzionale." />
+  <string english="Mute" en="Mute" de="Stummschalten" cs="Ztlumit" es="Silenciar" fr="Couper le son" it="Disattiva audio" />
+  <string english="Mute all game sounds." en="Mute all game sounds." de="Alle Spielgeräusche stummschalten." cs="Vypne všechny herní zvuky." es="Silencia todos los sonidos." fr="Coupe tous les sons du jeu." it="Disattiva tutti i suoni del gioco." />
+  <string english="Name" en="Name" de="Name" cs="Jméno" es="Nombre" fr="Nom" it="Nome" />
+  <string english="Network side" en="Network side" de="Netzwerkseite" cs="Strana v síti" es="Lado en red" fr="Côté en réseau" it="Lato in rete" />
+  <string english="New binding" en="New binding" de="Neue Belegung" cs="Nové ovládání" es="Nueva asignación" fr="Nouvelle commande" it="Nuovo comando" />
+  <string english="Normal" en="Normal" de="Normal" cs="Normálně" es="Normal" fr="Normal" it="Normale" />
+  <string english="Off" en="Off" de="Aus" cs="Vypnuto" es="No" fr="Désactivé" it="Disattivo" />
+  <string english="On" en="On" de="Ein" cs="Zapnuto" es="Sí" fr="Activé" it="Attivo" />
+  <string english="Only one player can use the mouse." en="Only one player can use the mouse." de="Die Maus kann nur einem Spieler zugewiesen werden." cs="Myš může používat jen jeden hráč." es="Solo un jugador puede usar el ratón." fr="Un seul joueur peut utiliser la souris." it="Solo un giocatore può usare il mouse." />
+  <string english="Only sizes that fit the current monitor." en="Only sizes that fit the current monitor." de="Nur Größen, die auf den aktuellen Bildschirm passen." cs="Jen velikosti, které se vejdou na aktuální monitor." es="Solo tamaños que caben en el monitor actual." fr="Uniquement les tailles adaptées à l'écran actuel." it="Solo dimensioni adatte al monitor attuale." />
+  <string english="Options" en="Options" de="Optionen" cs="Nastavení" es="Opciones" fr="Options" it="Opzioni" />
+  <string english="PLAYER " en="PLAYER " de="SPIELER " cs="HRÁČ " es="JUGADOR " fr="JOUEUR " it="GIOCATORE " />
+  <string english="Pause" en="Pause" de="Pause" cs="Pauza" es="Pausa" fr="Pause" it="Pausa" />
+  <string english="Play again" en="Play again" de="Noch eine Runde" cs="Hrát znovu" es="Volver a jugar" fr="Rejouer" it="Gioca ancora" />
+  <string english="Play on LAN" en="Play on LAN" de="Im LAN spielen" cs="Hrát v síti LAN" es="Jugar en LAN" fr="Jouer en réseau local" it="Gioca in LAN" />
+  <string english="Play online" en="Play online" de="Online spielen" cs="Hrát online" es="Jugar en línea" fr="Jouer en ligne" it="Gioca online" />
+  <string english="Play together online" en="Play together online" de="Gemeinsam online spielen" cs="Společně online" es="Jugad juntos en línea" fr="Jouez ensemble en ligne" it="Giocate insieme online" />
+  <string english="Play with friends on your network." en="Play with friends on your network." de="Spiele mit Freunden im selben Netz." cs="Hrajte s přáteli v místní síti." es="Juega con amigos en tu red." fr="Jouez avec vos amis en réseau local." it="Gioca con gli amici nella tua rete." />
+  <string english="Player " en="Player " de="Spieler " cs="Hráč " es="Jugador " fr="Joueur " it="Giocatore " />
+  <string english="Player device " en="Player device " de="Gerät Spieler " cs="Zařízení hráče " es="Dispositivo jugador " fr="Périphérique joueur " it="Dispositivo giocatore " />
+  <string english="Player type" en="Player type" de="Spielerart" cs="Typ hráče" es="Tipo de jugador" fr="Type de joueur" it="Tipo di giocatore" />
+  <string english="Players" en="Players" de="Spieler" cs="Hráči" es="Jugadores" fr="Joueurs" it="Giocatori" />
+  <string english="Points needed to win." en="Points needed to win." de="Benötigte Punkte für einen Sieg." cs="Počet bodů potřebných k vítězství." es="Puntos necesarios para ganar." fr="Nombre de points nécessaires pour gagner." it="Punti necessari per vincere." />
+  <string english="Points to win" en="Points to win" de="Punkte bis zum Sieg" cs="Body k vítězství" es="Puntos para ganar" fr="Points pour gagner" it="Punti per vincere" />
+  <string english="Preferred side in network matches." en="Preferred side in network matches." de="Bevorzugte Seite im Netzwerkspiel." cs="Preferovaná strana v síťových zápasech." es="Lado preferido en partidos en red." fr="Côté préféré lors des matchs en réseau." it="Lato preferito nelle partite in rete." />
+  <string english="Press a key, mouse button or joystick control." en="Press a key, mouse button or joystick control." de="Taste, Maustaste oder Joystick betätigen." cs="Stiskněte klávesu, tlačítko myši nebo ovladače." es="Pulsa una tecla, botón del ratón o control del joystick." fr="Appuyez sur une touche, un bouton de souris ou une commande du joystick." it="Premi un tasto, un pulsante del mouse o un comando del joystick." />
+  <string english="Quit" en="Quit" de="Beenden" cs="Ukončit" es="Salir" fr="Quitter" it="Esci" />
+  <string english="Quit Blobby Volley 2 HD?" en="Quit Blobby Volley 2 HD?" de="Blobby Volley 2 HD beenden?" cs="Ukončit Blobby Volley 2 HD?" es="¿Cerrar Blobby Volley 2 HD?" fr="Quitter Blobby Volley 2 HD ?" it="Uscire da Blobby Volley 2 HD?" />
+  <string english="RENDERING" en="RENDERING" de="DARSTELLUNG" cs="VYKRESLOVÁNÍ" es="REPRESENTACIÓN" fr="RENDU" it="RENDERING" />
+  <string english="Reaction strength of the selected bot." en="Reaction strength of the selected bot." de="Reaktionsstärke des ausgewählten Bots." cs="Rychlost reakcí vybraného bota." es="Capacidad de reacción del bot." fr="Réactivité du bot sélectionné." it="Reattività del bot selezionato." />
+  <string english="Red" en="Red" de="Rot" cs="Červená" es="Rojo" fr="Rouge" it="Rosso" />
+  <string english="Renderer" en="Renderer" de="Renderer" cs="Vykreslovač" es="Motor gráfico" fr="Moteur de rendu" it="Motore grafico" />
+  <string english="Replays" en="Replays" de="Replays" cs="Záznamy" es="Repeticiones" fr="Replays" it="Replay" />
+  <string english="Reset" en="Reset" de="Zurücksetzen" cs="Obnovit" es="Restaurar" fr="Réinitialiser" it="Ripristina" />
+  <string english="Resolution" en="Resolution" de="Auflösung" cs="Rozlišení" es="Resolución" fr="Résolution" it="Risoluzione" />
+  <string english="Restore default settings?" en="Restore default settings?" de="Standardwerte wiederherstellen?" cs="Obnovit výchozí nastavení?" es="¿Restaurar los ajustes predeterminados?" fr="Restaurer les réglages par défaut ?" it="Ripristinare le impostazioni predefinite?" />
+  <string english="Restore defaults" en="Restore defaults" de="Standardwerte" cs="Výchozí nastavení" es="Restaurar valores" fr="Valeurs par défaut" it="Ripristina valori" />
+  <string english="Right" en="Right" de="Rechts" cs="Vpravo" es="Derecha" fr="Droite" it="Destra" />
+  <string english="Rules" en="Rules" de="Regelwerk" cs="Pravidla" es="Reglas" fr="Règles" it="Regole" />
+  <string english="Rules for the next match." en="Rules for the next match." de="Regelwerk für das nächste Spiel." cs="Pravidla pro další zápas." es="Reglas del próximo partido." fr="Règles du prochain match." it="Regole della prossima partita." />
+  <string english="Save" en="Save" de="Speichern" cs="Uložit" es="Guardar" fr="Enregistrer" it="Salva" />
+  <string english="Save replay" en="Save replay" de="Replay speichern" cs="Uložit záznam" es="Guardar repetición" fr="Enregistrer le replay" it="Salva replay" />
+  <string english="See you next match" en="See you next match" de="Bis zum nächsten Match" cs="Uvidíme se v dalším zápase" es="Nos vemos en el próximo partido" fr="À la prochaine partie" it="Alla prossima partita" />
+  <string english="Select an HD court background." en="Select an HD court background." de="HD-Hintergrund für das Spielfeld auswählen." cs="Vyberte HD pozadí hřiště." es="Elige un fondo HD para la pista." fr="Choisissez un fond de terrain HD." it="Scegli uno sfondo HD per il campo." />
+  <string english="Select each player's input device independently." en="Select each player's input device independently." de="Eingabegerät getrennt für jeden Spieler auswählen." cs="Vyberte ovládací zařízení pro každého hráče zvlášť." es="Elige el dispositivo de cada jugador por separado." fr="Choisissez séparément le périphérique de chaque joueur." it="Scegli separatamente il dispositivo di ogni giocatore." />
+  <string english="Select, then press a mouse button." en="Select, then press a mouse button." de="Auswählen, dann die Maustaste drücken." cs="Vyberte a stiskněte tlačítko myši." es="Selecciona y pulsa un botón del ratón." fr="Sélectionnez, puis appuyez sur un bouton de souris." it="Seleziona e premi un pulsante del mouse." />
+  <string english="Select, then press the desired key, button or axis." en="Select, then press the desired key, button or axis." de="Auswählen, dann die gewünschte Taste oder Achse betätigen." cs="Vyberte a stiskněte požadovanou klávesu, tlačítko nebo osu." es="Selecciona y pulsa la tecla, botón o eje deseado." fr="Sélectionnez, puis actionnez la touche, le bouton ou l'axe souhaité." it="Seleziona e premi il tasto, pulsante o asse desiderato." />
+  <string english="Sensitivity" en="Sensitivity" de="Empfindlichkeit" cs="Citlivost" es="Sensibilidad" fr="Sensibilité" it="Sensibilità" />
+  <string english="Shadows" en="Shadows" de="Schatten" cs="Stíny" es="Sombras" fr="Ombres" it="Ombre" />
+  <string english="Show FPS" en="Show FPS" de="FPS anzeigen" cs="Zobrazit FPS" es="Mostrar FPS" fr="Afficher les FPS" it="Mostra FPS" />
+  <string english="Slow" en="Slow" de="Langsam" cs="Pomalu" es="Lento" fr="Lent" it="Lento" />
+  <string english="Start a match against friends" en="Start a match against friends" de="Starte ein Match gegen Freunde" cs="Spusťte zápas proti přátelům" es="Inicia un partido contra amigos" fr="Lancez un match contre vos amis" it="Avvia una partita contro gli amici" />
+  <string english="Start match" en="Start match" de="Spiel starten" cs="Spustit zápas" es="Iniciar partido" fr="Lancer un match" it="Avvia partita" />
+  <string english="Start opens the pause menu." en="Start opens the pause menu." de="Start öffnet das Pausenmenü." cs="Start otevře nabídku pauzy." es="Start abre el menú de pausa." fr="Start ouvre le menu pause." it="Start apre il menu di pausa." />
+  <string english="Stay in menu" en="Stay in menu" de="Im Menü bleiben" cs="Zůstat v nabídce" es="Permanecer en el menú" fr="Rester dans le menu" it="Resta nel menu" />
+  <string english="Stick deadzone" en="Stick deadzone" de="Stick-Totzone" cs="Mrtvá zóna páčky" es="Zona muerta" fr="Zone morte du stick" it="Zona morta stick" />
+  <string english="Test sound" en="Test sound" de="Sound testen" cs="Vyzkoušet zvuk" es="Probar sonido" fr="Tester le son" it="Prova audio" />
+  <string english="The beach is yours!" en="The beach is yours!" de="Der Strand gehört dir!" cs="Pláž je vaše!" es="¡La playa es tuya!" fr="La plage est à vous !" it="La spiaggia è tua!" />
+  <string english="The current match will end." en="The current match will end." de="Das laufende Spiel wird beendet." cs="Aktuální zápas skončí." es="Terminará el partido actual." fr="Le match en cours se terminera." it="La partita in corso terminerà." />
+  <string english="The game will close." en="The game will close." de="Das Spiel wird geschlossen." cs="Hra se ukončí." es="El juego se cerrará." fr="Le jeu va se fermer." it="Il gioco verrà chiuso." />
+  <string english="The menu language changes immediately." en="The menu language changes immediately." de="Die Menüsprache wird sofort umgestellt." cs="Jazyk nabídky se změní okamžitě." es="El idioma cambia al instante." fr="La langue du menu change immédiatement." it="La lingua del menu cambia subito." />
+  <string english="The renderer switches immediately." en="The renderer switches immediately." de="Der Renderer wird sofort umgestellt." cs="Vykreslovač se změní okamžitě." es="El motor gráfico cambia al instante." fr="Le moteur de rendu change immédiatement." it="Il motore grafico cambia subito." />
+  <string english="The team behind Blobby Volley" en="The team behind Blobby Volley" de="Das Team hinter Blobby Volley" cs="Tým hry Blobby Volley" es="El equipo de Blobby Volley" fr="L'équipe de Blobby Volley" it="Il team di Blobby Volley" />
+  <string english="Touch controls" en="Touch controls" de="Touch-Steuerung" cs="Dotykové ovládání" es="Control táctil" fr="Commandes tactiles" it="Comandi touch" />
+  <string english="Unchanged" en="Unchanged" de="Unverändert" cs="Beze změny" es="Sin cambios" fr="Inchangé" it="Invariato" />
+  <string english="VOLUME" en="VOLUME" de="LAUTSTÄRKE" cs="HLASITOST" es="VOLUMEN" fr="VOLUME" it="VOLUME" />
+  <string english="Very fast" en="Very fast" de="Sehr schnell" cs="Velmi rychle" es="Muy rápido" fr="Très rapide" it="Molto veloce" />
+  <string english="Very slow" en="Very slow" de="Sehr langsam" cs="Velmi pomalu" es="Muy lento" fr="Très lent" it="Molto lento" />
+  <string english="Volume of all game sounds." en="Volume of all game sounds." de="Lautstärke aller Spielgeräusche." cs="Hlasitost všech herních zvuků." es="Volumen de todos los sonidos." fr="Volume de tous les sons du jeu." it="Volume di tutti i suoni del gioco." />
+  <string english="Watch your saved matches." en="Watch your saved matches." de="Sieh dir gespeicherte Spiele an." cs="Přehrajte uložené zápasy." es="Mira tus partidos guardados." fr="Regardez vos matchs enregistrés." it="Guarda le partite salvate." />
+  <string english="Window" en="Window" de="Fenster" cs="Okno" es="Ventana" fr="Fenêtre" it="Finestra" />
+  <string english="Window size" en="Window size" de="Fenstergröße" cs="Velikost okna" es="Tamaño de ventana" fr="Taille de fenêtre" it="Dimensione finestra" />
+  <string english="You will return to the main menu." en="You will return to the main menu." de="Du kehrst ins Hauptmenü zurück." cs="Vrátíte se do hlavní nabídky." es="Volverás al menú principal." fr="Vous reviendrez au menu principal." it="Tornerai al menu principale." />
+  <string english="Your best rallies" en="Your best rallies" de="Deine besten Ballwechsel" cs="Vaše nejlepší výměny" es="Tus mejores jugadas" fr="Vos meilleurs échanges" it="I tuoi scambi migliori" />
+  <string english="Your game, your settings" en="Your game, your settings" de="Dein Spiel, deine Einstellungen" cs="Vaše hra, vaše nastavení" es="Tu juego, tus ajustes" fr="Votre jeu, vos réglages" it="Il tuo gioco, le tue impostazioni" />
+  <string english="or the computer." en="or the computer." de="oder den Computer." cs="nebo proti počítači." es="o contra el ordenador." fr="ou contre l'ordinateur." it="o contro il computer." />
+  <string english="Aurora" en="Aurora" de="Aurora" cs="Polární záře" es="Aurora" fr="Aurore" it="Aurora" />
+  <string english="Rocky beach" en="Rocky beach" de="Felsstrand" cs="Skalnatá pláž" es="Playa rocosa" fr="Plage rocheuse" it="Spiaggia rocciosa" />
+  <string english="Beach arena" en="Beach arena" de="Strandarena" cs="Plážová aréna" es="Arena de playa" fr="Arène de plage" it="Arena sulla spiaggia" />
+  <string english="Mountain coast" en="Mountain coast" de="Bergküste" cs="Horské pobřeží" es="Costa montañosa" fr="Côte montagneuse" it="Costa montuosa" />
+  <string english="Alpine lake" en="Alpine lake" de="Bergsee" cs="Horské jezero" es="Lago alpino" fr="Lac alpin" it="Lago alpino" />
+  <string english="Castle" en="Castle" de="Burg" cs="Hrad" es="Castillo" fr="Château" it="Castello" />
+  <string english="Country house" en="Country house" de="Landhaus" cs="Venkovský dům" es="Casa de campo" fr="Maison de campagne" it="Casa di campagna" />
+  <string english="Mars" en="Mars" de="Mars" cs="Mars" es="Marte" fr="Mars" it="Marte" />
+  <string english="Mars colony" en="Mars colony" de="Marskolonie" cs="Kolonie na Marsu" es="Colonia de Marte" fr="Colonie martienne" it="Colonia marziana" />
+  <string english="Moon" en="Moon" de="Mond" cs="Měsíc" es="Luna" fr="Lune" it="Luna" />
+  <string english="Oasis" en="Oasis" de="Oase" cs="Oáza" es="Oasis" fr="Oasis" it="Oasi" />
+  <string english="Saturn" en="Saturn" de="Saturn" cs="Saturn" es="Saturno" fr="Saturne" it="Saturno" />
+  <string english="Snow" en="Snow" de="Schnee" cs="Sníh" es="Nieve" fr="Neige" it="Neve" />
+  <string english="Sports hall" en="Sports hall" de="Sporthalle" cs="Sportovní hala" es="Pabellón deportivo" fr="Salle de sport" it="Palazzetto dello sport" />
+  <string english="Meadow" en="Meadow" de="Wiese" cs="Louka" es="Pradera" fr="Prairie" it="Prato" />
+  <string english="Classic beach" en="Classic beach" de="Klassischer Strand" cs="Klasická pláž" es="Playa clásica" fr="Plage classique" it="Spiaggia classica" />
+  <string english="Beach 1" en="Beach 1" de="Strand 1" cs="Pláž 1" es="Playa 1" fr="Plage 1" it="Spiaggia 1" />
+  <string english="Beach 2" en="Beach 2" de="Strand 2" cs="Pláž 2" es="Playa 2" fr="Plage 2" it="Spiaggia 2" />
+  <string english="Beach 3" en="Beach 3" de="Strand 3" cs="Pláž 3" es="Playa 3" fr="Plage 3" it="Spiaggia 3" />
+  <string english="Road" en="Road" de="Straße" cs="Silnice" es="Carretera" fr="Route" it="Strada" />
+  <string english="Temple" en="Temple" de="Tempel" cs="Chrám" es="Templo" fr="Temple" it="Tempio" />
+  <string english="Tropical resort" en="Tropical resort" de="Tropenresort" cs="Tropické letovisko" es="Complejo tropical" fr="Complexe tropical" it="Resort tropicale" />
+  <string english="Volleyball court" en="Volleyball court" de="Volleyballfeld" cs="Volejbalové hřiště" es="Pista de voleibol" fr="Terrain de volley" it="Campo da pallavolo" />
+  <string english="Wheat field" en="Wheat field" de="Weizenfeld" cs="Pšeničné pole" es="Campo de trigo" fr="Champ de blé" it="Campo di grano" />
+  <string english="Clouds" en="Clouds" de="Wolken" cs="Oblaka" es="Nubes" fr="Nuages" it="Nuvole" />
+</translations>

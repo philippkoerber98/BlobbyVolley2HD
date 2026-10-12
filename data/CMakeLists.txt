@@ -40,6 +40,7 @@ add_zip_archive(backgrounds bmp)
 add_zip_archive(rules lua)
 
 set(install_files
+	${CMAKE_CURRENT_SOURCE_DIR}/ui-translations.xml
 	${CMAKE_CURRENT_BINARY_DIR}/gfx.zip
 	${CMAKE_CURRENT_BINARY_DIR}/sounds.zip
 	${CMAKE_CURRENT_BINARY_DIR}/scripts.zip
@@ -50,6 +51,8 @@ set(install_files
 	${CMAKE_CURRENT_SOURCE_DIR}/rules_api.lua
 	${CMAKE_CURRENT_SOURCE_DIR}/config.xml
 	${CMAKE_CURRENT_SOURCE_DIR}/inputconfig.xml
+	${CMAKE_CURRENT_SOURCE_DIR}/default-config.xml
+	${CMAKE_CURRENT_SOURCE_DIR}/default-inputconfig.xml
 	${CMAKE_CURRENT_SOURCE_DIR}/server.xml
 	${CMAKE_CURRENT_SOURCE_DIR}/lang_cs.xml
 	${CMAKE_CURRENT_SOURCE_DIR}/lang_de.xml

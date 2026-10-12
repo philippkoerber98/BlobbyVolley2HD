@@ -34,6 +34,10 @@ enum ObjectType
 	IMAGE,
 	OVERLAY,
 	TEXT,
+	MENU_TEXT,
+	SCENE_BLUR,
+	CONFETTI,
+	ROUNDED_PANEL,
 	BUTTON, // Unused!
 	SCROLLBAR,
 	ACTIVESCROLLBAR,
@@ -72,12 +76,15 @@ IMGUI::IMGUI(InputManager* inputMgr) : mInputManager(inputMgr)
 	mButtonReset = false;
 	mInactive = false;
 	mIdCounter = 0;
+	mDrawCursor = false;
 }
 
 IMGUI::~IMGUI() = default;
 
 void IMGUI::begin()
 {
+	mHasSceneBlur = false;
+	mDrawCursor = false;
 	mUsingCursor = false;
 	mButtonReset = false;
 
@@ -111,21 +118,44 @@ void IMGUI::begin()
 void IMGUI::end(RenderManager& renderer)
 {
 	int FontSize;
-	while (!mQueue->empty())
+	// Keep the last simulation tick's UI for additional render frames.
+	if(!mHasSceneBlur) renderer.resetSceneBlur();
+	auto renderQueue = *mQueue;
+	while (!renderQueue.empty())
 	{
-		QueueObject& obj = mQueue->front();
+		QueueObject& obj = renderQueue.front();
+  const float offset=(renderer.courtWidth()-800.f)/2;
+  if(obj.type!=SCENE_BLUR&&obj.type!=CONFETTI){
+   const bool fullLayer=(obj.type==OVERLAY&&obj.pos1==Vector2(0,0)&&obj.pos2==Vector2(800,600));
+   obj.pos1.x+=offset;
+   if(obj.type==OVERLAY||obj.type==ROUNDED_PANEL||obj.type==CHAT||obj.type==ACTIVECHAT||obj.type==SELECTBOX||obj.type==ACTIVESELECTBOX)obj.pos2.x+=offset;
+   if(fullLayer){obj.pos1.x=0;obj.pos2.x=renderer.courtWidth();}
+   if(obj.type==IMAGE&&(obj.text=="background"||obj.text.compare(0,17,"menu-backgrounds/")==0)){obj.pos1.x=renderer.courtWidth()/2;obj.pos2=Vector2(renderer.courtWidth(),600);}
+  }
 		switch (obj.type)
 		{
+			case CONFETTI:
+				renderer.drawConfetti(obj.flags);
+				break;
+			case SCENE_BLUR:
+				renderer.drawSceneBlur(obj.text);
+				break;
 			case IMAGE:
 				renderer.drawImage( obj.text, obj.pos1, obj.pos2);
 				break;
 
+			case ROUNDED_PANEL:
+				renderer.drawRoundedPanel(obj.alpha,obj.pos1,obj.pos2,obj.col);
+				break;
 			case OVERLAY:
 				renderer.drawOverlay( obj.alpha, obj.pos1, obj.pos2, obj.col);
 				break;
 
 			case TEXT:
 				renderer.drawText( obj.text, obj.pos1, obj.flags);
+				break;
+			case MENU_TEXT:
+				renderer.drawMenuText(obj.text, obj.pos1, obj.pos2.x, obj.flags);
 				break;
 
 			case SCROLLBAR:
@@ -179,19 +209,18 @@ void IMGUI::end(RenderManager& renderer)
 				break;
 
 			case BLOB:
-				renderer.drawBlob( obj.pos1, obj.col);
+				renderer.drawBlob( obj.pos1, obj.col, obj.alpha);
 				break;
 
 			default:
 				break;
 		}
-		mQueue->pop();
+		renderQueue.pop();
 	}
 #if BLOBBY_ON_DESKTOP
 	if (mDrawCursor)
 	{
-		renderer.drawImage( "gfx/cursor.bmp", mInputManager->position() + Vector2( 24.0, 24.0));
-		mDrawCursor = false;
+		renderer.drawImage( "gfx/cursor.bmp", mInputManager->position() + Vector2(24.f+(renderer.courtWidth()-800.f)/2,24.f));
 	}
 #endif
 	static bool lastCursor = false;
@@ -201,6 +230,21 @@ void IMGUI::end(RenderManager& renderer)
 		lastCursor = relativeCursor;
 		SDL_SetRelativeMouseMode( relativeCursor ? SDL_TRUE : SDL_FALSE );
 	}
+}
+
+void IMGUI::prepend(const std::function<void()>& draw)
+{
+ RenderQueue previous; previous.swap(*mQueue); draw();
+ while(!previous.empty()){ mQueue->push(previous.front()); previous.pop(); }
+}
+void IMGUI::doConfetti(int id,Uint32 started)
+{
+ QueueObject obj{};obj.type=CONFETTI;obj.id=id;obj.flags=started;mQueue->push(obj);
+}
+void IMGUI::doSceneBlur(int id,const std::string& key)
+{
+ mHasSceneBlur=true;
+ QueueObject obj{};obj.type=SCENE_BLUR;obj.id=id;obj.text=key;mQueue->push(obj);
 }
 
 void IMGUI::doImage(int id, const Vector2& position, const std::string& name, const Vector2& size)
@@ -242,6 +286,19 @@ void IMGUI::doText(int id, const Vector2& position, const std::string& text, uns
 void IMGUI::doText(int id, const Vector2& position, TextManager::STRING text, unsigned int flags)
 {
 	doText(id, position, getText(text), flags);
+}
+
+void IMGUI::doMenuText(int id, const Vector2& position, const std::string& text, float height, int style)
+{
+	QueueObject obj{};
+	obj.type = MENU_TEXT; obj.id = id; obj.pos1 = position;
+	obj.pos2 = Vector2(height, 0); obj.text = text; obj.flags = style;
+	mQueue->push(obj);
+}
+
+void IMGUI::doRoundedPanel(int id,const Vector2& pos1,const Vector2& pos2,const Color& col,float alpha)
+{
+ QueueObject obj{};obj.type=ROUNDED_PANEL;obj.id=id;obj.pos1=pos1;obj.pos2=pos2;obj.col=col;obj.alpha=alpha;mQueue->push(obj);
 }
 
 void IMGUI::doOverlay(int id, const Vector2& pos1, const Vector2& pos2, const Color& col, float alpha)
@@ -1071,13 +1128,14 @@ void IMGUI::doChatbox(int id, const Vector2& pos1, const Vector2& pos2, const st
 }
 
 
-bool IMGUI::doBlob(int id, const Vector2& position, const Color& col)
+bool IMGUI::doBlob(int id, const Vector2& position, const Color& col, float scale)
 {
 	QueueObject obj;
 	obj.id = id;
 	obj.pos1 = position;
 	obj.type = BLOB;
 	obj.col = col;
+	obj.alpha = scale;
 	mQueue->push(obj);
 	return false;
 }

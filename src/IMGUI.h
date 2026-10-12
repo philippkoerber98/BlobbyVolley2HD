@@ -23,6 +23,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #include <vector>
 #include <string>
 #include <queue>
+#include <functional>
 
 #include "Vector.h"
 #include "Global.h"
@@ -58,12 +59,18 @@ class IMGUI : public ObjectCounter<IMGUI>
 		void begin();
 		void end(RenderManager& renderer);
 		void resetSelection();
+		void prepend(const std::function<void()>& draw);
+		bool hasSceneBlur() const { return mHasSceneBlur; }
+		void doSceneBlur(int id, const std::string& key);
+		void doConfetti(int id, Uint32 started);
 
 		void doImage(int id, const Vector2& position, const std::string& name, const Vector2& size = Vector2(0,0));
 		void doText(int id, const Vector2& position, const std::string& text, unsigned int flags = TF_NORMAL);
 		void doText(int id, const Vector2& position, TextManager::STRING text, unsigned int flags = TF_NORMAL);
+		void doMenuText(int id, const Vector2& position, const std::string& text, float height = 22, int style = 0);
 		void doOverlay(int id, const Vector2& pos1, const Vector2& pos2, const Color& col = Color(0, 0, 0), float alpha = 0.65);
 		void doCursor(bool draw = true);
+		void doRoundedPanel(int id, const Vector2& pos1, const Vector2& pos2, const Color& col, float alpha);
 
 		bool doButton(int id, const Vector2& position, const std::string& text, unsigned int flags = TF_NORMAL);
 		bool doButton(int id, const Vector2& position, TextManager::STRING text, unsigned int flags = TF_NORMAL);
@@ -77,7 +84,7 @@ class IMGUI : public ObjectCounter<IMGUI>
 		bool doEditbox(int id, const Vector2& position, unsigned length, std::string& text, unsigned& cpos, unsigned int flags = TF_NORMAL, bool force_active = false);
 		SelectBoxAction doSelectbox(int id, const Vector2& pos1, const Vector2& pos2, const std::vector<std::string>& entries, unsigned& selected, unsigned int flags = TF_NORMAL);
 		void doChatbox(int id, const Vector2& pos1, const Vector2& pos2, const std::vector<std::string>& entries, unsigned& selected, const std::vector<bool>& local, unsigned int flags = TF_NORMAL);
-		bool doBlob(int id, const Vector2& position, const Color& col);
+		bool doBlob(int id, const Vector2& position, const Color& col, float scale = 1);
 
 		bool usingCursor() const;
 		void doInactiveMode(bool inactive) { mInactive = inactive; }
@@ -94,6 +101,7 @@ class IMGUI : public ObjectCounter<IMGUI>
 		KeyAction mLastKeyAction;
 		int mLastWidget;
 		bool mDrawCursor;
+		bool mHasSceneBlur = false;
 		bool mButtonReset;
 		bool mInactive;
 		bool mUsingCursor;

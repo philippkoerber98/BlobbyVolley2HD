@@ -54,6 +54,7 @@ set (blobby_SRC ${common_SRC} ${inputdevice_SRC}
 	LocalInputSource.cpp LocalInputSource.h
 	RenderManager.cpp RenderManager.h
 	RuntimeFont.cpp RuntimeFont.h
+	UITranslations.cpp UITranslations.h
 	RenderManagerGL2D.cpp RenderManagerGL2D.h
 	RenderManagerSDL.cpp RenderManagerSDL.h
 	RenderManagerNull.cpp RenderManagerNull.h
