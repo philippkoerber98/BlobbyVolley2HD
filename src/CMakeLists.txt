@@ -101,7 +101,8 @@ if (UNIX AND (NOT ANDROID))
 	add_definitions("-DBLOBBY_DATA_DIR=\"${CMAKE_INSTALL_PREFIX}/share/blobby\"")
 endif()
 
-set(BLOBBY_COMMON_LIBS lua::lua blobnet::blobnet tinyxml2::tinyxml2 PhysFS::PhysFS SDL2::SDL2main SDL2::SDL2 Boost::boost)
+find_package(SDL2_image CONFIG REQUIRED)
+set(BLOBBY_COMMON_LIBS lua::lua blobnet::blobnet tinyxml2::tinyxml2 PhysFS::PhysFS SDL2::SDL2main SDL2::SDL2 SDL2_image::SDL2_image Boost::boost)
 
 # other additional dependencies
 if (NOT WIN32)

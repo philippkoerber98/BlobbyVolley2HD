@@ -54,21 +54,28 @@ class RenderManagerGL2D : public RenderManager
 
 		void init(int xResolution, int yResolution, bool fullscreen) override;
 		void refresh() override;
+		bool setVSync(bool enabled) override;
 
 		bool setBackground(const std::string& filename) override;
 		void setBlobColor(int player, Color color) override;
 		void showShadow(bool shadow) override;
 
 		void drawText(const std::string& text, Vector2 position, unsigned int flags = TF_NORMAL) override;
+		void setCourtWidth(float width) override;
+		void drawSceneBlur(const std::string& key) override;
 		void drawImage(const std::string& filename, Vector2 position, Vector2 size) override;
+		void drawRoundedPanel(float opacity, Vector2 pos1, Vector2 pos2, Color col) override;
 		void drawOverlay(float opacity, Vector2 pos1, Vector2 pos2, Color col) override;
-		void drawBlob(const Vector2& pos, const Color& col) override;
+		void drawBlob(const Vector2& pos, const Color& col, float scale = 1) override;
 		void startDrawParticles() override;
 		void drawParticle(const Vector2& pos, int player) override;
 		void endDrawParticles() override;
 		void drawGame(const DuelMatchState& gameState) override;
 
 	private:
+		void uploadFontAtlas(const std::string& name,SDL_Surface* surface) override;
+		void releaseFontAtlas(const std::string& name) override;
+		void drawFontGlyph(const std::string& name,const SDL_Rect& source,Vector2 position,Vector2 size,Color color) override;
 		// Make sure this object is created before any opengl call
 		SDL_GLContext mGlContext;
 
@@ -82,14 +89,16 @@ class RenderManagerGL2D : public RenderManager
 		};
 
 		GLuint mBackground;
+		std::unique_ptr<Texture> mNetRod;
+		void updateNetRod(SDL_Surface* background);
 		GLuint mBallShadow;
 
 		std::vector<GLuint> mBall;
+		GLuint mBallPanels = 0;
+		GLuint mBallLighting = 0;
 		std::vector<GLuint> mBlob;
 		std::vector<GLuint> mBlobSpecular;
 		std::vector<GLuint> mBlobShadow;
-		std::vector<Texture> mFont;
-		std::vector<Texture> mHighlightFont;
 		GLuint mParticle;
 
 		std::list<Vector2> mLastBallStates;

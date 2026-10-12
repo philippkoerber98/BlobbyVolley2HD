@@ -1,4 +1,5 @@
-﻿/*=============================================================================
+#include "BackgroundSettings.h"
+/*=============================================================================
 Blobby Volley 2
 Copyright (C) 2006 Jonathan Sieber (jonathan_sieber@yahoo.de)
 Copyright (C) 2006 Daniel Knobe (daniel-knobe@web.de)
@@ -23,11 +24,54 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 /* includes */
 #include "FileRead.h"
+#include "FileSystem.h"
+#include "AssetTransforms.h"
+#include <SDL_image.h>
+#include <algorithm>
+#include <cstdlib>
+#include <sstream>
+#include "DisplayViewport.h"
+
+float RenderManager::menuTextWidth(const std::string& text,float height)
+{
+    float width=0;for(size_t i=0;i<text.size();)width+=nunitoAdvance(nextFontCode(text,i))*height;return width;
+}
+void RenderManager::drawMenuText(const std::string& text,Vector2 position,float height,int style)
+{ drawRuntimeText(text,position,height,style); }
+void RenderManager::drawRuntimeText(const std::string& text,Vector2 position,float height,int style,float fixedAdvance,bool obfuscate)
+{
+    if(height<=0||text.empty())return;
+    int w=800,h=600;
+    if(mWindow){if(SDL_GetWindowFlags(mWindow)&SDL_WINDOW_OPENGL)SDL_GL_GetDrawableSize(mWindow,&w,&h);
+        else if(auto* renderer=SDL_GetRenderer(mWindow))SDL_GetRendererOutputSize(renderer,&w,&h);
+        else SDL_GetWindowSize(mWindow,&w,&h);}
+    const auto viewport=fitGameViewport(w,h,mCourtWidth);
+    // Bucket physical sizes in four-pixel increments. Atlases are rebuilt from
+    // outlines at the active monitor density, never enlarged from PNG glyphs.
+    const int pixels=(std::max)(12,(std::min)(256,4*int(std::ceil(height*viewport.h/600.f/4))));
+    auto found=mRuntimeFonts.find(pixels);
+    const std::string name="__nunito_"+std::to_string(pixels);
+    if(found==mRuntimeFonts.end()){
+        // Bound GPU memory while freely resizing or moving between monitors.
+        if(mRuntimeFonts.size()>=16){auto oldest=mRuntimeFonts.begin();
+            releaseFontAtlas("__nunito_"+std::to_string(oldest->first));mRuntimeFonts.erase(oldest);}
+        RuntimeFontAtlas atlas;auto* surface=createNunitoAtlas(pixels,atlas);
+        uploadFontAtlas(name,surface);found=mRuntimeFonts.emplace(pixels,std::move(atlas)).first;
+    }
+    const float scale=height/pixels;
+    const Color color=style==1?Color(53,36,20):style==2?Color(255,207,91):Color(255,245,220);
+    for(size_t i=0;i<text.size();){unsigned c=nextFontCode(text,i);if(obfuscate)c='*';if(c<32||c>=384)c='?';
+        const auto& g=found->second.glyphs[c];
+        float offset=fixedAdvance?(fixedAdvance-g.advance*scale)/2:0;
+        if(g.source.w&&g.source.h)drawFontGlyph(name,g.source,position+Vector2(offset+g.x*scale,g.y*scale),
+            Vector2(g.source.w*scale,g.source.h*scale),color);
+        position.x+=fixedAdvance?fixedAdvance:g.advance*scale;
+    }
+}
 #include "Blood.h"
 #include "IUserConfigReader.h"
 
 /* implementation */
-#define INVALID_FONT_INDEX -1
 
 RenderManager::~RenderManager() = default;
 
@@ -43,56 +87,90 @@ BloodManager& RenderManager::getBlood() {
 
 SDL_Surface* RenderManager::highlightSurface(SDL_Surface* surface, int luminance)
 {
-	SDL_Surface *newSurface = createEmptySurface(surface->w, surface->h);
-	SDL_SetColorKey(surface, SDL_FALSE, 0);
-	SDL_BlitSurface(surface, nullptr, newSurface, nullptr);
-	SDL_SetColorKey(surface, SDL_TRUE, SDL_MapRGB(newSurface->format, 0, 0, 0));
-
-	Uint8 alpha;
-	SDL_GetSurfaceAlphaMod(surface, &alpha);
-	SDL_SetSurfaceAlphaMod(newSurface, alpha);
-	SDL_SetColorKey(newSurface, SDL_TRUE, SDL_MapRGB(newSurface->format, 0, 0, 0));
-
-	SDL_LockSurface(newSurface);
-	for (int y = 0; y < surface->h; ++y)
-	{
-		for (int x = 0; x < surface->w; ++x)
-		{
-			// this seems overly complicated:
-			// aren't we just calculating newSurface->pixels + (y * newSurface->w + x)
-			SDL_Color* pixel = &( ((SDL_Color*)newSurface->pixels)[y * newSurface->w + x] );
-			Uint32 colorKey;
-			SDL_GetColorKey(surface, &colorKey);
-			// we index newSurface->pixels once as Uint32[] and once as SDL_Color[], so these must have the same size
-			static_assert( sizeof(Uint32) == sizeof(SDL_Color), "Uint32 must have the same size as SDL_Color" );
-
-			if (colorKey != ((Uint32*)newSurface->pixels)[y * newSurface->w +x])
-			{
-				pixel->r = pixel->r + luminance > 255 ? 255 : pixel->r + luminance;
-				pixel->g = pixel->g + luminance > 255 ? 255 : pixel->g + luminance;
-				pixel->b = pixel->b + luminance > 255 ? 255 : pixel->b + luminance;
-			}
-		}
-	}
-	SDL_UnlockSurface(newSurface);
-	// no DisplayFormatAlpha, because of problems with
-	// OpenGL RenderManager
-	return newSurface;
+    auto* result = SDL_ConvertSurfaceFormat(surface,SDL_PIXELFORMAT_RGBA32,0);
+    if (!result) return nullptr;
+    bool colorKey = SDL_HasColorKey(surface);
+    SDL_SetColorKey(result,SDL_FALSE,0);
+    for(int y=0;y<result->h;++y) for(int x=0;x<result->w;++x)
+    {
+        auto* pixel=reinterpret_cast<Uint32*>(static_cast<Uint8*>(result->pixels)+y*result->pitch)+x;
+        Uint8 r,g,b,a; SDL_GetRGBA(*pixel,result->format,&r,&g,&b,&a);
+        if(colorKey && !(r|g|b)) a=0;
+        if(a) { r=Uint8((std::min)(255,int(r)+luminance)); g=Uint8((std::min)(255,int(g)+luminance)); b=Uint8((std::min)(255,int(b)+luminance)); }
+        *pixel=SDL_MapRGBA(result->format,r,g,b,a);
+    }
+    SDL_SetSurfaceBlendMode(result,SDL_BLENDMODE_BLEND);
+    return result;
 }
 
 SDL_Surface* RenderManager::loadSurface(const std::string& filename)
 {
-	FileRead file(filename);
-	int fileLength = file.length();
+	const std::string menuPrefix="menu-backgrounds/";
+	if(filename.compare(0,menuPrefix.size(),menuPrefix)==0)
+	{
+		auto* source=loadSurface("backgrounds/"+resolveBackgroundName(filename.substr(menuPrefix.size())));
+		auto* blurred=createMenuBackdrop(source,true); SDL_FreeSurface(source);
+		if(!blurred) BOOST_THROW_EXCEPTION(FileLoadException(filename));
+		return blurred;
+	}
+	auto readBitmap = [](const std::string& path) -> SDL_Surface*
+	{
+		FileRead file(preferredHDImage(path));
+		int fileLength = file.length();
+		auto content = file.readRawBytes(fileLength);
+		return IMG_Load_RW(SDL_RWFromMem(content.data(), fileLength), 1);
+	};
 
-	// just read the whole file
-	auto fileContent = file.readRawBytes(fileLength);
+	if (filename.size() == 14 && filename.compare(0, 8, "gfx/ball") == 0)
+	{
+		int frame = std::atoi(filename.substr(8,2).c_str());
+		if (FileSystem::getSingleton().exists(preferredHDImage("gfx/hd/volleyball.png")))
+		{
+			auto* source = readBitmap("gfx/hd/volleyball.png");
+			auto* result = rotateVolleyball(source, frame);
+			SDL_FreeSurface(source);
+			if (result) { mAssetScales[filename] = 4; return result; }
+		}
+	}
+	// Fonts are deliberately excluded. Original BMPs remain the fallback.
+	if (filename.size() > 4 && filename.substr(filename.size()-4) == ".bmp" &&
+		filename.find("/font") == std::string::npos)
+	{
+		auto slash = filename.find_last_of('/');
+		std::string directory = slash == std::string::npos ? "gfx/" : filename.substr(0, slash+1);
+		std::string base = slash == std::string::npos ? filename : filename.substr(slash+1);
+		std::string path = preferredHDImage(directory + "hd/" + base.substr(0, base.size()-4) + ".png");
+		if (FileSystem::getSingleton().exists(path))
+		{
+			int logicalWidth=0,logicalHeight=0;
+			if(filename.compare(0,12,"backgrounds/")==0){logicalWidth=800;logicalHeight=600;}
+			if(FileSystem::getSingleton().exists("gfx/hd/metrics.txt"))
+			{
+				FileRead metrics("gfx/hd/metrics.txt");auto bytes=metrics.readRawBytes(metrics.length());
+				std::istringstream rows(std::string(bytes.begin(),bytes.end()));
+				std::string name;int w,h;
+				while(rows>>name>>w>>h)if(name==filename){logicalWidth=w;logicalHeight=h;break;}
+			}
+			auto* original = logicalWidth==0 && FileSystem::getSingleton().exists(filename) ? readBitmap(filename) : nullptr;
+			if(original){logicalWidth=original->w;logicalHeight=original->h;}
+			auto* png = readBitmap(path);
+			// Backgrounds retain their native widescreen dimensions. Both renderers
+			// choose a centered camera crop when drawing, including after mode changes.
+			if(filename.compare(0,12,"backgrounds/")==0){SDL_FreeSurface(original);mAssetScales[filename]=1;return png;}
+			if(filename.find("blobbym")!=std::string::npos || base=="titel.bmp" || base=="Icon.bmp" || base=="cursor.bmp" || base=="pokal.bmp")
+				cleanSpriteEdges(png);
+			auto* result = logicalWidth>0 ? scaleAsset(png, logicalWidth*4, logicalHeight*4) : nullptr;
+			SDL_FreeSurface(original); SDL_FreeSurface(png);
+			if (result) { mAssetScales[filename] = 4; return result; }
+		}
+	}
 
-	SDL_RWops* rwops = SDL_RWFromMem(fileContent.data(), fileLength);
-	SDL_Surface* newSurface = SDL_LoadBMP_RW(rwops , 1);
+	SDL_Surface* newSurface = readBitmap(filename);
 
 	if (!newSurface)
 		BOOST_THROW_EXCEPTION ( FileLoadException(filename) );
+	if (filename.compare(0, 11, "gfx/blobbym") == 0 || filename.compare(0, 8, "gfx/sch1") == 0)
+		SDL_SetColorKey(newSurface, SDL_TRUE, SDL_MapRGB(newSurface->format, 0, 0, 0));
 
 	return newSurface;
 }
@@ -103,163 +181,6 @@ SDL_Surface* RenderManager::createEmptySurface(unsigned int width, unsigned int 
 	SDL_Surface* newSurface = SDL_CreateRGBSurface(0, width, height, 32, 0x000000FF, 0x0000FF00, 0x00FF0000, 0x00000000);
 
 	return newSurface;
-}
-
-int RenderManager::getNextFontIndex(std::string::const_iterator& iter)
-{
-	int index = INVALID_FONT_INDEX;
-	char testChar = *iter;
-	++iter;
-	if (testChar >= '0' && testChar <= '9')
-		index = testChar - '0';
-	else if (testChar >= 'a' && testChar <= 'z')
-		index = testChar - 'a' + 10;
-	else if (testChar >= 'A' && testChar <= 'Z')
-		index = testChar - 'A' + 10;
-	else if (testChar == '.')
-		index = 36;
-	else if (testChar == '!')
-		index = 37;
-	else if (testChar == '(')
-		index = 38;
-	else if (testChar == ')')
-		index = 39;
-	else if (testChar == '\'')
-		index = 44;
-	else if (testChar == ':')
-		index = 45;
-	else if (testChar == ';')
-		index = 46;
-	else if (testChar == '?')
-		index = 47;
-	else if (testChar == ',')
-		index = 48;
-	else if (testChar == '/')
-		index = 49;
-	else if (testChar == '_')
-		index = 50;
-	else if (testChar == ' ')
-		index = 51;
-	else if (testChar == '-')
-		index = 52;
-	else if (testChar == '%')
-		index = 53;
-	else if (testChar == '+')
-		index = 54;
-	else if (testChar == std::string("¿")[0]) // UTF-8 escape (c2xx)
-	{
-		testChar = *iter;
-		++iter;
-		if (testChar == std::string("¿")[1])
-			index = 56;
-	}
-	else if (testChar == std::string("👁")[0]) // UTF-8 escape (f0xxxxxx)
-	{
-		testChar = *iter;
-		++iter;
-		if (testChar == std::string("👁")[1]) // UTF-8 escape (xx9fxxxx)
-		{
-			testChar = *iter;
-			++iter;
-			if (testChar == std::string("👁")[2]) // UTF-8 escape (xxxx91xx)
-			{
-				testChar = *iter;
-				++iter;
-				if (testChar == std::string("👁")[3]) // UTF-8 escape (xxxxxx81)
-				{
-					index = 57;
-				}
-			}
-			else if (testChar == std::string("🔒")[2]) // UTF-8 escape (xxxx94xx)
-			{
-				testChar = *iter;
-				++iter;
-				if (testChar == std::string("🔒")[3]) // UTF-8 escape (xxxxxx92)
-				{
-					index = 58;
-				}
-			}
-		}
-	}
-	else if (testChar == std::string("ß")[0]) // UTF-8 escape (c3xx)
-	{
-		testChar = *iter;
-		++iter;
-		if (testChar == std::string("ß")[1])
-			index = 40;
-		else if (testChar == std::string("ä")[1])
-			index = 41;
-		else if (testChar == std::string("ö")[1])
-			index = 42;
-		else if (testChar == std::string("ü")[1])
-			index = 43;
-		else if (testChar == std::string("ì")[1])
-			index = 55;
-		else if (testChar == std::string("Ä")[1])
-			index = 41;
-		else if (testChar == std::string("Ö")[1])
-			index = 42;
-		else if (testChar == std::string("Ü")[1])
-			index = 43;
-		else if (testChar == std::string("Ì")[1])
-			index = 55;
-		else if ((testChar >= std::string("à")[1]) && (testChar <= std::string("å")[1]))
-			index = 10; // Map to A
-		else if ((testChar >= std::string("À")[1]) && (testChar <= std::string("Å")[1]))
-			index = 10; // Map to A
-		else if ((testChar >= std::string("è")[1]) && (testChar <= std::string("ë")[1]))
-			index = 14; // Map to E
-		else if ((testChar >= std::string("ò")[1]) && (testChar <= std::string("õ")[1]))
-			index = 24; // Map to O
-		else if ((testChar >= std::string("Ò")[1]) && (testChar <= std::string("Õ")[1]))
-			index = 24; // Map to O
-		else if (testChar == std::string("ý")[1])
-			index = 34; // Map to Y
-		else if ((testChar >= std::string("ì")[1]) && (testChar <= std::string("ï")[1]))
-			index = 18; // Map to I
-		else if (testChar == std::string("ñ")[1])
-			index = 23; // Map to N
-		else if (testChar == std::string("Ñ")[1])
-			index = 23; // Map to N
-		else if (testChar == std::string("ç")[1])
-			index = 12; // Map to C
-		else if (testChar == std::string("Ç")[1])
-			index = 12; // Map to C
-	}
-	else if (testChar == std::string("Ć")[0]) // UTF-8 escape (c4xx)
-	{
-		testChar = *iter;
-		++iter;
-		if ((testChar >= std::string("Ć")[1]) && (testChar <= std::string("č")[1]))
-			index = 12; // Map to C
-		else if ((testChar >= std::string("Ē")[1]) && (testChar <= std::string("ě")[1]))
-			index = 14; // Map to E
-	}
-	else if (testChar == std::string("Ś")[0]) // UTF-8 escape (c5xx)
-	{
-		testChar = *iter;
-		++iter;
-		if ((testChar >= std::string("Ŕ")[1]) && (testChar <= std::string("ř")[1]))
-			index = 27; // Map to R
-		else if ((testChar >= std::string("Ś")[1]) && (testChar <= std::string("š")[1]))
-			index = 28; // Map to S
-		else if ((testChar >= std::string("Ũ")[1]) && (testChar <= std::string("ų")[1]))
-			index = 30; // Map to U
-		else if ((testChar >= std::string("Ŷ")[1]) && (testChar <= std::string("Ÿ")[1]))
-			index = 34; // Map to Y
-		else if ((testChar >= std::string("Ź")[1]) && (testChar <= std::string("ž")[1]))
-			index = 35; // Map to Z
-	}
-
-	if (index == INVALID_FONT_INDEX)
-	{
-#ifdef DEBUG
-		std::cerr << "Warning: Missing font for character code " << testChar << std::endl;
-#endif
-		index = 47;
-	}
-
-	return index;
 }
 
 void RenderManager::setMouseMarker(float position)
@@ -348,4 +269,23 @@ Color RenderManager::getOscillationColor() const
 		int((std::sin(time*2.5) + 1.0) * 128),
 		int((std::sin(time*3.5) + 1.0) * 128)
 	};
+}
+
+void RenderManager::drawConfetti(Uint32 started)
+{
+ const float time=static_cast<Uint32>(SDL_GetTicks()-started)/1000.f;
+ const Color colors[]={Color(255,207,91),Color(105,185,255),Color(255,164,82),Color(255,245,220)};
+ for(unsigned i=0;i<100;++i){
+  // Stable per-particle values, independent of game/network random state.
+  const unsigned seed=i*2654435761u+2246822519u;
+  const float phase=(seed%6283)/1000.f;
+  const float x=12+(seed%int(mCourtWidth-24))+14*std::sin(time*.8f+phase);
+  const float y=std::fmod((seed/997)%640+time*(42+(seed%53)),640.f)-20;
+  // Keep winner, score and all controls unobstructed.
+  if(x>137+(mCourtWidth-800)/2&&x<663+(mCourtWidth-800)/2&&y>110&&y<582)continue;
+  if(x<1||x>mCourtWidth-7||y<0||y>596)continue;
+  const float w=1.5f+3*std::abs(std::cos(time*2+phase));
+  const float h=3+3*std::abs(std::sin(time*1.3f+phase));
+  drawOverlay(.88f,Vector2(x,y),Vector2(x+w,y+h),colors[i%4]);
+ }
 }

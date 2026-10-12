@@ -1,5 +1,26 @@
 macro(add_zip_archive _dir _filetype)
+	# Includes optional high-resolution images below gfx/hd.
 	file(GLOB_RECURSE archive_src RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ${_dir}/*.${_filetype})
+	if("${_dir}" STREQUAL "gfx" OR "${_dir}" STREQUAL "backgrounds")
+		file(GLOB_RECURSE png_src RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ${_dir}/*.png)
+		list(APPEND archive_src ${png_src})
+	endif()
+	if("${_dir}" STREQUAL "gfx")
+		file(GLOB archive_src CONFIGURE_DEPENDS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} gfx/hd/*.png gfx/hd/*.webp gfx/hd/*.txt gfx/hd/*.ttf)
+	elseif("${_dir}" STREQUAL "backgrounds")
+		file(GLOB archive_src CONFIGURE_DEPENDS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} backgrounds/hd/*.png backgrounds/hd/*.webp)
+	endif()
+    # Package only the preferred format of each HD image, never both copies.
+    if("${_dir}" STREQUAL "gfx" OR "${_dir}" STREQUAL "backgrounds")
+        foreach(asset ${archive_src})
+            if(asset MATCHES "\\.png$")
+                string(REGEX REPLACE "\\.png$" ".webp" webp_asset "${asset}")
+                if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${webp_asset}")
+                    list(REMOVE_ITEM archive_src "${asset}")
+                endif()
+            endif()
+        endforeach()
+    endif()
 	add_custom_command(
 		OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${_dir}.zip
 		COMMAND ${CMAKE_COMMAND} -E tar cf ${CMAKE_CURRENT_BINARY_DIR}/${_dir}.zip --format=zip ${archive_src}
@@ -27,7 +48,6 @@ set(install_files
 	${CMAKE_CURRENT_SOURCE_DIR}/api.lua
 	${CMAKE_CURRENT_SOURCE_DIR}/bot_api.lua
 	${CMAKE_CURRENT_SOURCE_DIR}/rules_api.lua
-	${CMAKE_CURRENT_SOURCE_DIR}/Icon.bmp
 	${CMAKE_CURRENT_SOURCE_DIR}/config.xml
 	${CMAKE_CURRENT_SOURCE_DIR}/inputconfig.xml
 	${CMAKE_CURRENT_SOURCE_DIR}/server.xml

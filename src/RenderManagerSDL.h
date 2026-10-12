@@ -39,19 +39,26 @@ class RenderManagerSDL : public RenderManager
 
 		void init(int xResolution, int yResolution, bool fullscreen) override;
 		void refresh() override;
+		bool setVSync(bool enabled) override;
 
 		bool setBackground(const std::string& filename) override;
 		void setBlobColor(int player, Color color) override;
 		void showShadow(bool shadow) override;
 
 		void drawText(const std::string& text, Vector2 position, unsigned int flags = TF_NORMAL) override;
+		void setCourtWidth(float width) override;
+		void drawSceneBlur(const std::string& key) override;
 		void drawImage(const std::string& filename, Vector2 position, Vector2 size) override;
+		void drawRoundedPanel(float opacity, Vector2 pos1, Vector2 pos2, Color col) override;
 		void drawOverlay(float opacity, Vector2 pos1, Vector2 pos2, Color col) override;
-		void drawBlob(const Vector2& pos, const Color& col) override;
+		void drawBlob(const Vector2& pos, const Color& col, float scale = 1) override;
 		void drawParticle(const Vector2& pos, int player) override;
 		void drawGame(const DuelMatchState& gameState) override;
 
 	private:
+		void uploadFontAtlas(const std::string& name,SDL_Surface* surface) override;
+		void releaseFontAtlas(const std::string& name) override;
+		void drawFontGlyph(const std::string& name,const SDL_Rect& source,Vector2 position,Vector2 size,Color color) override;
 		struct DynamicColoredTexture
 		{
 			// constructors
@@ -67,10 +74,13 @@ class RenderManagerSDL : public RenderManager
 
 
 		SDL_Texture* mBackground;
+		SDL_Texture* mNetRod = nullptr;
 		SDL_Texture* mBallShadow;
 		SDL_Texture* mMarker[2];
 
 		std::vector<SDL_Texture*> mBall;
+		SDL_Texture* mBallPanels = nullptr;
+		SDL_Texture* mBallLighting = nullptr;
 		std::vector<SDL_Surface*> mStandardBlob;
 		std::vector<SDL_Surface*> mStandardBlobShadow;
 		SDL_Surface* mStandardBlobBlood;
@@ -82,8 +92,6 @@ class RenderManagerSDL : public RenderManager
 		std::vector<DynamicColoredTexture> mRightBlobShadow;
 		DynamicColoredTexture mRightBlobBlood;
 
-		std::vector<SDL_Texture*> mFont;
-		std::vector<SDL_Texture*> mHighlightFont;
 
 		SDL_Texture* mOverlayTexture = nullptr;
 
@@ -94,14 +102,10 @@ class RenderManagerSDL : public RenderManager
 		// Store color for caching
 		Color mBlobColor[MAX_PLAYERS];
 
-		// Rendertarget to make windowmode resizeable
-		SDL_Texture* mRenderTarget = nullptr;
-
 		// colors a surface
 		// the returned SDL_Surface* is already converted into DisplayFormat
 		SDL_Surface* colorSurface(SDL_Surface *surface, Color color);
 
-		void drawTextImpl(const std::string& text, Vector2 position, unsigned int flags);
 		void colorizeBlobs(int player, int frame);
 };
 

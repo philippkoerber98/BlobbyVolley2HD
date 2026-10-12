@@ -28,6 +28,19 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #include "Color.h"
 #include "Global.h"
 #include "DuelMatchState.h"
+#include "DisplayViewport.h"
+#include "NetRodOcclusion.h"
+#include "AssetTransforms.h"
+#include "FileSystem.h"
+#include "HDImagePaths.h"
+
+static void updateGameViewport(SDL_Window* window,float courtWidth=800.f)
+{
+	int width = 0, height = 0;
+	SDL_GL_GetDrawableSize(window, &width, &height);
+	auto view = fitGameViewport(width, height,courtWidth);
+	glViewport(view.x, view.y, view.w, view.h);
+}
 
 /* implementation */
 RenderManagerGL2D::Texture::Texture( GLuint tex, int x, int y, int width, int height, int tw, int th ) :
@@ -108,8 +121,8 @@ GLuint RenderManagerGL2D::loadTexture(SDL_Surface *surface, bool specular)
 	targetRect.x = (paddedX - oldX) / 2;
 	targetRect.y = (paddedY - oldY) / 2;
 
-	SDL_SetColorKey(textureSurface, SDL_TRUE,
-	                SDL_MapRGB(textureSurface->format, 0, 0, 0));
+	if (SDL_HasColorKey(textureSurface) || !textureSurface->format->Amask)
+		SDL_SetColorKey(textureSurface, SDL_TRUE, SDL_MapRGB(textureSurface->format, 0, 0, 0));
 	convertedTexture =
 	        SDL_CreateRGBSurface(SDL_SWSURFACE,
 	                             paddedX, paddedY, 32,
@@ -118,6 +131,8 @@ GLuint RenderManagerGL2D::loadTexture(SDL_Surface *surface, bool specular)
 #else
 	                0x000000ff, 0x0000ff00, 0x00ff0000, 0xff000000);
 #endif
+	SDL_FillRect(convertedTexture, nullptr, SDL_MapRGBA(convertedTexture->format, 0, 0, 0, 0));
+	SDL_SetSurfaceBlendMode(textureSurface, SDL_BLENDMODE_NONE);
 	SDL_BlitSurface(textureSurface, nullptr, convertedTexture, &targetRect);
 
 	if (specular)
@@ -142,8 +157,8 @@ GLuint RenderManagerGL2D::loadTexture(SDL_Surface *surface, bool specular)
 	GLuint texture;
 	glGenTextures(1, &texture);
 	glBindTexture(texture);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8,
 	             convertedTexture->w, convertedTexture->h, 0, GL_RGBA,
 	             GL_UNSIGNED_BYTE, convertedTexture->pixels);
@@ -151,6 +166,17 @@ GLuint RenderManagerGL2D::loadTexture(SDL_Surface *surface, bool specular)
 	SDL_FreeSurface(convertedTexture);
 
 	return texture;
+}
+
+void RenderManagerGL2D::updateNetRod(SDL_Surface* background)
+{
+	auto* rod=extractNetRod(background);
+	int width=rod->w,height=rod->h;
+	int tw=getNextPOT(width),th=getNextPOT(height);
+	if(mNetRod)glDeleteTextures(1,&mNetRod->texture);
+	GLuint texture=loadTexture(rod,false);
+	mNetRod.reset(new Texture(texture,(tw-width)/2,(th-height)/2,width,height,tw,th));
+	mNetRod->w=NetRodOcclusion::w;mNetRod->h=NetRodOcclusion::h;
 }
 
 void RenderManagerGL2D::drawQuad(float x, float y, float w, float h)
@@ -205,6 +231,11 @@ std::unique_ptr<RenderManager> RenderManager::createRenderManagerGL2D()
 	return std::unique_ptr<RenderManager>{new RenderManagerGL2D()};
 }
 
+bool RenderManagerGL2D::setVSync(bool enabled)
+{
+	return SDL_GL_SetSwapInterval(enabled ? 1 : 0) == 0;
+}
+
 void RenderManagerGL2D::init(int xResolution, int yResolution, bool fullscreen)
 {
 	glDisable(GL_DEPTH_TEST);
@@ -218,9 +249,9 @@ void RenderManagerGL2D::init(int xResolution, int yResolution, bool fullscreen)
 	SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
 
 	// Set modesetting
-	Uint32 screenFlags = SDL_WINDOW_OPENGL;
+	Uint32 screenFlags = SDL_WINDOW_OPENGL | SDL_WINDOW_ALLOW_HIGHDPI | SDL_WINDOW_RESIZABLE;
 	if (fullscreen)
-		screenFlags |= SDL_WINDOW_FULLSCREEN;
+		screenFlags |= SDL_WINDOW_FULLSCREEN_DESKTOP;
 
 	// Create window
 	mWindow = SDL_CreateWindow(AppTitle,
@@ -251,17 +282,26 @@ void RenderManagerGL2D::init(int xResolution, int yResolution, bool fullscreen)
 	glEnable(GL_TEXTURE_2D);
 
 	// Load background
-	SDL_Surface* bgSurface = loadSurface("backgrounds/strand2.bmp");
+	SDL_Surface* bgSurface = loadSurface("backgrounds/strand1.bmp");
+	updateNetRod(bgSurface);
 	BufferedImage* bgBufImage = new BufferedImage;
-	bgBufImage->w = getNextPOT(bgSurface->w);
-	bgBufImage->h = getNextPOT(bgSurface->h);
+	bgBufImage->w = getNextPOT(bgSurface->w) / assetScale("backgrounds/strand1.bmp");
+	bgBufImage->h = getNextPOT(bgSurface->h) / assetScale("backgrounds/strand1.bmp");
+	bgBufImage->sourceWidth=bgSurface->w;bgBufImage->sourceHeight=bgSurface->h;
 	bgBufImage->glHandle = loadTexture(bgSurface, false);
 	mBackground = bgBufImage->glHandle;
 	mImageMap["background"] = bgBufImage;
 
 	mBallShadow = loadTexture(loadSurface("gfx/schball.bmp"), false);
 
-	for (int i = 1; i <= 16; ++i)
+	if (FileSystem::getSingleton().exists(preferredHDImage("gfx/hd/volleyball.png")))
+	{
+		auto* source = loadSurface("gfx/hd/volleyball.png");
+		mBallPanels = loadTexture(rotateVolleyball(source, 1, VolleyballLayer::Panels), false);
+		mBallLighting = loadTexture(rotateVolleyball(source, 1, VolleyballLayer::Lighting), false);
+		SDL_FreeSurface(source);
+	}
+	else for (int i = 1; i <= 16; ++i)
 	{
 		char filename[64];
 		sprintf(filename, "gfx/ball%02d.bmp", i);
@@ -283,47 +323,11 @@ void RenderManagerGL2D::init(int xResolution, int yResolution, bool fullscreen)
 		mBlobShadow.push_back(blobShadow);
 	}
 
-	// create text base textures
-	SDL_Surface* textbase = createEmptySurface(2048, 32);
-	SDL_Surface* hltextbase = createEmptySurface(2048, 32);
-
-	int x = 0;
-	int sx = 0;
-
-	for (int i = 0; i <= 58; ++i)
-	{
-		char filename[64];
-		sprintf(filename, "gfx/font%02d.bmp", i);
-		SDL_Surface* fontSurface = loadSurface(filename);
-
-		SDL_Surface* highlight = highlightSurface(fontSurface, 60);
-
-		SDL_Rect r = {(Uint16)x, 0, (Uint16)fontSurface->w, (Uint16)fontSurface->h};
-		SDL_BlitSurface(fontSurface, nullptr, textbase, &r);
-		SDL_BlitSurface(highlight, nullptr, hltextbase, &r);
-		r.x = sx;
-		r.y = 0;
-		Texture s = Texture(0, x, 0, fontSurface->w, fontSurface->h, 2048, 32);
-		mFont.push_back(s);
-		mHighlightFont.push_back(s);
-
-		x += fontSurface->w;
-
-		SDL_FreeSurface(fontSurface);
-		SDL_FreeSurface(highlight);
-	}
-
-	GLuint texture =  loadTexture(textbase, false);
-	GLuint hltexture =  loadTexture(hltextbase, false);
-	for (unsigned int i = 0; i < mFont.size(); ++i)
-	{
-		mFont[i].texture = texture;
-		mHighlightFont[i].texture = hltexture;
-	}
-
 	mParticle = loadTexture(loadSurface("gfx/blood.bmp"), false);
 
-	glViewport(0, 0, xResolution, yResolution);
+	updateGameViewport(mWindow,mCourtWidth);
+	glClearColor(0, 0, 0, 1);
+	glClear(GL_COLOR_BUFFER_BIT);
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
 	glOrtho(0, 800, 600, 0, -1.0, 1.0);
@@ -338,16 +342,18 @@ void RenderManagerGL2D::init(int xResolution, int yResolution, bool fullscreen)
 
 RenderManagerGL2D::~RenderManagerGL2D()
 {
-	glDeleteTextures(1, &mBackground);
-	glDeleteTextures(mBall.size(), &mBall[0]);
+	if (!mBall.empty()) glDeleteTextures(mBall.size(), mBall.data());
+	glDeleteTextures(1, &mBallPanels);
+	glDeleteTextures(1, &mBallLighting);
 	glDeleteTextures(1, &mBallShadow);
-	glDeleteTextures(mBlob.size(), &mBlob[0]);
-	glDeleteTextures(mBlobSpecular.size(), &mBlobSpecular[0]);
-	glDeleteTextures(mBlobShadow.size(), &mBlobShadow[0]);
-	glDeleteTextures(1/*mFont.size()*/, &mFont[0].texture);
-	glDeleteTextures(/*mHighlightFont.size()*/1, &mHighlightFont[0].texture);
+	if(mNetRod)glDeleteTextures(1,&mNetRod->texture);
+	glDeleteTextures(mBlob.size(), mBlob.data());
+	glDeleteTextures(mBlobSpecular.size(), mBlobSpecular.data());
+	glDeleteTextures(mBlobShadow.size(), mBlobShadow.data());
+
 
 	for (auto& iter : mImageMap) {
+        if(!iter.second)continue;
 		glDeleteTextures(1, &iter.second->glHandle);
 		delete iter.second;
 	}
@@ -363,11 +369,13 @@ bool RenderManagerGL2D::setBackground(const std::string& filename)
 	try
 	{
 		SDL_Surface* newSurface = loadSurface(filename);
+		updateNetRod(newSurface);
 		glDeleteTextures(1, &mBackground);
 		delete mImageMap["background"];
 		BufferedImage *imgBuffer = new BufferedImage;
-		imgBuffer->w = getNextPOT(newSurface->w);
-		imgBuffer->h = getNextPOT(newSurface->h);
+		imgBuffer->w = getNextPOT(newSurface->w) / assetScale(filename);
+		imgBuffer->h = getNextPOT(newSurface->h) / assetScale(filename);
+		imgBuffer->sourceWidth=newSurface->w;imgBuffer->sourceHeight=newSurface->h;
 		imgBuffer->glHandle = loadTexture(newSurface, false);
 		mBackground = imgBuffer->glHandle;
 		mImageMap["background"] = imgBuffer;
@@ -393,83 +401,117 @@ void RenderManagerGL2D::showShadow(bool shadow)
 	mShowShadow = shadow;
 }
 
-void RenderManagerGL2D::drawText(const std::string& text, Vector2 position, unsigned int flags)
+void RenderManagerGL2D::uploadFontAtlas(const std::string& name,SDL_Surface* surface)
 {
-	glEnable(GL_TEXTURE_2D);
-	glEnable(GL_ALPHA_TEST);
-	glDisable(GL_BLEND);
+    auto* image=new BufferedImage;
+    image->sourceWidth=surface->w;image->sourceHeight=surface->h;
+    image->w=getNextPOT(surface->w);image->h=getNextPOT(surface->h);
+    image->glHandle=loadTexture(surface,false);
+    glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
+    mImageMap[name]=image;
+}
+void RenderManagerGL2D::releaseFontAtlas(const std::string& name)
+{
+    auto found=mImageMap.find(name);if(found==mImageMap.end())return;
+    glDeleteTextures(1,&found->second->glHandle);delete found->second;mImageMap.erase(found);
+}
+void RenderManagerGL2D::drawFontGlyph(const std::string& name,const SDL_Rect& source,Vector2 position,Vector2 size,Color color)
+{
+    const auto* image=mImageMap.at(name);
+    Texture region(image->glHandle,(image->w-image->sourceWidth)/2+source.x,
+        (image->h-image->sourceHeight)/2+source.y,source.w,source.h,image->w,image->h);
+    region.w=size.x;region.h=size.y;
+    glEnable(GL_TEXTURE_2D);glDisable(GL_ALPHA_TEST);glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);glColor4ub(color.r,color.g,color.b,255);
+    drawQuad(position.x+size.x/2,position.y+size.y/2,region);
+}
+void RenderManagerGL2D::drawText(const std::string& text,Vector2 position,unsigned int flags)
+{
+    const float cell=flags&TF_SMALL_FONT?FONT_WIDTH_SMALL:FONT_WIDTH_NORMAL;
+    drawRuntimeText(text,position,cell*1.35f,flags&TF_HIGHLIGHT?2:0,cell,(flags&TF_OBFUSCATE)!=0);
+}
 
-	glColor4f(1.0, 1.0, 1.0, 1.0);
-	int FontSize = (flags & TF_SMALL_FONT ? FONT_WIDTH_SMALL : FONT_WIDTH_NORMAL);
-
-	float x = position.x - (FontSize / 2);
-	float y = position.y + (FontSize / 2);
-
-	for (auto iter = text.cbegin(); iter != text.cend(); )
-
-	{
-		int index = getNextFontIndex(iter);
-
-		if (flags & TF_OBFUSCATE)
-			index = FONT_INDEX_ASTERISK;
-
-		x += FontSize;
-		if (flags & TF_SMALL_FONT)
-		{
-			if (flags & TF_HIGHLIGHT)
-			{
-				int charWidth = mHighlightFont[index].w;
-				int charHeight = mHighlightFont[index].h;
-				mHighlightFont[index].w = FONT_WIDTH_SMALL;
-				mHighlightFont[index].h = FONT_WIDTH_SMALL;
-				drawQuad(x, y, mHighlightFont[index]);
-				mHighlightFont[index].w = charWidth;
-				mHighlightFont[index].h = charHeight;
-			}
-			else
-			{
-				int charWidth = mFont[index].w;
-				int charHeight = mFont[index].h;
-				mFont[index].w = FONT_WIDTH_SMALL;
-				mFont[index].h = FONT_WIDTH_SMALL;
-				drawQuad(x, y, mFont[index]);
-				mFont[index].w = charWidth;
-				mFont[index].h = charHeight;
-			}
-		}
-		else
-		{
-			if (flags & TF_HIGHLIGHT)
-				drawQuad(x, y, mHighlightFont[index]);
-			else
-				drawQuad(x, y, mFont[index]);
-		}
-	}
+void RenderManagerGL2D::drawSceneBlur(const std::string& key)
+{
+ const std::string name="__scene_blur";
+ if(mSceneBlurKey!=key) {
+  GLint v[4];glGetIntegerv(GL_VIEWPORT,v);if(v[2]<=0||v[3]<=0)return;
+  auto* capture=SDL_CreateRGBSurfaceWithFormat(0,v[2],v[3],32,SDL_PIXELFORMAT_RGBA32);if(!capture)return;
+  glReadPixels(v[0],v[1],v[2],v[3],GL_RGBA,GL_UNSIGNED_BYTE,capture->pixels);
+  auto* pixels=static_cast<Uint8*>(capture->pixels);
+  for(int y=0;y<capture->h/2;++y)for(int x=0;x<capture->pitch;++x)std::swap(pixels[y*capture->pitch+x],pixels[(capture->h-1-y)*capture->pitch+x]);
+  auto* blur=createMenuBackdrop(capture);SDL_FreeSurface(capture);if(!blur)return;
+  auto*& image=mImageMap[name];if(!image)image=new BufferedImage;else glDeleteTextures(1,&image->glHandle);
+  image->sourceWidth=400;image->sourceHeight=300;image->w=512;image->h=512;
+  image->glHandle=loadTexture(blur,false);mSceneBlurKey=key;
+ }
+ drawImage(name,Vector2(mCourtWidth/2,300),Vector2(mCourtWidth,600));
 }
 
 void RenderManagerGL2D::drawImage(const std::string& filename, Vector2 position, Vector2 size)
 {
+	if(filename=="background" && size==Vector2(0,0))size=Vector2(800,600);
 	glEnable(GL_TEXTURE_2D);
-	glEnable(GL_ALPHA_TEST);
-	glDisable(GL_BLEND);
+	glDisable(GL_ALPHA_TEST);
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 	BufferedImage* imageBuffer = mImageMap[filename];
 	if (!imageBuffer)
 	{
 		imageBuffer = new BufferedImage;
 		SDL_Surface* newSurface = loadSurface(filename);
-		imageBuffer->w = getNextPOT(newSurface->w);
-		imageBuffer->h = getNextPOT(newSurface->h);
+		imageBuffer->sourceWidth = newSurface->w;
+		imageBuffer->sourceHeight = newSurface->h;
+		imageBuffer->w = getNextPOT(newSurface->w) / assetScale(filename);
+		imageBuffer->h = getNextPOT(newSurface->h) / assetScale(filename);
 		imageBuffer->glHandle = loadTexture(newSurface, false);
 		mImageMap[filename] = imageBuffer;
 	}
 
 	glColor4f(1.0, 1.0, 1.0, 1.0);
-	glDisable(GL_BLEND);
 	//glLoadIdentity();
 	//glTranslatef(position.x , position.y, 0.0);
 	glBindTexture(imageBuffer->glHandle);
-	drawQuad(position.x, position.y, imageBuffer->w, imageBuffer->h);
+	if (size != Vector2(0,0) && imageBuffer->sourceWidth > 0)
+	{
+		const int tw=getNextPOT(imageBuffer->sourceWidth), th=getNextPOT(imageBuffer->sourceHeight);
+		const bool backdrop=filename=="background"||filename.compare(0,17,"menu-backgrounds/")==0;
+		const auto crop=backdrop ? backgroundSourceRect(imageBuffer->sourceWidth,imageBuffer->sourceHeight,size.x*600/size.y)
+			: SDL_Rect{0,0,imageBuffer->sourceWidth,imageBuffer->sourceHeight};
+		Texture region(imageBuffer->glHandle,(tw-imageBuffer->sourceWidth)/2+crop.x,(th-imageBuffer->sourceHeight)/2+crop.y,
+			crop.w,crop.h,tw,th);
+		region.w=size.x; region.h=size.y;
+		drawQuad(position.x,position.y,region);
+	}
+	else drawQuad(position.x, position.y, imageBuffer->w, imageBuffer->h);
+}
+
+void RenderManagerGL2D::drawRoundedPanel(float opacity,Vector2 pos1,Vector2 pos2,Color col)
+{
+ const float w=pos2.x-pos1.x,h=pos2.y-pos1.y;
+ if(w<=0||h<=0)return;
+ if(w<8||h<8){drawOverlay(opacity,pos1,pos2,col);return;}
+ GLint viewport[4];glGetIntegerv(GL_VIEWPORT,viewport);
+ const int radius=(std::max)(1,int(std::ceil(4.f*viewport[2]/mCourtWidth)));
+ const int size=radius*2+2,pot=getNextPOT(size),padding=(pot-size)/2;
+ const auto key="__rounded-panel-"+std::to_string(radius);
+ auto*& image=mImageMap[key];
+ if(!image){
+  auto* mask=createRoundedPanelMask(radius);if(!mask)return;
+  image=new BufferedImage;image->glHandle=loadTexture(mask,false);image->w=image->h=pot;
+ }
+ glEnable(GL_TEXTURE_2D);glDisable(GL_ALPHA_TEST);glEnable(GL_BLEND);
+ glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);glColor4f(col.r/255.f,col.g/255.f,col.b/255.f,opacity);
+ glBindTexture(image->glHandle);
+ const int source[]={0,radius,radius+2,size};
+ const float x[]={pos1.x,pos1.x+4,pos2.x-4,pos2.x},y[]={pos1.y,pos1.y+4,pos2.y-4,pos2.y};
+ for(int j=0;j<3;++j)for(int i=0;i<3;++i){
+  Texture region(image->glHandle,padding+source[i],padding+source[j],source[i+1]-source[i],source[j+1]-source[j],pot,pot);
+  region.w=x[i+1]-x[i];region.h=y[j+1]-y[j];
+  drawQuad((x[i]+x[i+1])/2,(y[j]+y[j+1])/2,region);
+ }
 }
 
 void RenderManagerGL2D::drawOverlay(float opacity, Vector2 pos1, Vector2 pos2, Color col)
@@ -479,7 +521,7 @@ void RenderManagerGL2D::drawOverlay(float opacity, Vector2 pos1, Vector2 pos2, C
 	glDisable(GL_ALPHA_TEST);
 	glEnable(GL_BLEND);
 
-	glColor4f(col.r, col.g, col.b, opacity);
+	glColor4f(col.r / 255.f, col.g / 255.f, col.b / 255.f, opacity);
 	//glLoadIdentity();
 	glBegin(GL_QUADS);
 	glVertex2f(pos1.x, pos1.y);
@@ -489,24 +531,24 @@ void RenderManagerGL2D::drawOverlay(float opacity, Vector2 pos1, Vector2 pos2, C
 	glEnd();
 }
 
-void RenderManagerGL2D::drawBlob(const Vector2& pos, const Color& col)
+void RenderManagerGL2D::drawBlob(const Vector2& pos, const Color& col, float scale)
 {
 	glEnable(GL_TEXTURE_2D);
-	glEnable(GL_ALPHA_TEST);
-	glDisable(GL_BLEND);
-
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+	glDisable(GL_ALPHA_TEST);
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 	//glLoadIdentity();
 	//glTranslatef(pos.x, pos.y, 0.6);
 	glBindTexture(mBlob[0]);
 	glColor3ub(col.r, col.g, col.b);
-	drawQuad(pos.x, pos.y, 128.0, 128.0);
+	drawQuad(pos.x, pos.y, 128.0f*scale, 128.0f*scale);
 
 	glEnable(GL_BLEND);
 	glColor4f(1.0, 1.0, 1.0, 1.0);
 	glBindTexture(mBlobSpecular[0]);
-	drawQuad(pos.x, pos.y, 128.0, 128.0);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+	drawQuad(pos.x, pos.y, 128.0f*scale, 128.0f*scale);
 	glDisable(GL_BLEND);
 }
 
@@ -554,6 +596,8 @@ void RenderManagerGL2D::refresh()
 {
 	//std::cout << debugStateChanges << "\n";
 	SDL_GL_SwapWindow(mWindow);
+	updateGameViewport(mWindow,mCourtWidth);
+	glClear(GL_COLOR_BUFFER_BIT);
 	debugStateChanges = 0;
 	//std::cerr << debugBindTextureCount << "\n";
 	debugBindTextureCount = 0;
@@ -567,7 +611,14 @@ void RenderManagerGL2D::drawGame(const DuelMatchState& gameState)
 	glColor4f(1.0, 1.0, 1.0, 1.0);
 	glBindTexture(mBackground);
 	glLoadIdentity();
-	drawQuad(400.0, 300.0, 1024.0, 1024.0);
+	glDisable(GL_BLEND);
+	const auto* bg=mImageMap["background"];
+	const auto crop=backgroundSourceRect(bg->sourceWidth,bg->sourceHeight,mCourtWidth);
+	const int tw=getNextPOT(bg->sourceWidth),th=getNextPOT(bg->sourceHeight);
+	Texture backgroundRegion(mBackground,(tw-bg->sourceWidth)/2+crop.x,
+		(th-bg->sourceHeight)/2+crop.y,crop.w,crop.h,tw,th);
+	backgroundRegion.w=mCourtWidth;backgroundRegion.h=600;
+	drawQuad(mCourtWidth/2,300.f,backgroundRegion);
 
 
 	if(mShowShadow)
@@ -599,6 +650,14 @@ void RenderManagerGL2D::drawGame(const DuelMatchState& gameState)
 		glDisable(GL_BLEND);
 	}
 
+	// The embedded pole is a masked foreground layer above ground shadows.
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
+	glColor4f(1.f, 1.f, 1.f, 1.f);
+	mNetRod->w=NetRodOcclusion::w;
+	drawQuad(mCourtWidth/2,
+		NetRodOcclusion::y+NetRodOcclusion::h/2.f,*mNetRod);
+	glDisable(GL_BLEND);
 	glEnable(GL_ALPHA_TEST);
 
 	// General object settings
@@ -606,7 +665,21 @@ void RenderManagerGL2D::drawGame(const DuelMatchState& gameState)
 	// The Ball
 
 	glColor4f(1.0, 1.0, 1.0, 1.0);
-	glBindTexture(mBall[int(gameState.getBallRotation() / M_PI / 2 * 16) % 16]);
+	if (mBallPanels)
+	{
+		glDisable(GL_ALPHA_TEST);
+		glEnable(GL_BLEND);
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+		glBindTexture(mBallPanels);
+		glPushMatrix();
+		glTranslatef(gameState.getBallPosition().x, gameState.getBallPosition().y, 0);
+		glRotatef(gameState.getBallRotation() * 180.0 / M_PI, 0, 0, 1);
+		drawQuad(0, 0, 64.0, 64.0);
+		glPopMatrix();
+		glBindTexture(mBallLighting);
+	}
+	else
+		glBindTexture(mBall[int(gameState.getBallRotation() / M_PI / 2 * 16) % 16]);
 /*
 	float opacity = 0.0;
 	for (std::list<Vector2>::iterator iter = mLastBallStates.begin();
@@ -630,6 +703,9 @@ void RenderManagerGL2D::drawGame(const DuelMatchState& gameState)
 */
 
 	// blob normal
+	glDisable(GL_ALPHA_TEST);
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	// left blob
 	glBindTexture(mBlob[int(gameState.getBlobState(LEFT_PLAYER))  % 5]);
 	glColor3ub(mLeftBlobColor.r, mLeftBlobColor.g, mLeftBlobColor.b);
@@ -641,6 +717,7 @@ void RenderManagerGL2D::drawGame(const DuelMatchState& gameState)
 	drawQuad(gameState.getBlobPosition(RIGHT_PLAYER).x, gameState.getBlobPosition(RIGHT_PLAYER).y, 128.0, 128.0);
 
 	// blob specular
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE);
 	glEnable(GL_BLEND);
 	glColor4f(1.0, 1.0, 1.0, 1.0);
 	// left blob
@@ -683,3 +760,10 @@ std::unique_ptr<RenderManager> RenderManager::createRenderManagerGL2D()
 
 
 #endif
+
+void RenderManagerGL2D::setCourtWidth(float width)
+{
+ RenderManager::setCourtWidth(width);updateGameViewport(mWindow,width);
+ glMatrixMode(GL_PROJECTION);glLoadIdentity();glOrtho(0,width,600,0,-1,1);
+ glMatrixMode(GL_MODELVIEW);glLoadIdentity();
+}

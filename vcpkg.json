@@ -1,5 +1,18 @@
 {
-    "name": "blobby",
-    "version-string": "0.1",
-    "dependencies": ["sdl2", "physfs", "boost-smart-ptr", "boost-exception", "boost-crc", "boost-algorithm"]
-  }
+  "name": "blobby",
+  "version-string": "0.1",
+  "dependencies": [
+    "sdl2",
+    {
+      "name": "sdl2-image",
+      "features": [
+        "libwebp"
+      ]
+    },
+    "physfs",
+    "boost-smart-ptr",
+    "boost-exception",
+    "boost-crc",
+    "boost-algorithm"
+  ]
+}

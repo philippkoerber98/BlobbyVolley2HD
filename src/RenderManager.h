@@ -22,6 +22,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 #include <map>
 #include <SDL.h>
+#include "RuntimeFont.h"
 
 #include "Vector.h"
 #include "Color.h"
@@ -32,12 +33,11 @@ class BloodManager;
 struct DuelMatchState;
 
 // Text definitions
-static const int FONT_WIDTH_NORMAL 	=	24;	// Height and width of the normal font.
+static const int FONT_WIDTH_NORMAL = 24;
 static const int LINE_SPACER_NORMAL	=	 6;	// Extra space between 2 lines in a normal SelectBox.
-static const int FONT_WIDTH_SMALL	=	12;	// Height and width of the small font.
+static const int FONT_WIDTH_SMALL = 12;
 static const int LINE_SPACER_SMALL	=	 3;	// Extra space between 2 lines in a small SelectBox.
 
-static const int FONT_INDEX_ASTERISK=	36; // M.W. : Currently a dot because there is no asterisk yet.
 
 
 // Text flags (usable for the RenderManager::drawText() flag parameter)
@@ -63,6 +63,7 @@ struct BufferedImage : public ObjectCounter<BufferedImage>
 {
 	int w;
 	int h;
+	int sourceWidth = 0, sourceHeight = 0;
 	union
 	{
 		SDL_Texture* sdlImage;
@@ -111,7 +112,11 @@ class RenderManager : public ObjectCounter<RenderManager>
 		// This swaps the screen buffers and should be called
 		// after all draw calls
 		virtual void refresh() {};
+		virtual void setCourtWidth(float width) { if(width!=mCourtWidth)resetSceneBlur();mCourtWidth=width; }
 		float courtWidth() const { return mCourtWidth; }
+		virtual void drawSceneBlur(const std::string& key) {}
+		void resetSceneBlur() { mSceneBlurKey.clear(); }
+		virtual bool setVSync(bool enabled) { return false; }
 
 		// Init with the desired Resolution.
 		// Note: It is not guaranteed that this resolution will be selected
@@ -132,6 +137,8 @@ class RenderManager : public ObjectCounter<RenderManager>
 		// This simply draws the given text with its top left corner at the
 		// given position and doesn't care about line feeds.
 		virtual void drawText(const std::string& text, Vector2 position, unsigned int flags = TF_NORMAL) {};
+		void drawMenuText(const std::string& text, Vector2 position, float height, int style = 0);
+		static float menuTextWidth(const std::string& text, float height);
 
 		// This loads and draws an image by name
 		// The according Surface is automatically colorkeyed
@@ -141,8 +148,13 @@ class RenderManager : public ObjectCounter<RenderManager>
 		// This draws a greyed-out area
 		virtual void drawOverlay(float opacity, Vector2 pos1, Vector2 pos2, Color col = Color(0,0,0)) {}
 
+		// Celebration particles use real render time and never advance the simulation RNG.
+		void drawConfetti(Uint32 started);
+
+		virtual void drawRoundedPanel(float opacity, Vector2 pos1, Vector2 pos2, Color col) { drawOverlay(opacity,pos1,pos2,col); }
+
 		// Draws a blob
-		virtual void drawBlob(const Vector2& pos, const Color& col){};
+		virtual void drawBlob(const Vector2& pos, const Color& col, float scale = 1){};
 
 		// Draws the game
 		virtual void drawGame(const DuelMatchState& gameState) = 0;
@@ -161,15 +173,23 @@ class RenderManager : public ObjectCounter<RenderManager>
 		SDL_Window* getWindow();
 	protected:
 		RenderManager();
-		// Returns -1 on EOF
-		// Returns index for ? on unknown char
-		int getNextFontIndex(std::string::const_iterator& iter);
 		SDL_Surface* highlightSurface(SDL_Surface* surface, int luminance);
 		SDL_Surface* loadSurface(const std::string& filename);
+		virtual void uploadFontAtlas(const std::string& name,SDL_Surface* surface) { SDL_FreeSurface(surface); }
+		virtual void releaseFontAtlas(const std::string& name) {}
+		virtual void drawFontGlyph(const std::string& name,const SDL_Rect& source,Vector2 position,Vector2 size,Color color) {}
+		void drawRuntimeText(const std::string& text,Vector2 position,float height,int style,float fixedAdvance=0,bool obfuscate=false);
+		std::map<int,RuntimeFontAtlas> mRuntimeFonts;
+		int assetScale(const std::string& filename) const
+		{
+			auto it = mAssetScales.find(filename);
+			return it == mAssetScales.end() ? 1 : it->second;
+		}
 		SDL_Surface* createEmptySurface(unsigned int width, unsigned int height);
 
-		SDL_Window* mWindow;
 		float mCourtWidth = 800.f;
+		SDL_Window* mWindow;
+		std::string mSceneBlurKey;
 
 		Vector2 blobShadowPosition(const Vector2& position);
 		Vector2 ballShadowPosition(const Vector2& position);
@@ -180,6 +200,7 @@ class RenderManager : public ObjectCounter<RenderManager>
 		SDL_Rect ballShadowRect(const Vector2& position);
 
 		std::map<std::string, BufferedImage*> mImageMap;
+		std::map<std::string, int> mAssetScales;
 
 		float mMouseMarkerPosition;
 
