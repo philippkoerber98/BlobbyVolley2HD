@@ -48,6 +48,19 @@ SpeedController::SpeedController(float gameFPS)
 
 SpeedController::~SpeedController() = default;
 
+void SpeedController::recordRenderedFrame()
+{
+	++mFPSCounter;
+	const Uint32 now = SDL_GetTicks();
+	const Uint32 elapsed = now - mOldTicks;
+	if (elapsed >= 1000)
+	{
+		mFPS = int(mFPSCounter * 1000.0 / elapsed + 0.5);
+		mFPSCounter = 0;
+		mOldTicks = now;
+	}
+}
+
 void SpeedController::setGameSpeed(float fps)
 {
 	if (fps < 5)

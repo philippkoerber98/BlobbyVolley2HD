@@ -21,6 +21,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #pragma once
 
 #include <memory>
+#include "DisplaySettings.h"
 
 class State;
 class SoundManager;
@@ -33,8 +34,14 @@ struct SDL_Window;
 class BlobbyApp {
 	public:
 		explicit BlobbyApp(std::unique_ptr<State> initState, const IUserConfigReader& config);
+		~BlobbyApp();
 
 		void step();
+		void render(float alpha);
+		void updateDisplaySettings(bool force = false);
+		const DisplaySettings& displaySettings() const { return mDisplaySettings; }
+		void setFrameLimit(int fps);
+		int renderFPS() const;
 
 		void switchToState(std::unique_ptr<State> newState);
 
@@ -73,4 +80,7 @@ class BlobbyApp {
 		std::unique_ptr<IMGUI> mIMGUI;
 		std::unique_ptr<InputManager> mInputMgr;
 		std::unique_ptr<RenderManager> mRenderMgr;
+		DisplaySettings mDisplaySettings;
+		Uint32 mLastDisplayQuery = 0;
+		int mFrameLimit = 0; // zero = monitor synchronization
 };

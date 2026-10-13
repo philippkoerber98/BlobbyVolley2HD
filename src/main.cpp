@@ -1,3 +1,4 @@
+#include "BackgroundSettings.h"
 /*=============================================================================
 Blobby Volley 2
 Copyright (C) 2006 Jonathan Sieber (jonathan_sieber@yahoo.de)
@@ -41,6 +42,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #include "UserConfig.h"
 #include "IMGUI.h"
 #include "SpeedController.h"
+#include "FrameTiming.h"
 #include "Blood.h"
 #include "FileSystem.h"
 #include "state/State.h"
@@ -133,6 +135,9 @@ int main(int argc, char* argv[])
 
 	DEBUG_STATUS("physfs initialised");
 
+#if defined(_WIN32)
+	SDL_SetHint("SDL_WINDOWS_DPI_AWARENESS", "permonitorv2");
+#endif
 	SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_JOYSTICK);
 
 
@@ -167,6 +172,10 @@ int main(int argc, char* argv[])
 	{
 		UserConfig gameConfig;
 		gameConfig.loadFile("config.xml");
+        const auto background=resolveBackgroundName(gameConfig.getString("background"));
+        if(background!=gameConfig.getString("background")){
+            gameConfig.setString("background",background);gameConfig.saveFile("config.xml");
+        }
 
 		SpeedController scontroller(gameConfig.getFloat("gamefps"));
 		SpeedController::setMainInstance(&scontroller);
@@ -177,14 +186,30 @@ int main(int argc, char* argv[])
 		DEBUG_STATUS("starting mainloop");
 
 		BlobbyApp app( std::unique_ptr<State>(new MainMenuState()), gameConfig );
+		SimulationClock simulationClock;
+		const double timerFrequency = double(SDL_GetPerformanceFrequency());
+		auto secondsNow = [&]() { return SDL_GetPerformanceCounter() / timerFrequency; };
+		double previousTime = secondsNow();
+		double nextRenderTime = previousTime;
+		simulationClock.advance(1.0 / scontroller.getGameSpeed());
 
 		while (running)
 		{
-			app.getInputManager().updateInput();
+			// Poll frequently, retaining menu edges until one simulation step consumes them.
+			app.getInputManager().updateInput(false);
 			running = app.getInputManager().running();
+			if (!running) break;
+			app.updateDisplaySettings();
+			const double now = secondsNow();
+			simulationClock.advance(now - previousTime);
+			previousTime = now;
 
-			app.getIMGUI().begin();
-			app.step();
+			while (simulationClock.consume(scontroller.getGameSpeed()))
+			{
+				app.getIMGUI().begin();
+				app.step();
+				app.getInputManager().clearTransientInput();
+			}
 			//draw FPS:
 			static int lastfps = 0;
 			static int lastlag = -1;
@@ -218,13 +243,21 @@ int main(int argc, char* argv[])
 				lastfps = -1;
 			}
 
-			if (!scontroller.doFramedrop())
+			if (secondsNow() >= nextRenderTime)
 			{
-				app.getIMGUI().end(app.getRenderManager());
+				const double frameStart = secondsNow();
+				app.render(simulationClock.alpha(scontroller.getGameSpeed()));
 				app.getRenderManager().getBlood().step(app.getRenderManager());
 				app.getRenderManager().refresh();
+				scontroller.recordRenderedFrame();
+				const double interval = 1.0 / app.renderFPS();
+				nextRenderTime += interval;
+				if (nextRenderTime < frameStart || nextRenderTime > frameStart + interval)
+					nextRenderTime = frameStart + interval;
 			}
-			scontroller.update();
+			const double remaining = (std::min)(nextRenderTime - secondsNow(),
+				simulationClock.untilNextStep(scontroller.getGameSpeed()) - (secondsNow() - previousTime));
+			SDL_Delay(remaining > 0.001 ? Uint32(remaining * 1000) : 0);
 		}
 	}
 	catch (std::exception& e)

@@ -23,6 +23,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #include "State.h"
 #include "TextManager.h"
 #include "Global.h"
+#include "DuelMatchState.h"
 
 #include <functional>
 #include <tuple>
@@ -39,6 +40,7 @@ public:
 
 	// step function defines the steps actual work
 	void step_impl() override = 0;
+	void render(float alpha) override;
 
 protected:
 
@@ -84,5 +86,7 @@ protected:
 
 	std::string mErrorMessage;
 private:
+	DuelMatchState mPreviousRenderState, mCurrentRenderState;
+	bool mHasRenderState = false;
 	std::string mFilename;
 };

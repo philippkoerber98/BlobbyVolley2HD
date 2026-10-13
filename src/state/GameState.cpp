@@ -31,6 +31,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #include "Blood.h"
 #include "FileWrite.h"
 #include "Global.h"
+#include "RenderInterpolation.h"
 
 /* implementation */
 
@@ -40,6 +41,13 @@ GameState::GameState(DuelMatch* match) : mMatch(match), mSaveReplay(false)
 }
 
 GameState::~GameState() = default;
+
+void GameState::render(float alpha)
+{
+    if (mMatch) getApp().getRenderManager().setCourtWidth(mMatch->getCourtWidth());
+    if (mHasRenderState)
+        getApp().getRenderManager().drawGame(interpolateMatch(mPreviousRenderState, mCurrentRenderState, alpha));
+}
 
 void GameState::presentGame()
 {
@@ -81,7 +89,10 @@ void GameState::presentGame()
 
 void GameState::presentGameUI()
 {
-	getApp().getRenderManager().drawGame(mMatch->getState());
+    const auto current = mMatch->getState();
+    mPreviousRenderState = mHasRenderState ? mCurrentRenderState : current;
+    mCurrentRenderState = current;
+    mHasRenderState = true;
 
 	auto& imgui = getIMGUI();
 

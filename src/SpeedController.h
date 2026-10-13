@@ -57,6 +57,7 @@ class SpeedController : public ObjectCounter<SpeedController>
 
 	/// This updates everything and waits the necessary time
 		void update();
+		void recordRenderedFrame();
 
 		static void setMainInstance(SpeedController* inst) { mMainInstance = inst; }
 		static SpeedController* getMainInstance() { return mMainInstance; }
