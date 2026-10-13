@@ -120,6 +120,13 @@ bool UserConfig::loadFile(const std::string& filename)
 		}
 	}
 
+ // Older private installations have no court setting. Default them to classic
+ // after parsing, without overwriting a saved widescreen selection.
+ if(filename=="config.xml"||filename=="default-config.xml"){
+  bool found=false;for(const auto& var:mVars)if(var.Name=="court_widescreen")found=true;
+  if(!found)createVar("court_widescreen","false");
+ }
+
 	return true;
 }
 

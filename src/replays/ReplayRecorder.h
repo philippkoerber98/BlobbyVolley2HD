@@ -81,6 +81,7 @@ class ReplayRecorder : public ObjectCounter<ReplayRecorder>
 		void setPlayerNames(const std::string& left, const std::string& right);
 		void setPlayerColors(Color left, Color right);
 		void setGameSpeed(int fps);
+		void setCourtWidth(float width);
 		void setGameRules( const std::string& rules );
 
 	private:

@@ -138,9 +138,9 @@ PlayerInput PlayerInputAbs::toPlayerInput( const DuelMatch* match ) const
 
 		float distance = std::abs(blobpos - mTarget);
 
-		if ( std::abs(blobpos + BLOBBY_SPEED - mTarget) < distance )
+		if ( std::abs(blobpos + match->getMovementSpeed() - mTarget) < distance )
 			right = true;
-		else if (std::abs(blobpos - BLOBBY_SPEED - mTarget) < distance)
+		else if (std::abs(blobpos - match->getMovementSpeed() - mTarget) < distance)
 			left = true;
 		return PlayerInput( left, right, mFlags & F_JUMP );
 	}

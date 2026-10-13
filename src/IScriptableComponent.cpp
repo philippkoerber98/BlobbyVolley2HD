@@ -324,3 +324,9 @@ const DuelMatchState& IScriptableComponent::getMatchState() const
 void IScriptableComponent::setMatchState(const DuelMatchState& state) {
 	mCachedState = state;
 }
+void IScriptableComponent::setSimulationGeometry(float width,float speed)
+{
+ mDummyWorld.reset(new PhysicWorld(width,speed));
+ setLuaGlobal("CONST_FIELD_WIDTH",width);
+ setLuaGlobal("CONST_BLOBBY_SPEED",speed);
+}

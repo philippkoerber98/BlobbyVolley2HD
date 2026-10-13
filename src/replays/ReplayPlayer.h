@@ -52,6 +52,7 @@ class ReplayPlayer : public ObjectCounter<ReplayPlayer>
 		std::string getPlayerName(const PlayerSide side) const;
 		Color getBlobColor(const PlayerSide side) const;
 		int getGameSpeed() const;
+		float getCourtWidth() const;
 
 		// -----------------------------------------------------------------------------------------
 		// 							Status information
@@ -94,6 +95,7 @@ class ReplayPlayer : public ObjectCounter<ReplayPlayer>
 
 	private:
 
+		float mCourtWidth = 800.f;
 		int mPosition;
 		int mLength;
 		std::unique_ptr<IReplayLoader> loader;

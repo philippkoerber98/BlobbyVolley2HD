@@ -50,7 +50,7 @@ class DuelMatch : public ObjectCounter<DuelMatch>
 		// If remote is true, only physical responses will be calculated
 		// but hit events and score events are received from network
 
-		DuelMatch(bool remote, const std::string& rules, int score_to_win = 0);
+		DuelMatch(bool remote, const std::string& rules, int score_to_win = 0, float courtWidth = 800.f);
 
 		void setPlayers(PlayerIdentity left_player, PlayerIdentity right_player);
 		void setInputSources(std::shared_ptr<InputSource> left_input, std::shared_ptr<InputSource> right_input );
@@ -60,6 +60,9 @@ class DuelMatch : public ObjectCounter<DuelMatch>
 		void setRules(const std::string& rulesFile, int score_to_win = 0);
 
 		void reset();
+		float getCourtWidth() const { return mCourtWidth; }
+		float getMovementSpeed() const { return mCourtWidth>801.f ? 5.4f : 4.5f; }
+		void setCourtWidth(float width);
 
 		// This steps through one frame
 		void step();
@@ -143,6 +146,7 @@ class DuelMatch : public ObjectCounter<DuelMatch>
 
 		GameLogicPtr mLogic;
 
+		float mCourtWidth = 800.f;
 		bool mPaused;
 
 		// accumulation of physic events since last event processing

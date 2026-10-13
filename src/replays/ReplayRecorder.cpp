@@ -88,7 +88,7 @@ void ReplayRecorder::save(FileWrite& file) const
 	printer.OpenElement("replay");
 	printer.OpenElement("version");
 	printer.PushAttribute("major", REPLAY_FILE_VERSION_MAJOR);
-	printer.PushAttribute("minor", REPLAY_FILE_VERSION_MINOR);
+	printer.PushAttribute("minor", mGameRules.rfind("-- BLOBBY_HD_WIDE_V1",0)==0 ? 1 : REPLAY_FILE_VERSION_MINOR);
 	printer.CloseElement();
 
 	// the explicit template arguments below are to prevent ambiguities on OSX where
@@ -234,4 +234,9 @@ void ReplayRecorder::finalize(unsigned int left, unsigned int right)
 		unsigned char packet = 0;
 		mSaveData.push_back(packet);
 	}
+}
+
+void ReplayRecorder::setCourtWidth(float width)
+{
+ if(width>801.f&&mGameRules.rfind("-- BLOBBY_HD_WIDE_V1",0)!=0)mGameRules="-- BLOBBY_HD_WIDE_V1\n"+mGameRules;
 }

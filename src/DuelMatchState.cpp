@@ -27,9 +27,9 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 
 /* implementation */
-void DuelMatchState::swapSides()
+void DuelMatchState::swapSides(float courtWidth)
 {
-	worldState.swapSides();
+	worldState.swapSides(courtWidth);
 	logicState.swapSides();
 
 	std::swap(playerInput[LEFT_PLAYER].left, playerInput[LEFT_PLAYER].right);

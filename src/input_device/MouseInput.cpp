@@ -110,9 +110,10 @@ PlayerInputAbs MouseInputDevice::transferInput()
 	if((mouseState & SDL_BUTTON(mJumpButton)) && !mDelay)
 		input.setJump( true );
 
-	const int playerOffset = mPlayer == RIGHT_PLAYER ? 600 : 200;
+	const int half=int(mInputManager->courtWidth()/4);
+	const int playerOffset = mPlayer == RIGHT_PLAYER ? half*3 : half;
 	mMarkerX += deltaX * mSensitivity;
-	mMarkerX = std::max(-200, std::min(200, mMarkerX));
+	mMarkerX = std::max(-half, std::min(half, mMarkerX));
 
 	input.setTarget( mMarkerX + playerOffset, mPlayer );
 

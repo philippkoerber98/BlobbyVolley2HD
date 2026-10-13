@@ -69,7 +69,7 @@ class ReplayLoader_V2X: public IReplayLoader
 		~ReplayLoader_V2X() override = default;
 
 		int getVersionMajor() const override { return 2; };
-		int getVersionMinor() const override { return 0; };
+		int getVersionMinor() const override { return 1; };
 
 		std::string getPlayerName(PlayerSide player) const override
 		{

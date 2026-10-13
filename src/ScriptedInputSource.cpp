@@ -44,6 +44,8 @@ ScriptedInputSource::ScriptedInputSource(const std::string& filename, PlayerSide
 
 	// set game constants
 	setGameConstants();
+	const bool wide=mMatch->getCourtWidth()>801.f;
+	if(wide)setSimulationGeometry(mMatch->getCourtWidth(),mMatch->getMovementSpeed());
 	setGameFunctions();
 
 	// push infos into script
@@ -54,7 +56,12 @@ ScriptedInputSource::ScriptedInputSource(const std::string& filename, PlayerSide
 
 	openScript("api");
 	openScript("bot_api");
-	openScript(filename);
+	if(wide){
+  const auto slash=filename.find_last_of("/\\");
+  const auto name=filename.substr(slash==std::string::npos?0:slash+1);
+  openScript("scripts/wide/"+name);
+  openScript("scripts/wide/api");
+ }else openScript(filename);
 
 	// check whether all required lua functions are available
 	bool step = getLuaFunction("__OnStep");
@@ -81,8 +88,15 @@ void ScriptedInputSource::setWaitTime(int wait_in_ms) {
 PlayerInputAbs ScriptedInputSource::getNextInput()
 {
 	DuelMatchState state = mMatch->getState();
+ if(mMatch->getCourtWidth()>801.f&&!mMatch->getBallActive()){
+  // Difficulty errors belong to rallies, not to precise serve alignment.
+  mBallPosError.clear();mBallVelError.clear();mBlobPosError=0;
+  mBallPosErrorTimer=0;mReactionTime=0;
+ }
+
+
 	if(mSide == RIGHT_PLAYER) {
-		state.swapSides();
+		state.swapSides(mMatch->getCourtWidth());
 	}
 
 	// if the ball is on the bots side, decrease the error timers more quickly.
@@ -91,7 +105,7 @@ PlayerInputAbs ScriptedInputSource::getNextInput()
 	// would have reached zero by the time the ball arrives at the bot's half. This
 	// way, we can give the counters larger initial values, and still don't get completely
 	// stupid play.
-	if(state.getBallPosition().x < 400) {
+	if(state.getBallPosition().x < mMatch->getCourtWidth()/2) {
 		--mBallPosErrorTimer;
 		--mReactionTime;
 	}

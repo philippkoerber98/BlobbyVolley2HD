@@ -52,17 +52,17 @@ USER_SERIALIZER_IMPLEMENTATION_HELPER(PhysicState)
 	io.number( value.ballAngularVelocity );
 }
 
-void PhysicState::swapSides()
+void PhysicState::swapSides(float courtWidth)
 {
-	blobPosition[LEFT_PLAYER].x = RIGHT_PLANE - blobPosition[LEFT_PLAYER].x;
-	blobPosition[RIGHT_PLAYER].x = RIGHT_PLANE - blobPosition[RIGHT_PLAYER].x;
+	blobPosition[LEFT_PLAYER].x = courtWidth - blobPosition[LEFT_PLAYER].x;
+	blobPosition[RIGHT_PLAYER].x = courtWidth - blobPosition[RIGHT_PLAYER].x;
 	blobVelocity[LEFT_PLAYER].x = -blobVelocity[LEFT_PLAYER].x;
 	blobVelocity[RIGHT_PLAYER].x = -blobVelocity[RIGHT_PLAYER].x;
 	std::swap(blobPosition[LEFT_PLAYER], blobPosition[RIGHT_PLAYER]);
 	std::swap(blobVelocity[LEFT_PLAYER], blobVelocity[RIGHT_PLAYER]);
 	std::swap(blobState[LEFT_PLAYER], blobState[RIGHT_PLAYER]);
 
-	ballPosition.x = RIGHT_PLANE - ballPosition.x;
+	ballPosition.x = courtWidth - ballPosition.x;
 	ballVelocity.x = -ballVelocity.x;
 	ballAngularVelocity = -ballAngularVelocity;
 	ballRotation = 2*M_PI - ballRotation;

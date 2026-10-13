@@ -40,6 +40,7 @@ bool ReplayPlayer::endOfFile() const
 void ReplayPlayer::load(const std::string& filename)
 {
 	loader.reset(IReplayLoader::createReplayLoader(filename));
+	mCourtWidth=loader->getRules().rfind("-- BLOBBY_HD_WIDE_V1",0)==0 ? 3200.f/3.f : 800.f;
 
 	mPlayerNames[LEFT_PLAYER] = loader->getPlayerName(LEFT_PLAYER);
 	mPlayerNames[RIGHT_PLAYER] = loader->getPlayerName(RIGHT_PLAYER);
@@ -85,6 +86,7 @@ std::string ReplayPlayer::getRules() const
 
 bool ReplayPlayer::play(DuelMatch* virtual_match)
 {
+	virtual_match->setCourtWidth(getCourtWidth());
 	mPosition++;
 	if( mPosition < mLength )
 	{
@@ -112,6 +114,7 @@ bool ReplayPlayer::play(DuelMatch* virtual_match)
 
 bool ReplayPlayer::gotoPlayingPosition(int rep_position, DuelMatch* virtual_match)
 {
+	virtual_match->setCourtWidth(getCourtWidth());
 	/// \todo add validity check for rep_position
 	/// \todo replay clock does not work!
 
@@ -159,4 +162,9 @@ bool ReplayPlayer::gotoPlayingPosition(int rep_position, DuelMatch* virtual_matc
 	}
 
 	return false;
+}
+
+float ReplayPlayer::getCourtWidth() const
+{
+ return mCourtWidth;
 }

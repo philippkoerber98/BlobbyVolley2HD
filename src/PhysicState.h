@@ -40,5 +40,5 @@ struct PhysicState
 	float   ballRotation;
 	float   ballAngularVelocity;
 
-	void swapSides();
+	void swapSides(float courtWidth = 800.f);
 };

@@ -38,7 +38,7 @@ class PhysicWorld : public ObjectCounter<PhysicWorld>
 	typedef std::function<void(MatchEvent)> event_callback_fn;
 
 	public:
-		PhysicWorld();
+		explicit PhysicWorld(float width = 800.f, float speed = 4.5f);
 		~PhysicWorld();
 
 		// set the callback
@@ -59,7 +59,8 @@ class PhysicWorld : public ObjectCounter<PhysicWorld>
 		// this function calculates whether the player is on the ground
 		bool blobHitGround(PlayerSide player) const;
 
-		// Important: This assumes a fixed framerate of 60 FPS!
+		// One deterministic unit step; normal wall-clock rate is 75 steps/second.
+		// Rendering may run at any independent rate.
 		void step(const PlayerInput& leftInput, const PlayerInput& rightInput,
 					bool isBallValid, bool isGameRunning);
 
@@ -89,6 +90,7 @@ class PhysicWorld : public ObjectCounter<PhysicWorld>
 		// calculate ball impacts vs wall, ground and net
 		void handleBallWorldCollisions();
 
+		float mWidth, mSpeed;
 		Vector2 mBlobPosition[MAX_PLAYERS];
 		Vector2 mBallPosition;
 

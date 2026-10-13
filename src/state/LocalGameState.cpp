@@ -23,6 +23,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 /* includes */
 #include "DuelMatch.h"
+#include "BlobbyApp.h"
 #include "InputManager.h"
 #include "InputDevice.h"
 #include "IMGUI.h"
@@ -80,7 +81,7 @@ void LocalGameState::init()
 
 	playSound(SoundManager::WHISTLE, ROUND_START_SOUND_VOLUME);
 
-	mMatch.reset(new DuelMatch( false, config->getString("rules")));
+	mMatch.reset(new DuelMatch(false,config->getString("rules"),0,config->getBool("court_widescreen",false)?3200.f/3.f:800.f));
 	std::shared_ptr<InputSource> leftInput = createInputSource(*config, LEFT_PLAYER, mMatch.get());
 	std::shared_ptr<InputSource> rightInput = createInputSource(*config, RIGHT_PLAYER, mMatch.get());
 	mMatch->setPlayers(leftPlayer, rightPlayer);
@@ -90,6 +91,8 @@ void LocalGameState::init()
 	mRecorder->setPlayerColors( leftPlayer.getStaticColor(), rightPlayer.getStaticColor() );
 	mRecorder->setGameSpeed((float)config->getInteger("gamefps"));
 	mRecorder->setGameRules( config->getString("rules") );
+	mRecorder->setCourtWidth(mMatch->getCourtWidth());
+	getApp().getRenderManager().setCourtWidth(mMatch->getCourtWidth());
 }
 
 

@@ -60,6 +60,7 @@ class IScriptableComponent
 
 		// load lua functions
 		void setGameConstants();
+		void setSimulationGeometry(float width,float speed);
 		void setGameFunctions();
 
 		void setMatchState(const DuelMatchState& state);

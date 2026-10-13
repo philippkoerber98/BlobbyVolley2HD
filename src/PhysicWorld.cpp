@@ -35,8 +35,8 @@ const float BLOBBY_ANIMATION_SPEED = 0.5;
 inline short set_fpu_single_precision();
 void reset_fpu_flags(short flags);
 
-PhysicWorld::PhysicWorld()
-: mBallPosition(Vector2(200, STANDARD_BALL_HEIGHT))
+PhysicWorld::PhysicWorld(float width,float speed)
+: mWidth(width), mSpeed(speed), mBallPosition(Vector2(width/4, STANDARD_BALL_HEIGHT))
 , mBallRotation(0)
 , mBallAngularVelocity(STANDARD_BALL_ANGULAR_VELOCITY)
 , mCallback( [](const MatchEvent& me) {} )
@@ -47,8 +47,8 @@ PhysicWorld::PhysicWorld()
 	mBlobState[LEFT_PLAYER] = 0.0;
 	mBlobState[RIGHT_PLAYER] = 0.0;
 
-	mBlobPosition[LEFT_PLAYER] = Vector2( 200, GROUND_PLANE_HEIGHT);
-	mBlobPosition[RIGHT_PLAYER] = Vector2(600, GROUND_PLANE_HEIGHT);
+	mBlobPosition[LEFT_PLAYER] = Vector2(width/4, GROUND_PLANE_HEIGHT);
+	mBlobPosition[RIGHT_PLAYER] = Vector2(width*3/4, GROUND_PLANE_HEIGHT);
 }
 
 PhysicWorld::~PhysicWorld() = default;
@@ -152,8 +152,8 @@ void PhysicWorld::handleBlob(PlayerSide player, PlayerInput input)
 		blobbyStartAnimation(player);
 	}
 
-	mBlobVelocity[player].x = (input.right ? BLOBBY_SPEED : 0) -
-								(input.left ? BLOBBY_SPEED : 0);
+	mBlobVelocity[player].x = (input.right ? mSpeed : 0) -
+								(input.left ? mSpeed : 0);
 
 	// compute blobby fall movement (dt = 1)
 	// ds = a/2 * dt^2 + v * dt
@@ -238,18 +238,18 @@ void PhysicWorld::step(const PlayerInput& leftInput, const PlayerInput& rightInp
 	handleBallWorldCollisions();
 
 	// Collision between blobby and the net
-	if (mBlobPosition[LEFT_PLAYER].x+BLOBBY_LOWER_RADIUS>NET_POSITION_X-NET_RADIUS) // Collision with the net
-		mBlobPosition[LEFT_PLAYER].x=NET_POSITION_X-NET_RADIUS-BLOBBY_LOWER_RADIUS;
+	if (mBlobPosition[LEFT_PLAYER].x+BLOBBY_LOWER_RADIUS>(mWidth/2)-NET_RADIUS) // Collision with the net
+		mBlobPosition[LEFT_PLAYER].x=(mWidth/2)-NET_RADIUS-BLOBBY_LOWER_RADIUS;
 
-	if (mBlobPosition[RIGHT_PLAYER].x-BLOBBY_LOWER_RADIUS<NET_POSITION_X+NET_RADIUS)
-		mBlobPosition[RIGHT_PLAYER].x=NET_POSITION_X+NET_RADIUS+BLOBBY_LOWER_RADIUS;
+	if (mBlobPosition[RIGHT_PLAYER].x-BLOBBY_LOWER_RADIUS<(mWidth/2)+NET_RADIUS)
+		mBlobPosition[RIGHT_PLAYER].x=(mWidth/2)+NET_RADIUS+BLOBBY_LOWER_RADIUS;
 
 	// Collision between blobby and the border
 	if (mBlobPosition[LEFT_PLAYER].x < LEFT_PLANE)
 		mBlobPosition[LEFT_PLAYER].x=LEFT_PLANE;
 
-	if (mBlobPosition[RIGHT_PLAYER].x > RIGHT_PLANE)
-		mBlobPosition[RIGHT_PLAYER].x=RIGHT_PLANE;
+	if (mBlobPosition[RIGHT_PLAYER].x > mWidth)
+		mBlobPosition[RIGHT_PLAYER].x=mWidth;
 
 	// Velocity Integration
 	if( !isGameRunning )
@@ -277,7 +277,7 @@ void PhysicWorld::handleBallWorldCollisions()
 		mBallVelocity = mBallVelocity.reflectY();
 		mBallVelocity = mBallVelocity.scale(0.95);
 		mBallPosition.y = GROUND_PLANE_HEIGHT_MAX - BALL_RADIUS;
-		mCallback( MatchEvent{MatchEvent::BALL_HIT_GROUND, mBallPosition.x > NET_POSITION_X ? RIGHT_PLAYER : LEFT_PLAYER, 0} );
+		mCallback( MatchEvent{MatchEvent::BALL_HIT_GROUND, mBallPosition.x > (mWidth/2) ? RIGHT_PLAYER : LEFT_PLAYER, 0} );
 	}
 
 	// Border Collision
@@ -288,20 +288,20 @@ void PhysicWorld::handleBallWorldCollisions()
 		mBallPosition.x = LEFT_PLANE + BALL_RADIUS;
 		mCallback( MatchEvent{MatchEvent::BALL_HIT_WALL, LEFT_PLAYER, 0} );
 	}
-	else if (mBallPosition.x + BALL_RADIUS >= RIGHT_PLANE && mBallVelocity.x > 0.0)
+	else if (mBallPosition.x + BALL_RADIUS >= mWidth && mBallVelocity.x > 0.0)
 	{
 		mBallVelocity = mBallVelocity.reflectX();
 		// set the ball's position
-		mBallPosition.x = RIGHT_PLANE - BALL_RADIUS;
+		mBallPosition.x = mWidth - BALL_RADIUS;
 		mCallback( MatchEvent{MatchEvent::BALL_HIT_WALL, RIGHT_PLAYER, 0} );
 	}
 	else if (mBallPosition.y > NET_SPHERE_POSITION &&
-			fabs(mBallPosition.x - NET_POSITION_X) < BALL_RADIUS + NET_RADIUS)
+			fabs(mBallPosition.x - (mWidth/2)) < BALL_RADIUS + NET_RADIUS)
 	{
-		bool right = mBallPosition.x - NET_POSITION_X > 0;
+		bool right = mBallPosition.x - (mWidth/2) > 0;
 		mBallVelocity = mBallVelocity.reflectX();
 		// set the ball's position so that it touches the net
-		mBallPosition.x = NET_POSITION_X + (right ? (BALL_RADIUS + NET_RADIUS) : (-BALL_RADIUS - NET_RADIUS));
+		mBallPosition.x = (mWidth/2) + (right ? (BALL_RADIUS + NET_RADIUS) : (-BALL_RADIUS - NET_RADIUS));
 
 		mCallback( MatchEvent{MatchEvent::BALL_HIT_NET, right ? RIGHT_PLAYER : LEFT_PLAYER, 0} );
 	}
@@ -309,12 +309,12 @@ void PhysicWorld::handleBallWorldCollisions()
 	{
 		// Net Collisions
 
-		float ballNetDistance = Vector2(mBallPosition, Vector2(NET_POSITION_X, NET_SPHERE_POSITION)).length();
+		float ballNetDistance = Vector2(mBallPosition, Vector2((mWidth/2), NET_SPHERE_POSITION)).length();
 
 		if (ballNetDistance < NET_RADIUS + BALL_RADIUS)
 		{
 			// calculate
-			Vector2 normal = Vector2(mBallPosition,	Vector2(NET_POSITION_X, NET_SPHERE_POSITION)).normalise();
+			Vector2 normal = Vector2(mBallPosition,	Vector2((mWidth/2), NET_SPHERE_POSITION)).normalise();
 
 			// normal component of kinetic energy
 			float perp_ekin = normal.dotProduct(mBallVelocity);
@@ -332,11 +332,11 @@ void PhysicWorld::handleBallWorldCollisions()
 			mBallVelocity = Vector2(mBallVelocity.reflect(normal).normalise().scale(new_speed));
 
 			// pushes the ball out of the net
-			mBallPosition = (Vector2(NET_POSITION_X, NET_SPHERE_POSITION) - normal * (NET_RADIUS + BALL_RADIUS));
+			mBallPosition = (Vector2((mWidth/2), NET_SPHERE_POSITION) - normal * (NET_RADIUS + BALL_RADIUS));
 
 			mCallback( MatchEvent{MatchEvent::BALL_HIT_NET_TOP, NO_PLAYER, 0} );
 		}
-		// mBallVelocity = mBallVelocity.reflect( Vector2( mBallPosition, Vector2 (NET_POSITION_X, temp) ).normalise()).scale(0.75);
+		// mBallVelocity = mBallVelocity.reflect( Vector2( mBallPosition, Vector2 ((mWidth/2), temp) ).normalise()).scale(0.75);
 	}
 }
 Vector2 PhysicWorld::getBallPosition() const

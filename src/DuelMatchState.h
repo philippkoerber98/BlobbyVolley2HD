@@ -44,7 +44,7 @@ struct DuelMatchState
 	int getHitcount(PlayerSide player) const;
 	int getScore(PlayerSide player) const;
 
-	void swapSides();
+	void swapSides(float courtWidth = 800.f);
 
 	PhysicState worldState;
 	GameLogicState logicState;

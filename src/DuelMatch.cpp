@@ -33,7 +33,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 /* implementation */
 
-DuelMatch::DuelMatch(bool remote, const std::string& rules, int score_to_win) :
+DuelMatch::DuelMatch(bool remote, const std::string& rules, int score_to_win, float courtWidth) :
 		mPaused(false),
 		mRemote(remote)
 {
@@ -41,8 +41,9 @@ DuelMatch::DuelMatch(bool remote, const std::string& rules, int score_to_win) :
 		score_to_win = IUserConfigReader::createUserConfigReader("config.xml")->getInteger("scoretowin");
 	}
 
+	mCourtWidth=courtWidth>801.f?3200.f/3.f:800.f;
 	mLogic = createGameLogic(rules, score_to_win);
-	mPhysicWorld.reset( new PhysicWorld() );
+	mPhysicWorld.reset( new PhysicWorld(mCourtWidth,getMovementSpeed()) );
 
 	setInputSources(std::make_shared<InputSource>(), std::make_shared<InputSource>());
 
@@ -67,7 +68,7 @@ void DuelMatch::setInputSources(std::shared_ptr<InputSource> left_input, std::sh
 
 void DuelMatch::reset()
 {
-	mPhysicWorld.reset(new PhysicWorld());
+	mPhysicWorld.reset(new PhysicWorld(mCourtWidth,getMovementSpeed()));
 	mLogic = mLogic->clone();
 }
 
@@ -99,7 +100,11 @@ void DuelMatch::step()
 	// do steps in physic and logic
 	mPhysicWorld->step( mTransformedInput[LEFT_PLAYER], mTransformedInput[RIGHT_PLAYER],
 						mLogic->isBallValid(), mLogic->isGameRunning() );
-	mLogic->step( getState() );
+	auto logicState=getState();
+ const float ratio=800.f/mCourtWidth;
+ logicState.worldState.ballPosition.x*=ratio;logicState.worldState.ballVelocity.x*=ratio;
+ for(int i=0;i<MAX_PLAYERS;++i){logicState.worldState.blobPosition[i].x*=ratio;logicState.worldState.blobVelocity[i].x*=ratio;}
+ mLogic->step(logicState);
 
 	// check for all hit events
 
@@ -317,11 +322,11 @@ std::shared_ptr<InputSource> DuelMatch::getInputSource(PlayerSide player) const
 void DuelMatch::resetBall( PlayerSide side )
 {
 	if (side == LEFT_PLAYER)
-		mPhysicWorld->setBallPosition( Vector2(200, STANDARD_BALL_HEIGHT) );
+		mPhysicWorld->setBallPosition( Vector2(mCourtWidth/4, STANDARD_BALL_HEIGHT) );
 	else if (side == RIGHT_PLAYER)
-		mPhysicWorld->setBallPosition( Vector2(600, STANDARD_BALL_HEIGHT) );
+		mPhysicWorld->setBallPosition( Vector2(mCourtWidth*3/4, STANDARD_BALL_HEIGHT) );
 	else
-		mPhysicWorld->setBallPosition( Vector2(400, 450) );
+		mPhysicWorld->setBallPosition( Vector2(mCourtWidth/2, 450) );
 
 	mPhysicWorld->setBallVelocity( Vector2(0, 0) );
 	mPhysicWorld->setBallAngularVelocity( (side == RIGHT_PLAYER ? -1 : 1) * STANDARD_BALL_ANGULAR_VELOCITY );
@@ -349,4 +354,13 @@ void DuelMatch::updateEvents()
 	/// \todo more economical with a swap?
 	mLastEvents = mEvents;
 	mEvents.clear();
+}
+
+void DuelMatch::setCourtWidth(float width)
+{
+ const float desired=width>801.f?3200.f/3.f:800.f;
+ if(desired==mCourtWidth)return;
+ mCourtWidth=desired;
+ mPhysicWorld.reset(new PhysicWorld(mCourtWidth,getMovementSpeed()));
+ if(!mRemote)mPhysicWorld->setEventCallback([this](const MatchEvent& event){mEvents.push_back(event);});
 }
