@@ -136,6 +136,9 @@ endif ()
 
 target_link_libraries(blobby ${BLOBBY_COMMON_LIBS} ${OPENGL_LIBRARIES})
 
+add_executable(assets-smoke-test EXCLUDE_FROM_ALL ../test/AssetsSmokeTest.cpp ../test/FrameTimingTest.cpp ${blobby_SRC})
+target_link_libraries(assets-smoke-test PRIVATE ${BLOBBY_COMMON_LIBS} ${OPENGL_LIBRARIES})
+
 
 if (UNIX AND (NOT ANDROID) OR WIN32)
 	add_executable(blobby-server ${blobby-server_SRC})
@@ -192,3 +195,10 @@ foreach(HEADER ${HEADERS})
 endforeach()
 
 target_link_libraries(test-compile-headers PRIVATE ${BLOBBY_COMMON_LIBS})
+
+add_executable(display-viewport-test EXCLUDE_FROM_ALL ../test/DisplayViewportTest.cpp)
+target_link_libraries(display-viewport-test PRIVATE SDL2::SDL2main SDL2::SDL2)
+if(SDL2_VERSION VERSION_GREATER_EQUAL "2.0.14")
+    add_executable(controller-test EXCLUDE_FROM_ALL ../test/ControllerTest.cpp input_device/JoystickPool.cpp BlobbyDebug.cpp)
+    target_link_libraries(controller-test PRIVATE SDL2::SDL2main SDL2::SDL2)
+endif()
