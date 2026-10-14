@@ -27,6 +27,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 #include <functional>
 #include <tuple>
+#include "WarmUI.h"
 
 /*! \class GameState
 	\brief base class for any game related state (Local, Network, Replay)
@@ -70,6 +71,10 @@ protected:
 	/// this function draws the winning player screen
 	/// does not display any buttons because they depend on the game type
 	bool displayWinningPlayerScreen(PlayerSide winner);
+	int displayVictoryActions(bool rematch, bool replay = false);
+	bool beginDialog(const std::string& key, int count);
+	WarmUI::Navigation mDialogNavigation;
+	std::string mDialogKey;
 
 
 	/// calculates the default name for a replay file
@@ -89,4 +94,7 @@ private:
 	DuelMatchState mPreviousRenderState, mCurrentRenderState;
 	bool mHasRenderState = false;
 	std::string mFilename;
+	unsigned mReplayCursor = 0;
+	bool mCelebrating = false;
+	Uint32 mVictoryStarted = 0;
 };

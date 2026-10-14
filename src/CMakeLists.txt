@@ -68,6 +68,7 @@ set (blobby_SRC ${common_SRC} ${inputdevice_SRC}
 	state/LocalGameState.cpp state/LocalGameState.h
 	state/NetworkState.cpp state/NetworkState.h
 	state/OptionsState.cpp state/OptionsState.h
+	state/TabbedOptionsState.cpp
 	state/NetworkSearchState.cpp state/NetworkSearchState.h
 	state/ReplayState.cpp state/ReplayState.h
 	state/ReplaySelectionState.cpp state/ReplaySelectionState.h

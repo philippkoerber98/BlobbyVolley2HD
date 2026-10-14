@@ -39,15 +39,8 @@ public:
 	const char* getStateName() const override;
 
 private:
-	/// writes current settings to disk
-	void save();
-
-	UserConfig mOptionConfig;
-	std::vector<std::string> mScriptNames;
-	unsigned mPlayerOptions[MAX_PLAYERS];
-	std::string mPlayerName[MAX_PLAYERS];
-	unsigned mPlayerNamePosition[MAX_PLAYERS];
-	unsigned mBotStrength[MAX_PLAYERS];
+	struct Menu;
+	std::unique_ptr<Menu> mMenu;
 };
 
 /*! \class GraphicOptionsState
@@ -67,6 +60,8 @@ private:
 
 	UserConfig mOptionConfig;
 	bool mFullscreen;
+	int mWindowWidth = 800, mWindowHeight = 600;
+	int mRenderFPS = 0;
 	std::string mRenderer;
 	int mR1, mG1, mB1, mR2, mG2, mB2;
 	bool mLeftMorphing, mRightMorphing;

@@ -64,7 +64,7 @@ void ReplayState::loadReplay(const std::string& file)
 		FileWrite rulesFile("rules/"+TEMP_RULES_NAME);
 		rulesFile.write(mReplayPlayer->getRules());
 		rulesFile.close();
-		mMatch.reset(new DuelMatch(false, TEMP_RULES_NAME));
+		mMatch.reset(new DuelMatch(false,TEMP_RULES_NAME,0,mReplayPlayer->getCourtWidth()));
 
 		mMatch->setPlayers(PlayerIdentity{mReplayPlayer->getPlayerName(LEFT_PLAYER)},
 		                   PlayerIdentity{mReplayPlayer->getPlayerName(RIGHT_PLAYER)});
@@ -201,12 +201,13 @@ void ReplayState::step_impl()
 	{
 		displayWinningPlayerScreen(side);
 
-		if (imgui.doButton(GEN_ID, Vector2(290, 350), TextManager::LBL_OK))
+		const int action=displayVictoryActions(true,true);
+		if (action==2)
 		{
 			switchState(new ReplaySelectionState());
 			return;
 		}
-		if (imgui.doButton(GEN_ID, Vector2(400, 350), TextManager::RP_SHOW_AGAIN))
+		if (action==1)
 		{
 			// we don't have to reset the match, because we don't use lua rules
 			// we just have to jump to the beginning

@@ -93,6 +93,8 @@ void LocalGameState::init()
 	mRecorder->setGameRules( config->getString("rules") );
 	mRecorder->setCourtWidth(mMatch->getCourtWidth());
 	getApp().getRenderManager().setCourtWidth(mMatch->getCourtWidth());
+	presentGame();
+	presentGameUI();
 }
 
 
@@ -125,19 +127,11 @@ void LocalGameState::step_impl()
 	else if (mWinner)
 	{
 		displayWinningPlayerScreen( mMatch->winningPlayer() );
-		if (imgui.doButton(GEN_ID, Vector2(310, 340), TextManager::LBL_OK))
-		{
-			switchState(new MainMenuState());
-		}
-		if (imgui.doButton(GEN_ID, Vector2(420, 340), TextManager::GAME_TRY_AGAIN))
-		{
-			switchState(new LocalGameState());
-		}
-		if (imgui.doButton(GEN_ID, Vector2(500, 390), TextManager::RP_SAVE, TF_ALIGN_CENTER))
-		{
-			mSaveReplay = true;
-			imgui.resetSelection();
-		}
+        const int action=displayVictoryActions(true);
+        if(action==1)switchState(new LocalGameState());
+        if(action==2)switchState(new MainMenuState());
+        if(action==3){mSaveReplay=true;imgui.resetSelection();}
+
 	}
 	else if (is_exiting())
 	{

@@ -39,6 +39,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #include "SpeedController.h"
 #include "InputManager.h"
 #include "IScriptableComponent.h"
+#include "WarmUI.h"
 
 /* implementation */
 
@@ -92,58 +93,61 @@ MainMenuState::MainMenuState()
 	SpeedController::getMainInstance()->setGameSpeed(75);
 }
 
+struct MainMenuState::Menu {
+ WarmUI::Navigation navigation,confirm;
+ bool quitting=false;
+ UserConfig config;
+ Menu(){config.loadFile("config.xml");}
+};
 MainMenuState::~MainMenuState() = default;
-
-void MainMenuState::step_impl()
+void MainMenuState::init() { mMenu.reset(new Menu);draw(false); }
+void MainMenuState::step_impl() { if(!mMenu)mMenu.reset(new Menu);draw(true); }
+void MainMenuState::draw(bool interactive)
 {
-	IMGUI& imgui = getIMGUI();
-
-	imgui.doCursor();
-	imgui.doImage(GEN_ID, Vector2(400.0, 300.0), "background");
-	imgui.doOverlay(GEN_ID, Vector2(0.0, 0.0), Vector2(800.0, 600.0));
-	imgui.doImage(GEN_ID, Vector2(400.0, 175.0), "gfx/titel.bmp");
-	if (imgui.doButton(GEN_ID, Vector2(34, 300.0), TextManager::MNU_LABEL_ONLINE))
-	{
-		switchState( new OnlineSearchState() );
-	}
-	if (imgui.doButton(GEN_ID, Vector2(34, 340.0), TextManager::MNU_LABEL_LAN))
-	{
-		switchState( new LANSearchState() );
-	}
-	if (imgui.doButton(GEN_ID, Vector2(34.0, 380.0), TextManager::MNU_LABEL_START))
-	{
-		try
-		{
-			switchState(new LocalGameState());
-		}
-		catch (const ScriptException& except)
-		{
-			FILE* file = fopen("lualog.txt", "wb");
-			fprintf(file, "Lua Error: %s\n",
-				except.luaerror.c_str());
-			fclose(file);
-		}
-	}
-
-	if (imgui.doButton(GEN_ID, Vector2(34.0, 420.0), TextManager::MNU_LABEL_OPTIONS))
-	{
-		switchState(new OptionState());
-	}
-
-	if (imgui.doButton(GEN_ID, Vector2(34.0, 460.0), TextManager::MNU_LABEL_REPLAY))
-	{
-		switchState(new ReplaySelectionState());
-	}
-
-	if (imgui.doButton(GEN_ID, Vector2(34.0, 500.0), TextManager::MNU_LABEL_CREDITS))
-	{
-		switchState(new CreditsState());
-	}
-
-	if (imgui.doButton(GEN_ID, Vector2(34.0, 540.0), TextManager::MNU_LABEL_EXIT))
-	{
-		getInputMgr().setEndBlobby();
-	}
+ using namespace WarmUI;
+ auto& g=getIMGUI();auto& in=getInputMgr();auto& m=*mMenu;
+ const auto* config=&m.config;
+ language()=config->getString("language");
+ getApp().getRenderManager().setCourtWidth(config->getBool("court_widescreen",false)?3200.f/3.f:800.f);
+ g.doImage(GEN_ID,Vector2(400,300),"menu-backgrounds/"+config->getString("background"),Vector2(800,600));
+ g.doOverlay(GEN_ID,Vector2(0,0),Vector2(800,600));
+ g.doImage(GEN_ID,Vector2(211,111),"gfx/titel.bmp",Vector2(350,202));
+ m.navigation.begin(in,7,interactive&&!m.quitting);
+ const char* labelsDE[]={"Spiel starten","Online spielen","Im LAN spielen","Optionen","Replays","Mitwirkende","Beenden"};
+ const char* labelsEN[]={"Start match","Play online","Play on LAN","Options","Replays","Credits","Quit"};
+ int action=-1;
+ for(int i=0;i<7;++i)if(m.navigation.button(g,in,i,40,212.f+i*40.f,350,34,tr(labelsDE[i],labelsEN[i]),false,true))action=i;
+ const char* de[]={"Ab auf den Sand!","Gemeinsam online spielen","Ein Match im lokalen Netzwerk","Dein Spiel, deine Einstellungen","Deine besten Ballwechsel","Das Team hinter Blobby Volley","Bis zum n\xC3\xA4" "chsten Match"};
+ const char* en[]={"Back to the beach!","Play together online","A match on your local network","Your game, your settings","Your best rallies","The team behind Blobby Volley","See you next match"};
+ text(g,420,406,tr(de[m.navigation.focus],en[m.navigation.focus]),31,2);
+ const char* detailsDE[]={"Starte ein Match gegen Freunde","Finde Mitspieler im Internet.","Spiele mit Freunden im selben Netz.","Passe Spiel, Spieler und Anzeige an.","Sieh dir gespeicherte Spiele an.","Ideen, Entwicklung und Gestaltung.","Schlie\xC3\x9F" "e Blobby Volley 2 HD."};
+ const char* detailsEN[]={"Start a match against friends","Find other players online.","Play with friends on your network.","Adjust gameplay, players and display.","Watch your saved matches.","Ideas, development and artwork.","Close Blobby Volley 2 HD."};
+ text(g,420,443,tr(detailsDE[m.navigation.focus],detailsEN[m.navigation.focus]),22);
+ if(m.navigation.focus==0)text(g,420,464,tr("oder den Computer.","or the computer."),22);
+ text(g,40,571,tr("A / Enter  Ausw\xC3\xA4hlen     B / Esc  Beenden","A / Enter  Select     B / Esc  Quit"),18);
+ text(g,760,571,"Blobby Volley 2 HD",18,2,2);
+ bool opening=interactive&&!m.quitting&&(action==6||in.exit());
+ if(opening){m.quitting=true;m.confirm.focus=0;}
+ if(m.quitting){
+  shade(g,"quit-app");panel(g,144,191,512,215,Color(65,45,29),.98f);
+  text(g,400,214,tr("Blobby Volley 2 HD beenden?","Quit Blobby Volley 2 HD?"),35,2,1);
+  text(g,400,259,tr("Das Spiel wird geschlossen.","The game will close."),24,0,1);
+  m.confirm.begin(in,2,interactive&&!opening);
+  if(m.confirm.button(g,in,0,171,310,219,38,tr("Im Men\xC3\xBC bleiben","Stay in menu"))||(!opening&&interactive&&in.exit()))m.quitting=false;
+  if(m.confirm.button(g,in,1,406,310,223,38,tr("Beenden","Quit")))in.setEndBlobby();
+  text(g,400,378,tr("A  Ausw\xC3\xA4hlen     B  Abbrechen","A  Select     B  Cancel"),18,0,1);
+ }else if(interactive){
+  switch(action){
+   case 0:try{switchState(new LocalGameState());}catch(const ScriptException& e){std::fprintf(stderr,"Lua Error: %s\n",e.luaerror.c_str());}break;
+   case 1:switchState(new OnlineSearchState());break;
+   case 2:switchState(new LANSearchState());break;
+   case 3:switchState(new OptionState());break;
+   case 4:switchState(new ReplaySelectionState());break;
+   case 5:switchState(new CreditsState());break;
+   default:break;
+  }
+ }
+ g.doCursor();
 }
 
 const char* MainMenuState::getStateName() const

@@ -36,143 +36,15 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #include "FileSystem.h"
 
 /* implementation */
-OptionState::OptionState() = default;
-OptionState::~OptionState() = default;
-
-void OptionState::init()
-{
-	mOptionConfig.loadFile("config.xml");
-	mPlayerOptions[LEFT_PLAYER] = 0;
-	mPlayerOptions[RIGHT_PLAYER] = 0;
-	std::string leftScript = mOptionConfig.getString("left_script_name");
-	std::string rightScript = mOptionConfig.getString("right_script_name");
-
-	mScriptNames = FileSystem::getSingleton().enumerateFiles("scripts", ".lua");
-
-	// hack. we cant use something like push_front, though
-	mScriptNames.emplace_back("Human");
-	std::swap(mScriptNames[0], mScriptNames[mScriptNames.size() - 1]);
-
-	for(unsigned int i = 0; i < mScriptNames.size(); ++i)
-	{
-		if (mScriptNames[i] == leftScript)
-			mPlayerOptions[LEFT_PLAYER] = i;
-		if (mScriptNames[i] == rightScript)
-			mPlayerOptions[RIGHT_PLAYER] = i;
-	}
-
-	if (mOptionConfig.getBool("left_player_human"))
-		mPlayerOptions[LEFT_PLAYER] = 0;
-	if (mOptionConfig.getBool("right_player_human"))
-		mPlayerOptions[RIGHT_PLAYER] = 0;
-
-	mPlayerName[LEFT_PLAYER] = mOptionConfig.getString("left_player_name");
-	mPlayerName[RIGHT_PLAYER] = mOptionConfig.getString("right_player_name");
-	mPlayerNamePosition[RIGHT_PLAYER] = 0;
-	mPlayerNamePosition[LEFT_PLAYER] = 0;
-
-	mBotStrength[LEFT_PLAYER] = mOptionConfig.getInteger("left_script_strength");
-	mBotStrength[RIGHT_PLAYER] = mOptionConfig.getInteger("right_script_strength");
-}
-
-void OptionState::save()
-{
-	if (mPlayerOptions[LEFT_PLAYER] == 0)
-	{
-		mOptionConfig.setBool("left_player_human", true);
-	}
-	else
-	{
-		mOptionConfig.setBool("left_player_human", false);
-		mOptionConfig.setString("left_script_name", mScriptNames[mPlayerOptions[LEFT_PLAYER]]);
-	}
-
-	if (mPlayerOptions[RIGHT_PLAYER] == 0)
-	{
-		mOptionConfig.setBool("right_player_human", true);
-	}
-	else
-	{
-		mOptionConfig.setBool("right_player_human", false);
-		mOptionConfig.setString("right_script_name", mScriptNames[mPlayerOptions[RIGHT_PLAYER]]);
-	}
-	mOptionConfig.setString("left_player_name", mPlayerName[LEFT_PLAYER]);
-	mOptionConfig.setString("right_player_name", mPlayerName[RIGHT_PLAYER]);
-	mOptionConfig.setInteger("left_script_strength", mBotStrength[LEFT_PLAYER]);
-	mOptionConfig.setInteger("right_script_strength", mBotStrength[RIGHT_PLAYER]);
-	mOptionConfig.saveFile("config.xml");
-}
-
-void OptionState::step_impl()
-{
-	const int MAX_BOT_DELAY = 25;		// 25 frames = 0.33s (gamespeed: normal)
-
-	IMGUI& imgui = getIMGUI();
-	imgui.doCursor();
-	imgui.doImage(GEN_ID, Vector2(400.0, 300.0), "background");
-	imgui.doOverlay(GEN_ID, Vector2(0.0, 0.0), Vector2(800.0, 600.0));
-
-	imgui.doEditbox(GEN_ID, Vector2(5.0, 10.0), 15, mPlayerName[LEFT_PLAYER], mPlayerNamePosition[LEFT_PLAYER]);
-	imgui.doEditbox(GEN_ID, Vector2(425.0, 10.0), 15, mPlayerName[RIGHT_PLAYER], mPlayerNamePosition[RIGHT_PLAYER]);
-
-	imgui.doSelectbox(GEN_ID, Vector2(5.0, 50.0), Vector2(375.0, 300.0), mScriptNames, mPlayerOptions[LEFT_PLAYER]);
-	imgui.doSelectbox(GEN_ID, Vector2(425.0, 50.0), Vector2(795.0, 300.0), mScriptNames, mPlayerOptions[RIGHT_PLAYER]);
-
-	imgui.doText(GEN_ID, Vector2(400, 310.0), TextManager::OP_DIFFICULTY, TF_ALIGN_CENTER );
-
-	float f = 1.f - (float)mBotStrength[0] / MAX_BOT_DELAY;
-	imgui.doScrollbar(GEN_ID, Vector2(15.0, 350.0), f);
-	mBotStrength[0] = static_cast<unsigned int> ((1.f-f) * MAX_BOT_DELAY + 0.5f);
-	imgui.doText(GEN_ID, Vector2(235.0, 350.0), f > 0.66 ? TextManager::OP_STRONG :
-											 	(f > 0.33 ? TextManager::OP_MEDIUM:
-												TextManager::OP_WEAK));
-
-	f = 1.f - (float)mBotStrength[1] / MAX_BOT_DELAY;
-	imgui.doScrollbar(GEN_ID, Vector2(440.0, 350.0), f);
-	mBotStrength[1] = static_cast<unsigned int> ((1.f - f) * MAX_BOT_DELAY + 0.5f);
-	imgui.doText(GEN_ID, Vector2(660.0, 350.0), f > 0.66 ? TextManager::OP_STRONG :
-											 	(f > 0.33 ? TextManager::OP_MEDIUM:
-												TextManager::OP_WEAK));
-
-	if (imgui.doButton(GEN_ID, Vector2(40.0, 390.0), TextManager::OP_INPUT_OP))
-	{
-		save();
-		switchState(new InputOptionsState());
-	}
-
-	if (imgui.doButton(GEN_ID, Vector2(40.0, 430.0), TextManager::OP_GFX_OP))
-	{
-		save();
-		switchState(new GraphicOptionsState());
-	}
-	if (imgui.doButton(GEN_ID, Vector2(40.0, 470.0), TextManager::OP_MISC))
-	{
-		save();
-		switchState(new MiscOptionsState());
-	}
-
-	if (imgui.doButton(GEN_ID, Vector2(224.0, 530.0), TextManager::LBL_OK))
-	{
-		save();
-		switchState(new MainMenuState());
-	}
-	if (imgui.doButton(GEN_ID, Vector2(424.0, 530.0), TextManager::LBL_CANCEL))
-	{
-		switchState(new MainMenuState());
-	}
-}
-
-const char* OptionState::getStateName() const
-{
-	return "OptionState";
-}
-
 GraphicOptionsState::GraphicOptionsState() = default;
 
 void GraphicOptionsState::init()
 {
 	mOptionConfig.loadFile("config.xml");
 	mFullscreen = mOptionConfig.getBool("fullscreen");
+	mWindowWidth = mOptionConfig.getInteger("window_width", 800);
+	mWindowHeight = mOptionConfig.getInteger("window_height", 600);
+	mRenderFPS = mOptionConfig.getInteger("render_fps", 0);
 	mRenderer = mOptionConfig.getString("device");
 	mR1 = mOptionConfig.getInteger("left_blobby_color_r");
 	mG1 = mOptionConfig.getInteger("left_blobby_color_g");
@@ -189,14 +61,20 @@ GraphicOptionsState::~GraphicOptionsState() = default;
 
 void GraphicOptionsState::save()
 {
+	mOptionConfig.setInteger("render_fps", mRenderFPS);
 #if BLOBBY_ON_DESKTOP
-	if ((mOptionConfig.getBool("fullscreen") != mFullscreen) ||	(mOptionConfig.getString("device") != mRenderer))
+	if ((mOptionConfig.getBool("fullscreen") != mFullscreen) || (mOptionConfig.getString("device") != mRenderer) ||
+		mOptionConfig.getInteger("window_width", 800) != mWindowWidth ||
+		mOptionConfig.getInteger("window_height", 600) != mWindowHeight)
 	{
 		mOptionConfig.setBool("fullscreen", mFullscreen);
 		mOptionConfig.setString("device", mRenderer);
+		mOptionConfig.setInteger("window_width", mWindowWidth);
+		mOptionConfig.setInteger("window_height", mWindowHeight);
 		getApp().setupRenderManager(mOptionConfig);
 	}
 #endif
+	getApp().setFrameLimit(mRenderFPS);
 
 	getApp().getRenderManager().showShadow(mShowShadow);
 	mOptionConfig.setBool("show_shadow", mShowShadow);
@@ -223,7 +101,7 @@ void GraphicOptionsState::step_impl()
 #if BLOBBY_ON_DESKTOP
 	imgui.doText(GEN_ID, Vector2(34.0, 10.0), TextManager::OP_VIDEO);
 
-	if (imgui.doButton(GEN_ID, Vector2(34.0, 40.0), TextManager::OP_FULLSCREEN))
+	if (imgui.doButton(GEN_ID, Vector2(34.0, 40.0), "Fullscreen"))
 		mFullscreen = true;
 	if (imgui.doButton(GEN_ID, Vector2(34.0, 70.0), TextManager::OP_WINDOW))
 		mFullscreen = false;
@@ -244,6 +122,30 @@ void GraphicOptionsState::step_impl()
 		imgui.doImage(GEN_ID, Vector2(428.0, 82.0), "gfx/pfeil_rechts.bmp");
 #endif
 	float heightOfElement = 110.0;
+
+#if BLOBBY_ON_DESKTOP
+	if (!mFullscreen)
+	{
+		const auto& sizes = getApp().displaySettings().windowSizes;
+		auto selected = std::find(sizes.begin(),sizes.end(),WindowSize{mWindowWidth,mWindowHeight});
+		if (selected == sizes.end())
+		{
+			WindowSize fitting = sizes.front();
+			for (auto size : sizes)
+				if (size.width <= mWindowWidth && size.height <= mWindowHeight) fitting = size;
+			mWindowWidth = fitting.width; mWindowHeight = fitting.height;
+		}
+		imgui.doText(GEN_ID, Vector2(444, 105),
+			imgui.textMgr().getLang() == "de" ? "Fenstergröße" : "Window size", TF_SMALL_FONT);
+		if (imgui.doButton(GEN_ID, Vector2(444, 130),
+			std::to_string(mWindowWidth) + " x " + std::to_string(mWindowHeight)))
+		{
+			auto next = std::find(sizes.begin(),sizes.end(),WindowSize{mWindowWidth,mWindowHeight});
+			if (next == sizes.end() || ++next == sizes.end()) next = sizes.begin();
+			mWindowWidth = next->width; mWindowHeight = next->height;
+		}
+	}
+#endif
 
 #if BLOBBY_ON_MOBILE
 	heightOfElement = 10.0;
@@ -374,6 +276,28 @@ void GraphicOptionsState::step_impl()
 		imgui.doBlob(GEN_ID, Vector2(670, 500), ourCol);
 	}
 
+	const auto& display = getApp().displaySettings();
+	const auto& limits = display.frameLimits;
+	if (mRenderFPS > 0)
+	{
+		int fitting = limits.front();
+		for (int limit : limits) if (limit <= mRenderFPS) fitting = limit;
+		mRenderFPS = fitting;
+	}
+	imgui.doText(GEN_ID, Vector2(400,435),
+		imgui.textMgr().getLang() == "de" ? "Bildrate" : "Frame rate", TF_SMALL_FONT | TF_ALIGN_CENTER);
+	const std::string frameLabel = mRenderFPS == 0 ?
+		"Auto: " + std::to_string(display.refreshRate) + " Hz" : std::to_string(mRenderFPS) + " FPS";
+	if (imgui.doButton(GEN_ID, Vector2(400,460), frameLabel, TF_ALIGN_CENTER))
+	{
+		if (mRenderFPS == 0) mRenderFPS = limits.front();
+		else
+		{
+			auto next = std::find(limits.begin(),limits.end(),mRenderFPS);
+			mRenderFPS = next == limits.end() || ++next == limits.end() ? 0 : *next;
+		}
+	}
+
 	if (imgui.doButton(GEN_ID, Vector2(224.0, 530.0), TextManager::LBL_OK))
 	{
 		save();
@@ -493,7 +417,8 @@ void InputOptionsState::handlePlayerInput(PlayerSide player, std::string& lastAc
 	int base_x = (player == LEFT_PLAYER) ? 0 : 400;
 	imgui.doText(GEN_ID, Vector2(base_x + 34.0, 10.0), p_str);
 
-	if (imgui.doButton(GEN_ID, Vector2(base_x + 80.0, 60.0), getDeviceName(device)))
+	if (imgui.doButton(GEN_ID, Vector2(base_x + 80.0, 60.0),
+		device == "gamepad" ? std::string("Gamepad") : imgui.getText(getDeviceName(device))))
 	{
 		if (device == "mouse")
 		{
@@ -504,6 +429,10 @@ void InputOptionsState::handlePlayerInput(PlayerSide player, std::string& lastAc
 			device = "joystick";
 		}
 		else if (device == "joystick")
+		{
+			device = "gamepad";
+		}
+		else if (device == "gamepad")
 		{
 			if (mRightDevice != "mouse" && mLeftDevice != "mouse")
 			{
@@ -516,6 +445,23 @@ void InputOptionsState::handlePlayerInput(PlayerSide player, std::string& lastAc
 		}
 	}
 	//if mouse device is selected:
+	if (device == "gamepad")
+	{
+		std::string prefix = player == LEFT_PLAYER ? "left_blobby_" : "right_blobby_";
+		int slot = mOptionConfig.getInteger(prefix + "controller_slot", player == LEFT_PLAYER ? 0 : 1);
+		if (imgui.doButton(GEN_ID, Vector2(base_x + 34, 120), "Controller " + std::to_string(slot + 1)))
+			mOptionConfig.setInteger(prefix + "controller_slot", slot == 0 ? 1 : 0);
+		int jump = mOptionConfig.getInteger(prefix + "controller_jump", 0);
+		jump = jump == 2 || jump == 3 ? jump : 0;
+		const char* buttons[] = {"A", "B", "X", "Y"};
+		if (imgui.doButton(GEN_ID, Vector2(base_x + 34, 190), std::string("Jump: ") + buttons[jump]))
+			mOptionConfig.setInteger(prefix + "controller_jump", jump == 0 ? 2 : jump == 2 ? 3 : 0);
+		int deadzone = mOptionConfig.getInteger(prefix + "controller_deadzone", 10000);
+		if (imgui.doButton(GEN_ID, Vector2(base_x + 34, 260), "Deadzone: " + std::to_string(deadzone * 100 / 32767) + "%"))
+			mOptionConfig.setInteger(prefix + "controller_deadzone", deadzone >= 15000 ? 5000 : deadzone + 5000);
+		imgui.doText(GEN_ID, Vector2(base_x + 34, 330), "Stick / D-Pad");
+		imgui.doText(GEN_ID, Vector2(base_x + 34, 370), "Start: Pause");
+	}
 	if (device == "mouse")
 	{
 		handleMouseInput(base_x, mouse, player == LEFT_PLAYER ? mLeftMouseSensitivity : mRightMouseSensitivity);
@@ -1053,6 +999,12 @@ void MiscOptionsState::init()
 	mBackground = -1;
 
 	mBackgrounds = FileSystem::getSingleton().enumerateFiles("backgrounds", ".bmp", true);
+	const auto hdBackgrounds=FileSystem::getSingleton().enumerateFiles("backgrounds/hd", ".png", true);
+	for(const auto& png:hdBackgrounds)
+	{
+		const auto name=png.substr(0,png.size()-4)+".bmp";
+		if(std::find(mBackgrounds.begin(),mBackgrounds.end(),name)==mBackgrounds.end())mBackgrounds.push_back(name);
+	}
 
 	for(unsigned int i = 0; i < mBackgrounds.size(); ++i)
 	{

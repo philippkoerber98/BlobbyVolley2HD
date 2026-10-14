@@ -490,15 +490,10 @@ void NetworkGameState::step_impl()
 		{
 			mMatch->updateEvents(); // so the last whistle will be sounded
 			displayWinningPlayerScreen(mWinningPlayer);
-			if (imgui.doButton(GEN_ID, Vector2(290, 360), TextManager::LBL_OK))
-			{
-				switchState(new MainMenuState());
-			}
-			if (imgui.doButton(GEN_ID, Vector2(380, 360), TextManager::RP_SAVE))
-			{
-				mSaveReplay = true;
-				imgui.resetSelection();
-			}
+            const int action=displayVictoryActions(false);
+            if(action==2)switchState(new MainMenuState());
+            if(action==3){mSaveReplay=true;imgui.resetSelection();}
+
 			break;
 		}
 		case PAUSING:

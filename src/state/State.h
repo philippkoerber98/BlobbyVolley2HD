@@ -85,9 +85,14 @@ class MainMenuState : public State
 {
 public:
 	MainMenuState();
+	void init() override;
 	~MainMenuState() override;
 	void step_impl() override;
 	const char* getStateName() const override;
+private:
+	struct Menu;
+	std::unique_ptr<Menu> mMenu;
+	void draw(bool interactive);
 };
 
 /*! \class CreditsState
