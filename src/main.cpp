@@ -31,9 +31,6 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 #include "Global.h"
 
-#ifdef __SWITCH__
-	#include <switch.h>
-#endif
 
 #include "RenderManager.h"
 #include "SoundManager.h"
@@ -58,9 +55,6 @@ void deinit()
 {
 	SDL_Quit();
 
-#if (defined __SWITCH__) && (defined DEBUG)
-	socketExit();
-#endif
 }
 
 void setupPHYSFS()
@@ -123,10 +117,6 @@ void setupPHYSFS()
 
 int main(int argc, char* argv[])
 {
-#if (defined __SWITCH__) && (defined DEBUG)
-	socketInitializeDefault();   
-	nxlinkStdio();
-#endif
 
 	DEBUG_STATUS("started main");
 
@@ -265,9 +255,6 @@ int main(int argc, char* argv[])
 		std::cerr << e.what() << std::endl;
 		SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error", (std::string("An error occurred, blobby will close: ") + e.what()).c_str(), nullptr);
 		SDL_Quit();
-#if (defined __SWITCH__) && (defined DEBUG)
-	socketExit();
-#endif
 		exit (EXIT_FAILURE);
 	}
 	deinit();

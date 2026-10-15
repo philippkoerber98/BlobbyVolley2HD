@@ -39,11 +39,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #include "FileWrite.h"
 #include "base64.h"
 
-#ifdef __SWITCH__
-#define SIZET_TYPE unsigned int
-#else
 #define SIZET_TYPE std::uint64_t
-#endif
 
 /* implementation */
 VersionMismatchException::VersionMismatchException(const std::string& filename, uint8_t major, uint8_t minor)

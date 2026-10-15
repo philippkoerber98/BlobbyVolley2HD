@@ -99,9 +99,6 @@ void RenderManagerSDL::init(int xResolution, int yResolution, bool fullscreen)
 
 	// Set modesetting
 	Uint32 screenFlags = SDL_WINDOW_ALLOW_HIGHDPI;
-#ifdef __SWITCH__
-	screenFlags |= SDL_WINDOW_FULLSCREEN;
-#else
 	if (fullscreen)
 	{
 		screenFlags |= SDL_WINDOW_FULLSCREEN_DESKTOP;
@@ -110,7 +107,6 @@ void RenderManagerSDL::init(int xResolution, int yResolution, bool fullscreen)
 	{
 		screenFlags |= SDL_WINDOW_RESIZABLE;
 	}
-#endif
 	// Create window
 	mWindow = SDL_CreateWindow(AppTitle,
 		SDL_WINDOWPOS_UNDEFINED,
@@ -118,7 +114,7 @@ void RenderManagerSDL::init(int xResolution, int yResolution, bool fullscreen)
 		xResolution, yResolution,
 		screenFlags);
 
-#if !(defined __SWITCH__) && !(defined BUILD_MACOS_BUNDLE)
+#ifndef BUILD_MACOS_BUNDLE
 	// Set icon
 	SDL_Surface* icon = loadSurface("Icon.bmp");
 	SDL_SetColorKey(icon, SDL_TRUE,
@@ -128,11 +124,7 @@ void RenderManagerSDL::init(int xResolution, int yResolution, bool fullscreen)
 #endif
 
 	// Create renderer to draw in window
-#ifdef __SWITCH__
-	mRenderer = SDL_CreateRenderer(mWindow, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
-#else
 	mRenderer = SDL_CreateRenderer(mWindow, -1, 0);
-#endif
 
 	// Hide mousecursor
 	SDL_ShowCursor(0);

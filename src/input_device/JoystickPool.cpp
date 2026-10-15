@@ -120,7 +120,6 @@ KeyAction JoystickAction::toKeyAction() const
 	// This is an place holder
 	// Just to get simple gamepad support for the GUI
 	// TODO: Fix that! Use GUID -> ButtonMapping to get this think cleaned up
-#ifndef __SWITCH__
 	if (type == AXIS)
 	{
 		// X-Achse?!
@@ -151,7 +150,6 @@ KeyAction JoystickAction::toKeyAction() const
 			}
 		}
 	}
-#endif
 	
 	if (type == BUTTON)
 	{
@@ -167,28 +165,6 @@ KeyAction JoystickAction::toKeyAction() const
 			// We don't allow back at the moment -> game is not leavable
 			return KeyAction::NONE;
 		}
-#ifdef __SWITCH__
-		if(number == 12 || number == 16) 
-		{
-			return KeyAction::LEFT;
-		}
-		if(number == 13 || number == 17) 
-		{
-			return KeyAction::UP;
-		}
-		if(number == 14 || number == 18) 
-		{
-			return KeyAction::RIGHT;
-		}
-		if(number == 15 || number == 19) 
-		{
-			return KeyAction::DOWN;
-		}
-		if(number == 10)
-		{
-			return KeyAction::BACK;
-		}
-#endif
 	}
 	return KeyAction::NONE;
 }

@@ -92,10 +92,6 @@ find_package(OpenGL)
 add_subdirectory(raknet)
 add_subdirectory(blobnet)
 
-if (SWITCH)
-	find_library(NX nx)
-endif (SWITCH)
-
 if (OPENGL_FOUND)
 	include_directories(${OPENGL_INCLUDE_DIR})
 	add_definitions(-DHAVE_LIBGL)
@@ -114,26 +110,12 @@ if (NOT WIN32)
 	set(BLOBBY_COMMON_LIBS ${BLOBBY_COMMON_LIBS} Threads::Threads)
 endif ()
 
-if (SWITCH)
-	add_executable(blobby.elf main.cpp ${blobby_SRC})
-	target_link_libraries(blobby.elf ${DEVKITPRO}/portlibs/switch/lib/libEGL.a ${DEVKITPRO}/portlibs/switch/lib/libdrm_nouveau.a ${DEVKITPRO}/portlibs/switch/lib/libglapi.a ${DEVKITPRO}/libnx/lib/libnx.a)
-	add_custom_command(
-		OUTPUT blobby.nro
-		COMMAND ${DEVKITPRO}/tools/bin/elf2nro blobby.elf blobby.nro --icon=${CMAKE_SOURCE_DIR}/data/Icon.jpg --nacp=blobby.nacp
-		DEPENDS blobby.elf blobby.nacp)
-	add_custom_command(
-		OUTPUT blobby.nacp
-		COMMAND ${DEVKITPRO}/tools/bin/nacptool --create "${APP_NAME}" "${APP_AUTHOR}" "${PROJECT_VERSION}" VERBATIM blobby.nacp
-	)
-	add_custom_target(blobby ALL DEPENDS blobby.nro)
+if (ANDROID)
+    add_library(blobby SHARED main.cpp ${blobby_SRC})
+elseif (WIN32)
+    add_executable(blobby WIN32 main.cpp ${blobby_SRC})
 else ()
-	if (ANDROID)
-		add_library(blobby SHARED main.cpp ${blobby_SRC})
-	elseif (WIN32)
-	    add_executable(blobby WIN32 main.cpp ${blobby_SRC})
-	else ()
-		add_executable(blobby main.cpp ${blobby_SRC})
-	endif ()
+    add_executable(blobby main.cpp ${blobby_SRC})
 endif ()
 
 target_link_libraries(blobby ${BLOBBY_COMMON_LIBS} ${OPENGL_LIBRARIES})
@@ -163,8 +145,6 @@ if (WIN32)
 	install(TARGETS blobby blobby-server DESTINATION .)
 elseif (ANDROID)
 	install(TARGETS blobby DESTINATION bin)
-elseif (SWITCH)
-	install(FILES ${CMAKE_CURRENT_BINARY_DIR}/blobby.nro DESTINATION .)
 elseif (UNIX AND NOT APPLE)
 	install(TARGETS blobby blobby-server DESTINATION bin)
 endif ()
