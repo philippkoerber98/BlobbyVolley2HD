@@ -218,25 +218,26 @@ void testPresentation(const std::string& outputDirectory)
     SDL_InitSubSystem(SDL_INIT_AUDIO);
     SpeedController speed(75); SpeedController::setMainInstance(&speed);
     {
-        BlobbyApp app(std::unique_ptr<State>(new GraphicOptionsState),config);
+        BlobbyApp app(std::unique_ptr<State>(new OptionState),config);
         SDL_HideWindow(app.getWindow());
         app.getCurrentState().init();
         app.getInputManager().updateInput(); stepApp(app);
         require(app.renderFPS()==app.displaySettings().refreshRate,"Auto FPS does not follow monitor");
         captureApp(app,.5f,outputDirectory+"/graphics-window-auto.png");
-        auto click=[&](int x,int y) {
-            SDL_WarpMouseInWindow(app.getWindow(),x,y);
-            SDL_Event event{}; event.type=SDL_MOUSEBUTTONDOWN; event.button.button=SDL_BUTTON_LEFT;
-            SDL_PushEvent(&event); app.getInputManager().updateInput(); stepApp(app); stepApp(app);
-        };
-        click(400,470);
+        app.setFrameLimit(30);
+        require(app.renderFPS()==30,"Manual FPS limit was not applied");
         captureApp(app,.5f,outputDirectory+"/graphics-window-manual.png");
-        click(65,50);
+        config.setBool("fullscreen",true);
+        app.setupRenderManager(config);
+        SDL_HideWindow(app.getWindow());
         captureApp(app,.5f,outputDirectory+"/graphics-fullscreen-options.png");
         app.setFrameLimit(999);
         require(app.renderFPS()<=app.displaySettings().refreshRate,"Effective manual FPS exceeds monitor");
 		if (SDL_getenv("BLOBBY_TEST_OPENGL") && SDL_GetNumVideoDisplays()>1)
 		{
+			config.setBool("fullscreen",false);
+			app.setupRenderManager(config);
+			SDL_HideWindow(app.getWindow());
 			SDL_SetWindowPosition(app.getWindow(),SDL_WINDOWPOS_CENTERED_DISPLAY(1),SDL_WINDOWPOS_CENTERED_DISPLAY(1));
 			SDL_PumpEvents(); app.updateDisplaySettings(true);
 			require(app.displaySettings().display==1,"Display settings stayed on the primary monitor after moving");
@@ -288,7 +289,7 @@ void testWindowDecorations(const std::string& outputDirectory)
     for (const char* backend : {"SDL", "OpenGL"})
     {
         config.setString("device",backend);
-        BlobbyApp app(std::unique_ptr<State>(new GraphicOptionsState),config);
+        BlobbyApp app(std::unique_ptr<State>(new OptionState),config);
         SDL_HideWindow(app.getWindow());
         require(SDL_SetWindowFullscreen(app.getWindow(),SDL_WINDOW_FULLSCREEN_DESKTOP)==0,
                 "Cannot prepare fullscreen-to-window regression");
