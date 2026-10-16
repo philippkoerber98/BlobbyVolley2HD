@@ -488,7 +488,7 @@ void RenderManagerGL2D::drawSceneBlur(const std::string& key)
                 std::swap(pixels[y * capture->pitch + x], pixels[(capture->h - 1 - y) * capture->pitch + x]);
             }
         }
-        auto* blur = createMenuBackdrop(capture);
+        auto* blur = createMenuBackdrop(capture, true);
         SDL_FreeSurface(capture);
         if (!blur)
         {
@@ -503,10 +503,10 @@ void RenderManagerGL2D::drawSceneBlur(const std::string& key)
         {
             glDeleteTextures(1, &image->glHandle);
         }
-        image->sourceWidth = 400;
-        image->sourceHeight = 300;
-        image->w = 512;
-        image->h = 512;
+        image->sourceWidth = blur->w;
+        image->sourceHeight = blur->h;
+        image->w = getNextPOT(blur->w);
+        image->h = getNextPOT(blur->h);
         image->glHandle = loadTexture(blur, false);
         mSceneBlurKey = key;
     }

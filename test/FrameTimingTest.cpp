@@ -28,6 +28,7 @@
 #include <SDL_syswm.h>
 #endif
 #include <iostream>
+#include <cstring>
 #include <stdexcept>
 #include <vector>
 
@@ -909,6 +910,63 @@ void testGameMenus(const std::string& outputDirectory)
     }
     SpeedController::setMainInstance(nullptr);
     fs.removeFromSearchPath(outputDirectory);
+}
+
+void testSceneBlurAspect(const std::string& outputDirectory)
+{
+    FileSystem::getSingleton().setWriteDir(outputDirectory);
+    UserConfig config;
+    config.loadFile("config.xml");
+    config.setBool("fullscreen", false);
+    config.setBool("mute", true);
+    SpeedController speed(75);
+    SpeedController::setMainInstance(&speed);
+    std::vector<std::string> backends{"SDL"};
+    if (SDL_getenv("BLOBBY_TEST_OPENGL"))
+    {
+        backends.push_back("OpenGL");
+    }
+    for (const auto& backend : backends)
+    {
+        for (bool wide : {false, true})
+        {
+            config.setString("device", backend);
+            config.setInteger("window_width", wide ? 1280 : 800);
+            config.setInteger("window_height", wide ? 720 : 600);
+            BlobbyApp app(std::unique_ptr<State>(new MainMenuState), config);
+            SDL_HideWindow(app.getWindow());
+            auto& renderer = app.getRenderManager();
+            const float width = wide ? 3200.f / 3.f : 800.f;
+            renderer.setCourtWidth(width);
+            renderer.refresh();
+            // A central crop followed by stretching moves these boundaries.
+            renderer.drawOverlay(1, Vector2(0, 0), Vector2(width, 600), Color(0, 255, 0));
+            renderer.drawOverlay(1, Vector2(0, 0), Vector2(width / 4, 600), Color(255, 0, 0));
+            renderer.drawOverlay(1, Vector2(width * .75f, 0), Vector2(width, 600), Color(0, 0, 255));
+            renderer.drawSceneBlur("aspect-regression");
+            const std::string name = backend + (wide ? "-16x9" : "-4x3");
+            captureApp(app, 0, outputDirectory + "/popup-blur-" + name + ".png");
+            auto* image = IMG_Load((outputDirectory + "/popup-blur-" + name + ".png").c_str());
+            require(image != nullptr, "Cannot load popup blur capture");
+            bool preserved = true;
+            for (int sample = 0; sample < 3; ++sample)
+            {
+                const int x = int(image->w * (sample == 0 ? .20f : sample == 1 ? .50f : .80f));
+                const auto* pixel = static_cast<Uint8*>(image->pixels) + image->h / 2 * image->pitch +
+                                    x * image->format->BytesPerPixel;
+                Uint32 value = 0;
+                std::memcpy(&value, pixel, image->format->BytesPerPixel);
+                Uint8 r, g, b;
+                SDL_GetRGB(value, image->format, &r, &g, &b);
+                preserved &= sample == 0 ? r > 220 && g < 30 && b < 30
+                             : sample == 1 ? g > 220 && r < 30 && b < 30
+                                           : b > 220 && r < 30 && g < 30;
+            }
+            SDL_FreeSurface(image);
+            require(preserved, "Popup blur cropped or stretched the scene");
+        }
+        std::cout << backend << ": popup blur preserves the full scene in 4:3 and 16:9\n";
+    }
 }
 
 void testRoundedPanels(const std::string& outputDirectory)

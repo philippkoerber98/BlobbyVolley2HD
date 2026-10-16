@@ -550,12 +550,13 @@ void RenderManagerSDL::drawSceneBlur(const std::string& key)
             SDL_FreeSurface(capture);
             return;
         }
-        auto* blur = createMenuBackdrop(capture);
+        auto* blur = createMenuBackdrop(capture, true);
         SDL_FreeSurface(capture);
         if (!blur)
         {
             return;
         }
+        const int blurWidth = blur->w, blurHeight = blur->h;
         auto* texture = SDL_CreateTextureFromSurface(mRenderer, blur);
         SDL_FreeSurface(blur);
         if (!texture)
@@ -572,8 +573,8 @@ void RenderManagerSDL::drawSceneBlur(const std::string& key)
             SDL_DestroyTexture(image->sdlImage);
         }
         image->sdlImage = texture;
-        image->w = 400;
-        image->h = 300;
+        image->w = blurWidth;
+        image->h = blurHeight;
         mSceneBlurKey = key;
     }
     drawImage(name, Vector2(mCourtWidth / 2, 300), Vector2(mCourtWidth, 600));

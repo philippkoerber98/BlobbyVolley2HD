@@ -16,6 +16,7 @@ void testWindowDecorations(const std::string& outputDirectory);
 void testTabbedOptions(const std::string& outputDirectory);
 void testGameMenus(const std::string& outputDirectory);
 void testRoundedPanels(const std::string& outputDirectory);
+void testSceneBlurAspect(const std::string& outputDirectory);
 void testWidescreen(const std::string& outputDirectory);
 void testBotModes(const std::string& outputDirectory);
 
@@ -108,6 +109,7 @@ int main(int argc, char** argv)
             fs.addToSearchPath(std::string(argv[1]) + "/" + archive + ".zip");
         }
         testFrameTiming();
+        testSceneBlurAspect(argv[2]);
         testTabbedOptions(argv[2]);
         testGameMenus(argv[2]);
         testRoundedPanels(argv[2]);
