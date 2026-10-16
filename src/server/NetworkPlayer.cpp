@@ -30,70 +30,69 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 // will ever have this.
 NetworkPlayer::NetworkPlayer() : mID(), mIdentity()
 {
-	mID.binaryAddress = 0;
-	mID.port = 0;
+    mID.binaryAddress = 0;
+    mID.port = 0;
 }
 
 NetworkPlayer::NetworkPlayer(PlayerID id, const std::string& name, Color color, PlayerSide side)
-:mID(id), mIdentity(name, color, false, side)
+    : mID(id), mIdentity(name, color, false, side)
 {
-
 }
 
 NetworkPlayer::NetworkPlayer(PlayerID id, RakNet::BitStream& stream) : mID(id)
 {
-	int playerSide;
-	stream.Read(playerSide);
+    int playerSide;
+    stream.Read(playerSide);
 
-	// Read the Playername
-	char charName[16];
-	stream.Read(charName, sizeof(charName));
+    // Read the Playername
+    char charName[16];
+    stream.Read(charName, sizeof(charName));
 
-	// ensures that charName is null terminated
-	charName[sizeof(charName)-1] = '\0';
+    // ensures that charName is null terminated
+    charName[sizeof(charName) - 1] = '\0';
 
-	// read colour data
-	int color;
-	stream.Read(color);
+    // read colour data
+    int color;
+    stream.Read(color);
 
-	mIdentity = PlayerIdentity(charName, (Color)color, false, (PlayerSide)playerSide);
+    mIdentity = PlayerIdentity(charName, (Color)color, false, (PlayerSide)playerSide);
 }
 
 bool NetworkPlayer::valid() const
 {
-	return mID.port != 0;
+    return mID.port != 0;
 }
 
 const PlayerID& NetworkPlayer::getID() const
 {
-	return mID;
+    return mID;
 }
 
 const std::string& NetworkPlayer::getName() const
 {
-	return mIdentity.getName();
+    return mIdentity.getName();
 }
 Color NetworkPlayer::getColor() const
 {
-	return mIdentity.getStaticColor();
+    return mIdentity.getStaticColor();
 }
 
 PlayerSide NetworkPlayer::getDesiredSide() const
 {
-	return mIdentity.getPreferredSide();
+    return mIdentity.getPreferredSide();
 }
 
 PlayerIdentity NetworkPlayer::getIdentity() const
 {
-	return mIdentity;
+    return mIdentity;
 }
 
 const std::shared_ptr<NetworkGame>& NetworkPlayer::getGame() const
 {
-	return mGame;
+    return mGame;
 }
 
 void NetworkPlayer::setGame(std::shared_ptr<NetworkGame> game)
 {
-	mGame = std::move(game);
+    mGame = std::move(game);
 }

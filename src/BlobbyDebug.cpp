@@ -18,114 +18,113 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 =============================================================================*/
 
 #include "BlobbyDebug.h"
-#include <string>
-#include <map>
-#include <iostream>
 #include <fstream>
+#include <iostream>
+#include <map>
+#include <string>
 
 std::map<std::string, CountingReport>& GetCounterMap()
 {
-	static std::map<std::string, CountingReport> CounterMap;
-	return CounterMap;
+    static std::map<std::string, CountingReport> CounterMap;
+    return CounterMap;
 }
 
 std::map<void*, int>& GetAddressMap()
 {
-	static std::map<void*, int> AddressMap;
-	return AddressMap;
+    static std::map<void*, int> AddressMap;
+    return AddressMap;
 }
 
 std::map<std::string, int>& GetProfMap()
 {
-	static std::map<std::string, int> ProfMap;
-	return ProfMap;
+    static std::map<std::string, int> ProfMap;
+    return ProfMap;
 }
 
 int count(const std::type_info& type)
 {
-	std::string test = type.name();
-	if(GetCounterMap().find(type.name()) == GetCounterMap().end() )
-	{
-		GetCounterMap()[type.name()] = CountingReport();
-	}
+    std::string test = type.name();
+    if (GetCounterMap().find(type.name()) == GetCounterMap().end())
+    {
+        GetCounterMap()[type.name()] = CountingReport();
+    }
 
-	GetCounterMap()[type.name()].created++;
-	return ++GetCounterMap()[type.name()].alive;
+    GetCounterMap()[type.name()].created++;
+    return ++GetCounterMap()[type.name()].alive;
 }
 
 int uncount(const std::type_info& type)
 {
-	return --GetCounterMap()[type.name()].alive;
+    return --GetCounterMap()[type.name()].alive;
 }
 
 int getObjectCount(const std::type_info& type)
 {
-	return 	GetCounterMap()[type.name()].alive;
+    return GetCounterMap()[type.name()].alive;
 }
 
 int count(const std::type_info& type, std::string tag, int n)
 {
-	std::string name = std::string(type.name()) + " - " + std::move(tag);
-	if(GetCounterMap().find(name) == GetCounterMap().end() )
-	{
-		GetCounterMap()[name] = CountingReport();
-	}
-	GetCounterMap()[name].created += n;
-	return GetCounterMap()[name].alive += n;
+    std::string name = std::string(type.name()) + " - " + std::move(tag);
+    if (GetCounterMap().find(name) == GetCounterMap().end())
+    {
+        GetCounterMap()[name] = CountingReport();
+    }
+    GetCounterMap()[name].created += n;
+    return GetCounterMap()[name].alive += n;
 }
 
 int uncount(const std::type_info& type, std::string tag, int n)
 {
-	return GetCounterMap()[std::string(type.name()) + " - " + std::move(tag)].alive -= n;
+    return GetCounterMap()[std::string(type.name()) + " - " + std::move(tag)].alive -= n;
 }
 
 int count(const std::type_info& type, std::string tag, void* address, int num)
 {
-	std::cout << "MALLOC " << num << "\n";
-	count(type, std::move(tag), num);
-	GetAddressMap()[address] = num;
-	return 0;
+    std::cout << "MALLOC " << num << "\n";
+    count(type, std::move(tag), num);
+    GetAddressMap()[address] = num;
+    return 0;
 }
 
 int uncount(const std::type_info& type, std::string tag, void* address)
 {
-	int num = GetAddressMap()[address];
-	std::cout << "FREE " << num << "\n";
-	uncount(type, std::move(tag), num);
-	return 0;
+    int num = GetAddressMap()[address];
+    std::cout << "FREE " << num << "\n";
+    uncount(type, std::move(tag), num);
+    return 0;
 }
 
 void debug_count_execution_fkt(std::string file, int line)
 {
-	std::string rec = std::move(file) + ":" + std::to_string(line);
-	if(GetProfMap().find(rec) == GetProfMap().end() )
-	{
-		GetProfMap()[rec] = 0;
-	}
-	GetProfMap()[rec]++;
+    std::string rec = std::move(file) + ":" + std::to_string(line);
+    if (GetProfMap().find(rec) == GetProfMap().end())
+    {
+        GetProfMap()[rec] = 0;
+    }
+    GetProfMap()[rec]++;
 }
 
 std::fstream total_plot("logs/total.txt", std::fstream::out);
 
 void report(std::ostream& stream)
 {
-	stream << "MEMORY REPORT\n";
-	int sum = 0;
-	for(auto& i : GetCounterMap())
-	{
-		stream << i.first << "\n- - - - - - - - - -\n";
-		stream << " alive:   " << i.second.alive << "\n";
-		stream << " created: " << i.second.created << "\n\n";
-		sum += i.second.alive;
-	}
+    stream << "MEMORY REPORT\n";
+    int sum = 0;
+    for (auto& i : GetCounterMap())
+    {
+        stream << i.first << "\n- - - - - - - - - -\n";
+        stream << " alive:   " << i.second.alive << "\n";
+        stream << " created: " << i.second.created << "\n\n";
+        sum += i.second.alive;
+    }
 
-	stream << "\n\nPROFILE REPORT\n";
-	for(auto& i : GetProfMap())
-	{
-		stream << i.first << ": ";
-		stream << i.second << "\n";
-	}
+    stream << "\n\nPROFILE REPORT\n";
+    for (auto& i : GetProfMap())
+    {
+        stream << i.first << ": ";
+        stream << i.second << "\n";
+    }
 
-
-	total_plot << sum << std::endl;
+    total_plot << sum << std::endl;
 }

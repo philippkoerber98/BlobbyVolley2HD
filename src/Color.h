@@ -24,33 +24,32 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #include <cstdint>
 
 /*! \class Color
-	\brief represents RGB Colours
-	\details This class represents colors as RGB with one byte for each channel.
+    \brief represents RGB Colours
+    \details This class represents colors as RGB with one byte for each channel.
 */
 struct Color
 {
-	public:
-		Color(int red, int green, int blue);
+  public:
+    Color(int red, int green, int blue);
 
-		/// \sa toInt()
-		explicit Color(unsigned int col);
+    /// \sa toInt()
+    explicit Color(unsigned int col);
 
-		Color() = default;
+    Color() = default;
 
-		bool operator == (Color rval) const
-		{
-			return r == rval.r && g == rval.g && b == rval.b;
-		}
+    bool operator==(Color rval) const
+    {
+        return r == rval.r && g == rval.g && b == rval.b;
+    }
 
-		bool operator != (Color rval) const
-		{
-			return !(*this == rval);
-		}
+    bool operator!=(Color rval) const
+    {
+        return !(*this == rval);
+    }
 
-		unsigned int toInt() const;
+    unsigned int toInt() const;
 
-		std::uint8_t r = 0;
-		std::uint8_t g = 0;
-		std::uint8_t b = 0;
-
+    std::uint8_t r = 0;
+    std::uint8_t g = 0;
+    std::uint8_t b = 0;
 };

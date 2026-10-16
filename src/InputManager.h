@@ -20,25 +20,25 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 #pragma once
 
-#include <memory>
 #include <map>
+#include <memory>
 #include <utility>
 
 #include <SDL_keycode.h>
 
+#include "BlobbyDebug.h"
 #include "PlayerInput.h"
 #include "Vector.h"
-#include "BlobbyDebug.h"
 
 enum class KeyAction
 {
-	UP,
-	DOWN,
-	LEFT,
-	RIGHT,
-	SELECT,
-	BACK,
-	NONE
+    UP,
+    DOWN,
+    LEFT,
+    RIGHT,
+    SELECT,
+    BACK,
+    NONE
 };
 
 class JoystickPool;
@@ -52,90 +52,101 @@ struct JoystickAction;
 /// \brief class for managing input
 class InputManager : public ObjectCounter<InputManager>
 {
-	public:
-		InputManager(BlobbyApp* app);
-		~InputManager();
+  public:
+    InputManager(BlobbyApp* app);
+    ~InputManager();
 
-		std::unique_ptr<InputDevice> beginGame(PlayerSide side);
+    std::unique_ptr<InputDevice> beginGame(PlayerSide side);
 
-		float courtWidth() const;
-		bool running() const;
-		void setEndBlobby();	// call to trigger the event that ends blobby, i.e. running will return false after this call.
-		void updateInput(bool clearPrevious = true);
-		void clearTransientInput();
+    float courtWidth() const;
+    bool running() const;
+    void setEndBlobby(); // call to trigger the event that ends blobby, i.e. running will return false after
+                         // this call.
+    void updateInput(bool clearPrevious = true);
+    void clearTransientInput();
 
-		void captureMouse( bool c );		// sets whether the mouse should be captured
-		bool isMouseCaptured() const;
+    void captureMouse(bool c); // sets whether the mouse should be captured
+    bool isMouseCaptured() const;
 
-		// For GUI navigation (Gamepad, Joystick or Keyboard)
-		bool up() const;
-		bool down() const;
-		bool left() const;
-		bool right() const;
-		bool select() const;
-		bool exit() const; // extension for mouse included, so that right click = exit
-		bool previousTab() const { return mPreviousTab; }
-		bool nextTab() const { return mNextTab; }
+    // For GUI navigation (Gamepad, Joystick or Keyboard)
+    bool up() const;
+    bool down() const;
+    bool left() const;
+    bool right() const;
+    bool select() const;
+    bool exit() const; // extension for mouse included, so that right click = exit
+    bool previousTab() const
+    {
+        return mPreviousTab;
+    }
+    bool nextTab() const
+    {
+        return mNextTab;
+    }
 
-		std::string getLastTextKey();
-		std::string getLastActionKey() const;
-		int getLastMouseButton() const { return mLastMouseButton; }
-		std::string getLastJoyAction() const;
+    std::string getLastTextKey();
+    std::string getLastActionKey() const;
+    int getLastMouseButton() const
+    {
+        return mLastMouseButton;
+    }
+    std::string getLastJoyAction() const;
 
-		// For GUI navigation (Mouse)
-		Vector2 position();
-		bool click() const;
-		bool doubleClick() const;
-		bool mouseWheelUp() const;
-		bool mouseWheelDown() const;
-		bool unclick() const;
+    // For GUI navigation (Mouse)
+    Vector2 position();
+    bool click() const;
+    bool doubleClick() const;
+    bool mouseWheelUp() const;
+    bool mouseWheelDown() const;
+    bool unclick() const;
 
-		// In-game input visualization (Mouse)
-		void setMouseMarker(int target);
+    // In-game input visualization (Mouse)
+    void setMouseMarker(int target);
 
-		// In-game input
-		bool isKeyPressed(SDL_Keycode code) const;
-		bool isJoyActionActive(const JoystickAction& action) const;
-		PlayerInputAbs controllerInput(int slot, int deadzone, int jumpButton, ReleaseGate& gate) const;
+    // In-game input
+    bool isKeyPressed(SDL_Keycode code) const;
+    bool isJoyActionActive(const JoystickAction& action) const;
+    PlayerInputAbs controllerInput(int slot, int deadzone, int jumpButton, ReleaseGate& gate) const;
 
-		bool windowFocus() const;
+    bool windowFocus() const;
 
-		SDL_Joystick* getJoystickById(int joyId);
-	private:
-		// Keyboard
-		//static InputKeyMap mKeyMap[];	// Type for String <-convert-> SDLKey
+    SDL_Joystick* getJoystickById(int joyId);
 
-		// GUI storage (because we need event based input for the GUI)
-		bool mUp;
-		bool mDown;
-		bool mLeft;
-		bool mRight;
-		bool mSelect;
-		bool mExit;
-		bool mClick;
-		bool mDoubleClick;
-		bool mMouseWheelUp;
-		bool mMouseWheelDown;
-		bool mUnclick;
-		bool mPreviousTab = false, mNextTab = false;
+  private:
+    // Keyboard
+    // static InputKeyMap mKeyMap[];	// Type for String <-convert-> SDLKey
 
-		bool mWindowFocus;
+    // GUI storage (because we need event based input for the GUI)
+    bool mUp;
+    bool mDown;
+    bool mLeft;
+    bool mRight;
+    bool mSelect;
+    bool mExit;
+    bool mClick;
+    bool mDoubleClick;
+    bool mMouseWheelUp;
+    bool mMouseWheelDown;
+    bool mUnclick;
+    bool mPreviousTab = false, mNextTab = false;
 
-		int mMouseX;
-		int mMouseY;
-		int mLastClickTime;
+    bool mWindowFocus;
 
-		SDL_Keycode mLastActionKey;
-		std::string mLastTextKey;
+    int mMouseX;
+    int mMouseY;
+    int mLastClickTime;
 
-		int mLastMouseButton;
-		std::string mLastJoyAction;
+    SDL_Keycode mLastActionKey;
+    std::string mLastTextKey;
 
-		bool mRunning;
+    int mLastMouseButton;
+    std::string mLastJoyAction;
 
-		bool mMouseCaptured;
+    bool mRunning;
 
-		BlobbyApp* mApp;
-		std::unique_ptr<JoystickPool> mJoystickPool;
-		std::map<std::pair<int, int>, int> mControllerDirections;
+    bool mMouseCaptured;
+
+    BlobbyApp* mApp;
+    std::unique_ptr<JoystickPool> mJoystickPool;
+    std::map<std::pair<int, int>, int> mControllerDirections;
 };

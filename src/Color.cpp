@@ -26,24 +26,15 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 /* implementation */
 
-Color::Color(int red, int green, int blue)
-		: r(red)
-		, g(green)
-		, b(blue)
-{
+Color::Color(int red, int green, int blue) : r(red), g(green), b(blue) {}
 
-}
-
-Color::Color(unsigned int col) : Color(col&0xff, (col>>8)&0xff, (col>>16)&0xff)
-{
-
-}
+Color::Color(unsigned int col) : Color(col & 0xff, (col >> 8) & 0xff, (col >> 16) & 0xff) {}
 
 unsigned int Color::toInt() const
 {
-	int i = 0;
-	i |= r;
-	i |= g << 8;
-	i |= b << 16;
-	return i;
+    int i = 0;
+    i |= r;
+    i |= g << 8;
+    i |= b << 16;
+    return i;
 }

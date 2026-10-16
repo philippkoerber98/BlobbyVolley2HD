@@ -23,29 +23,29 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 /* includes */
 #include <cassert>
-#include <vector>
 #include <ctime>
-#include <memory>
 #include <iostream> // debugging
+#include <memory>
+#include <vector>
 
 #include "tinyxml2.h"
 
 #include "raknet/BitStream.h"
 
-#include "InputSource.h"
+#include "Color.h"
 #include "FileRead.h"
 #include "GenericIO.h"
-#include "base64.h"
+#include "InputSource.h"
 #include "ReplayDefs.h"
-#include "Color.h"
+#include "base64.h"
 
 /* implementation */
 IReplayLoader* IReplayLoader::createReplayLoader(const std::string& filename)
 {
-	std::unique_ptr<IReplayLoader> loader(createReplayLoader(0));
-	loader->initLoading(filename);
+    std::unique_ptr<IReplayLoader> loader(createReplayLoader(0));
+    loader->initLoading(filename);
 
-	return loader.release();
+    return loader.release();
 }
 
 //
@@ -53,275 +53,337 @@ IReplayLoader* IReplayLoader::createReplayLoader(const std::string& filename)
 //
 
 /***************************************************************************************************
-			              R E P L A Y   L O A D E R    V 2.x
+                          R E P L A Y   L O A D E R    V 2.x
 ***************************************************************************************************/
 
-
 /*! \class ReplayLoader_V2X
-	\brief Replay Loader V 2.x
-	\details Replay Loader for 2.0 replays
+    \brief Replay Loader V 2.x
+    \details Replay Loader for 2.0 replays
 */
-class ReplayLoader_V2X: public IReplayLoader
+class ReplayLoader_V2X : public IReplayLoader
 {
-	public:
-		ReplayLoader_V2X() = default;
+  public:
+    ReplayLoader_V2X() = default;
 
-		~ReplayLoader_V2X() override = default;
+    ~ReplayLoader_V2X() override = default;
 
-		int getVersionMajor() const override { return 2; };
-		int getVersionMinor() const override { return 1; };
+    int getVersionMajor() const override
+    {
+        return 2;
+    };
+    int getVersionMinor() const override
+    {
+        return 1;
+    };
 
-		std::string getPlayerName(PlayerSide player) const override
-		{
-			if(player == LEFT_PLAYER)
-				return mLeftPlayerName;
-			if(player == RIGHT_PLAYER)
-				return mRightPlayerName;
+    std::string getPlayerName(PlayerSide player) const override
+    {
+        if (player == LEFT_PLAYER)
+        {
+            return mLeftPlayerName;
+        }
+        if (player == RIGHT_PLAYER)
+        {
+            return mRightPlayerName;
+        }
 
-			assert(0);
-		}
+        assert(0);
+    }
 
-		Color getBlobColor(PlayerSide player) const override
-		{
-			if(player == LEFT_PLAYER)
-				return mLeftColor;
-			if(player == RIGHT_PLAYER)
-				return mRightColor;
+    Color getBlobColor(PlayerSide player) const override
+    {
+        if (player == LEFT_PLAYER)
+        {
+            return mLeftColor;
+        }
+        if (player == RIGHT_PLAYER)
+        {
+            return mRightColor;
+        }
 
-			assert(0);
-		}
+        assert(0);
+    }
 
+    int getFinalScore(PlayerSide player) const override
+    {
+        if (player == LEFT_PLAYER)
+        {
+            return mLeftFinalScore;
+        }
+        if (player == RIGHT_PLAYER)
+        {
+            return mRightFinalScore;
+        }
 
-		int getFinalScore(PlayerSide player) const override
-		{
-			if(player == LEFT_PLAYER)
-				return mLeftFinalScore;
-			if(player == RIGHT_PLAYER)
-				return mRightFinalScore;
+        assert(0);
+    }
 
-			assert(0);
-		}
+    int getSpeed() const override
+    {
+        return mGameSpeed;
+    };
 
-		int getSpeed() const override
-		{
-			return mGameSpeed;
-		};
+    int getDuration() const override
+    {
+        return mGameDuration;
+    };
 
-		int getDuration() const override
-		{
-			return mGameDuration;
-		};
+    int getLength() const override
+    {
+        return mGameLength;
+    };
 
-		int getLength()  const override
-		{
-			return mGameLength;
-		};
+    std::time_t getDate() const override
+    {
+        return mGameDate;
+    };
 
-		std::time_t getDate() const override
-		{
-			return mGameDate;
-		};
+    std::string getRules() const override
+    {
+        return mRules;
+    }
 
-		std::string getRules() const override
-		{
-			return mRules;
-		}
+    void getInputAt(int step, InputSource* left, InputSource* right) override
+    {
+        assert(step < mGameLength);
 
+        // for now, we have only a linear sequence of InputPackets, so finding the right one is just
+        // a matter of address arithmetics.
 
-		void getInputAt(int step, InputSource* left, InputSource* right) override
-		{
-			assert( step  < mGameLength );
+        // each packet has size 1 byte for now
+        // so we find step at mReplayOffset + step
+        char packet = mBuffer[mReplayOffset + step];
 
-			// for now, we have only a linear sequence of InputPackets, so finding the right one is just
-			// a matter of address arithmetics.
+        // now read the packet data
+        left->setInput(PlayerInput((bool)(packet & 32), (bool)(packet & 16), (bool)(packet & 8)));
+        right->setInput(PlayerInput((bool)(packet & 4), (bool)(packet & 2), (bool)(packet & 1)));
+    }
 
-			// each packet has size 1 byte for now
-			// so we find step at mReplayOffset + step
-			char packet = mBuffer[mReplayOffset + step];
+    bool isSavePoint(int position, int& save_position) const override
+    {
+        int foundPos;
+        save_position = getSavePoint(position, foundPos);
+        return save_position != -1 && foundPos == position;
+    }
 
-			// now read the packet data
-			left->setInput(PlayerInput((bool)(packet & 32), (bool)(packet & 16), (bool)(packet & 8)));
-			right->setInput(PlayerInput((bool)(packet & 4), (bool)(packet & 2), (bool)(packet & 1)));
-		}
+    // TODO: add optional argument: int previous = 0;
+    // 		so we can start from it when calling
+    // 		getSavePoint in a row (without "jumping").
+    // 		we can save this parameter in ReplayPlayer
+    int getSavePoint(int targetPosition, int& savepoint) const override
+    {
+        // desired index can't be lower that this value,
+        // cause additional savepoints could shift it only right
+        int index = targetPosition / REPLAY_SAVEPOINT_PERIOD;
 
-		bool isSavePoint(int position, int& save_position) const override
-		{
-			int foundPos;
-			save_position = getSavePoint(position, foundPos);
-			return save_position != -1 && foundPos == position;
-		}
+        if (index >= static_cast<int>(mSavePoints.size()))
+        {
+            return -1;
+        }
 
-		// TODO: add optional argument: int previous = 0;
-		// 		so we can start from it when calling
-		// 		getSavePoint in a row (without "jumping").
-		// 		we can save this parameter in ReplayPlayer
-		int getSavePoint(int targetPosition, int& savepoint) const override
-		{
-			// desired index can't be lower that this value,
-			// cause additional savepoints could shift it only right
-			int index = targetPosition / REPLAY_SAVEPOINT_PERIOD;
+        savepoint = mSavePoints[index].step;
 
-			if(index >= static_cast<int>(mSavePoints.size()))
-				return -1;
+        // watch right from initial index,
+        // cause best savepoint could be there.
+        // we have no much additional savepoints,
+        // so this cycle would be fast,
+        // maybe even faster than binary search.
+        do
+        {
+            int nextIndex = index + 1;
 
-			savepoint = mSavePoints[index].step;
+            if (nextIndex >= static_cast<int>(mSavePoints.size()))
+            {
+                break;
+            }
 
-			// watch right from initial index,
-			// cause best savepoint could be there.
-			// we have no much additional savepoints,
-			// so this cycle would be fast,
-			// maybe even faster than binary search.
-			do
-			{
-				int nextIndex = index + 1;
+            int nextPos = mSavePoints[nextIndex].step;
 
-				if (nextIndex >= static_cast<int>(mSavePoints.size()))
-					break;
+            if (nextPos > targetPosition)
+            {
+                break;
+            }
 
-				int nextPos = mSavePoints[nextIndex].step;
+            index = nextIndex;
+            savepoint = nextPos;
+        } while (true);
 
-				if (nextPos > targetPosition)
-					break;
+        return index;
+    }
 
-				index = nextIndex;
-				savepoint = nextPos;
-			} while (true);
+    void readSavePoint(int index, ReplaySavePoint& state) const override
+    {
+        state = mSavePoints.at(index);
+    }
 
-			return index;
-		}
+  private:
+    void initLoading(std::string filename) override
+    {
+        auto configDoc = FileRead::readXMLDocument(filename);
 
-		void readSavePoint(int index, ReplaySavePoint& state) const override
-		{
-			state = mSavePoints.at(index);
-		}
+        if (configDoc->Error())
+        {
+            std::cerr << "Warning: Parse error in " << filename << "!" << std::endl;
+            throw(std::runtime_error(""));
+        }
 
-	private:
-		void initLoading(std::string filename) override
-		{
-			auto configDoc = FileRead::readXMLDocument(filename);
+        const auto* userConfigElem = configDoc->FirstChildElement("replay");
+        if (userConfigElem == nullptr)
+        {
+            throw(std::runtime_error("No <replay> node found!"));
+        }
 
-			if (configDoc->Error())
-			{
-				std::cerr << "Warning: Parse error in " << filename << "!" << std::endl;
-				throw( std::runtime_error("") );
-			}
+        const auto* varElem = userConfigElem->FirstChildElement("version");
+        // the first element we find is expected to be the version
+        if (!varElem)
+        {
+            throw(std::runtime_error("Could not find <version> tag"));
+        }
+        else
+        {
+            const char* major = varElem->Attribute("major");
+            const char* minor = varElem->Attribute("minor");
+            if (!minor || !major)
+            {
+                throw(std::runtime_error(""));
+            }
+            assert(std::stoi(major) == 2);
+            mReplayFormatVersion = std::stoi(minor);
+        }
 
-			const auto* userConfigElem = configDoc->FirstChildElement("replay");
-			if (userConfigElem == nullptr)
-				throw(std::runtime_error("No <replay> node found!"));
+        for (; varElem; varElem = varElem->NextSiblingElement("var"))
+        {
+            std::string name, value;
+            if (auto c = varElem->Attribute("name"))
+            {
+                name = c;
+            }
+            else
+            {
+                continue;
+            }
 
-			const auto* varElem = userConfigElem->FirstChildElement("version");
-			// the first element we find is expected to be the version
-			if(!varElem)
-			{
-				throw( std::runtime_error("Could not find <version> tag") );
-			}
-			else
-			{
-				const char* major = varElem->Attribute("major");
-				const char* minor = varElem->Attribute("minor");
-				if(!minor || !major)
-					throw(std::runtime_error(""));
-				assert(std::stoi(major) == 2);
-				mReplayFormatVersion = std::stoi(minor);
-			}
+            if (auto c = varElem->Attribute("value"))
+            {
+                value = c;
+            }
+            else
+            {
+                continue;
+            }
 
+            // find valid attribute
+            if (name == "game_speed")
+            {
+                mGameSpeed = std::stoi(value);
+            }
+            else if (name == "game_length")
+            {
+                mGameLength = std::stoi(value);
+            }
+            else if (name == "game_duration")
+            {
+                mGameDuration = std::stoi(value);
+            }
+            else if (name == "game_date")
+            {
+                mGameDate = std::stoi(value);
+            }
+            else if (name == "score_left")
+            {
+                mLeftFinalScore = std::stoi(value);
+            }
+            else if (name == "score_right")
+            {
+                mRightFinalScore = std::stoi(value);
+            }
+            else if (name == "name_left")
+            {
+                mLeftPlayerName = value;
+            }
+            else if (name == "name_right")
+            {
+                mRightPlayerName = value;
+            }
+            else if (name == "color_left")
+            {
+                mLeftColor = Color(std::stoi(value));
+            }
+            else if (name == "color_right")
+            {
+                mRightColor = Color(std::stoi(value));
+            }
+        }
 
-			for (; varElem; varElem = varElem->NextSiblingElement("var"))
-			{
-				std::string name, value;
-				if (auto c = varElem->Attribute("name"))
-					name = c;
-				else
-					continue;
+        // load rules
+        varElem = userConfigElem->FirstChildElement("rules");
+        if (!varElem)
+        {
+            throw(std::runtime_error(""));
+        }
+        auto content = varElem->FirstChild();
+        if (!content)
+        {
+            throw(std::runtime_error(""));
+        }
 
-				if (auto c = varElem->Attribute("value"))
-					value = c;
-				else
-					continue;
+        mRules = content->Value();
 
-				// find valid attribute
-				if( name == "game_speed" )
-					mGameSpeed = std::stoi(value);
-				else if( name == "game_length" )
-					mGameLength = std::stoi(value);
-				else if( name == "game_duration" )
-					mGameDuration = std::stoi(value);
-				else if( name == "game_date" )
-					mGameDate = std::stoi(value);
-				else if( name == "score_left" )
-					mLeftFinalScore = std::stoi(value);
-				else if( name == "score_right" )
-					mRightFinalScore = std::stoi(value);
-				else if( name == "name_left" )
-					mLeftPlayerName = value;
-				else if( name == "name_right" )
-					mRightPlayerName = value;
-				else if( name == "color_left" )
-					mLeftColor = Color(std::stoi(value));
-				else if( name == "color_right" )
-					mRightColor = Color(std::stoi(value));
-			}
+        // now load buffer and savepoints
+        varElem = userConfigElem->FirstChildElement("input");
+        if (!varElem)
+        {
+            throw(std::runtime_error(""));
+        }
+        content = varElem->FirstChild();
+        if (!content)
+        {
+            throw(std::runtime_error(""));
+        }
 
-			// load rules
-			varElem = userConfigElem->FirstChildElement("rules");
-			if(!varElem)
-				throw(std::runtime_error(""));
-			auto content = varElem->FirstChild();
-			if(!content)
-				throw(std::runtime_error(""));
+        mBuffer = decode(content->Value());
 
-			mRules = content->Value();
+        varElem = userConfigElem->FirstChildElement("states");
+        if (!varElem)
+        {
+            throw(std::runtime_error(""));
+        }
+        content = varElem->FirstChild();
+        if (!content)
+        {
+            throw(std::runtime_error(""));
+        }
 
-			// now load buffer and savepoints
-			varElem = userConfigElem->FirstChildElement("input");
-			if(!varElem)
-				throw(std::runtime_error(""));
-			content = varElem->FirstChild();
-			if(!content)
-				throw(std::runtime_error(""));
+        // get save points
+        auto sp = decode(content->Value());
+        RakNet::BitStream temp(sp.data(), sp.size(), false);
+        auto convert = createGenericReader(&temp);
+        convert->generic<std::vector<ReplaySavePoint>>(mSavePoints);
+    }
 
-			mBuffer = decode(content->Value());
+    std::vector<uint8_t> mBuffer;
+    uint32_t mReplayOffset;
 
-			varElem = userConfigElem->FirstChildElement("states");
-			if(!varElem)
-				throw(std::runtime_error(""));
-			content = varElem->FirstChild();
-			if(!content)
-				throw(std::runtime_error(""));
+    std::vector<ReplaySavePoint> mSavePoints;
 
-			// get save points
-			auto sp = decode( content->Value() );
-			RakNet::BitStream temp( sp.data(), sp.size(), false );
-			auto convert = createGenericReader(&temp);
-			convert->generic<std::vector<ReplaySavePoint> > (mSavePoints);
-		}
+    // specific data
+    std::string mLeftPlayerName;
+    std::string mRightPlayerName;
+    unsigned int mLeftFinalScore;
+    unsigned int mRightFinalScore;
+    unsigned int mGameSpeed;
+    unsigned int mGameDate;
+    int mGameLength;
+    unsigned int mGameDuration;
+    Color mLeftColor;
+    Color mRightColor;
 
+    std::string mRules;
 
-		std::vector<uint8_t> mBuffer;
-		uint32_t mReplayOffset;
-
-		std::vector<ReplaySavePoint> mSavePoints;
-
-		// specific data
-		std::string mLeftPlayerName;
-		std::string mRightPlayerName;
-		unsigned int mLeftFinalScore;
-		unsigned int mRightFinalScore;
-		unsigned int mGameSpeed;
-		unsigned int mGameDate;
-		int mGameLength;
-		unsigned int mGameDuration;
-		Color mLeftColor;
-		Color mRightColor;
-
-		std::string mRules;
-
-		unsigned char mReplayFormatVersion;
+    unsigned char mReplayFormatVersion;
 };
-
 
 IReplayLoader* IReplayLoader::createReplayLoader(int major)
 {
-	return new ReplayLoader_V2X();
+    return new ReplayLoader_V2X();
 }

@@ -20,35 +20,35 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 #pragma once
 
-#include <string>
-#include <iosfwd>
 #include <cstdint>
+#include <iosfwd>
+#include <string>
 
-#include "raknet/PacketEnumerations.h"
-#include "raknet/NetworkTypes.h"
-#include "raknet/BitStream.h"
 #include "BlobbyDebug.h"
+#include "raknet/BitStream.h"
+#include "raknet/NetworkTypes.h"
+#include "raknet/PacketEnumerations.h"
 
 enum MessageType
 {
-	ID_GENERIC_MESSAGE = ID_RESERVED9 + 1,
-	ID_INPUT_UPDATE,	// send input data from client to server
-	ID_GAME_UPDATE,		// send game status from server to client [unreliable]
-	ID_GAME_EVENTS,		// send game events from server to client [reliable]
-	ID_OPPONENT_DISCONNECTED,
-	ID_GAME_READY,
-	ID_WIN_NOTIFICATION,
-	ID_ENTER_SERVER = ID_RESERVED9 + 10,
-	ID_PAUSE,
-	ID_UNPAUSE,
-	ID_BLOBBY_SERVER_PRESENT = ID_RESERVED9 + 13,
-	ID_VERSION_MISMATCH = ID_RESERVED9 + 14,
-	ID_REPLAY,
-	ID_CHAT_MESSAGE,
-	ID_RULES_CHECKSUM,
-	ID_RULES,
-	ID_SERVER_STATUS,
-	ID_LOBBY
+    ID_GENERIC_MESSAGE = ID_RESERVED9 + 1,
+    ID_INPUT_UPDATE, // send input data from client to server
+    ID_GAME_UPDATE,  // send game status from server to client [unreliable]
+    ID_GAME_EVENTS,  // send game events from server to client [reliable]
+    ID_OPPONENT_DISCONNECTED,
+    ID_GAME_READY,
+    ID_WIN_NOTIFICATION,
+    ID_ENTER_SERVER = ID_RESERVED9 + 10,
+    ID_PAUSE,
+    ID_UNPAUSE,
+    ID_BLOBBY_SERVER_PRESENT = ID_RESERVED9 + 13,
+    ID_VERSION_MISMATCH = ID_RESERVED9 + 14,
+    ID_REPLAY,
+    ID_CHAT_MESSAGE,
+    ID_RULES_CHECKSUM,
+    ID_RULES,
+    ID_SERVER_STATUS,
+    ID_LOBBY
 };
 
 // General Information:
@@ -186,43 +186,43 @@ enum MessageType
 
 enum class LobbyPacketType : unsigned char
 {
-	SERVER_STATUS,
-	REMOVED_FROM_GAME,
-	OPEN_GAME,
-	JOIN_GAME,
-	LEAVE_GAME,
-	GAME_STATUS,
-	START_GAME
+    SERVER_STATUS,
+    REMOVED_FROM_GAME,
+    OPEN_GAME,
+    JOIN_GAME,
+    LEAVE_GAME,
+    GAME_STATUS,
+    START_GAME
 };
 
 class IUserConfigReader;
 
 struct ServerInfo : public ObjectCounter<ServerInfo>
 {
-	// read server info from a bit stream, additionally, the server address and port are needed
-	ServerInfo(RakNet::BitStream& stream, const char* ip, uint16_t port);
-	// read server info from a user config object
-	explicit ServerInfo(const IUserConfigReader& config);
-	explicit ServerInfo(const std::string& playername);
+    // read server info from a bit stream, additionally, the server address and port are needed
+    ServerInfo(RakNet::BitStream& stream, const char* ip, uint16_t port);
+    // read server info from a user config object
+    explicit ServerInfo(const IUserConfigReader& config);
+    explicit ServerInfo(const std::string& playername);
 
-	void writeToBitstream(RakNet::BitStream& stream);
+    void writeToBitstream(RakNet::BitStream& stream);
 
-	/// \todo maybe we should define ServerInfo a little bit more
-	///			as e.g., hostname can be left uninitialised on server
-	/// we combine to functionalities here: server information and server addresses.
-	int activegames;
-	uint16_t port;
-	char hostname[64];
-	char name[32];
-	int waitingplayers;
-	char description[192];
+    /// \todo maybe we should define ServerInfo a little bit more
+    ///			as e.g., hostname can be left uninitialised on server
+    /// we combine to functionalities here: server information and server addresses.
+    int activegames;
+    uint16_t port;
+    char hostname[64];
+    char name[32];
+    int waitingplayers;
+    char description[192];
 
-	static const size_t BLOBBY_SERVER_PRESENT_PACKET_SIZE;
+    static const size_t BLOBBY_SERVER_PRESENT_PACKET_SIZE;
 };
 
 // convenience functions for building packets
 class PlayerIdentity;
-void makeEnterServerPacket(RakNet::BitStream& stream, const PlayerIdentity& player );
+void makeEnterServerPacket(RakNet::BitStream& stream, const PlayerIdentity& player);
 
-bool operator == (const ServerInfo& lval, const ServerInfo& rval);
+bool operator==(const ServerInfo& lval, const ServerInfo& rval);
 std::ostream& operator<<(std::ostream& stream, const ServerInfo& val);

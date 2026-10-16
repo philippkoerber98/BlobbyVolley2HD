@@ -37,42 +37,58 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 /// The class can report how much time is actually waited. If this value
 /// is close to zero, the real speed can be altered.
 
-
 class SpeedController : public ObjectCounter<SpeedController>
 {
-	public:
-		explicit SpeedController(float gameFPS);
-		~SpeedController();
+  public:
+    explicit SpeedController(float gameFPS);
+    ~SpeedController();
 
-		void setGameSpeed(float fps);
-		float getGameSpeed() const{return mGameFPS;}
+    void setGameSpeed(float fps);
+    float getGameSpeed() const
+    {
+        return mGameFPS;
+    }
 
-	/// This reports whether a framedrop is necessary to hold the real FPS
-		bool doFramedrop() const;
+    /// This reports whether a framedrop is necessary to hold the real FPS
+    bool doFramedrop() const;
 
-	/// gives the caller the fps of the drawn frames:
-		int getFPS() const { return mFPS; }
-		void setDrawFPS(bool draw) { mDrawFPS = draw; }  //help methods
-		bool getDrawFPS() const { return mDrawFPS; }
+    /// gives the caller the fps of the drawn frames:
+    int getFPS() const
+    {
+        return mFPS;
+    }
+    void setDrawFPS(bool draw)
+    {
+        mDrawFPS = draw;
+    } // help methods
+    bool getDrawFPS() const
+    {
+        return mDrawFPS;
+    }
 
-	/// This updates everything and waits the necessary time
-		void update();
-		void recordRenderedFrame();
+    /// This updates everything and waits the necessary time
+    void update();
+    void recordRenderedFrame();
 
-		static void setMainInstance(SpeedController* inst) { mMainInstance = inst; }
-		static SpeedController* getMainInstance() { return mMainInstance; }
-	private:
-		float mGameFPS;
-		int mFPS;
-		int mFPSCounter;
-		bool mFramedrop;
-		bool mDrawFPS;
-		static SpeedController* mMainInstance;
-		int mOldTicks;
+    static void setMainInstance(SpeedController* inst)
+    {
+        mMainInstance = inst;
+    }
+    static SpeedController* getMainInstance()
+    {
+        return mMainInstance;
+    }
 
-		// internal data
-		unsigned int mBeginSecond;
-		int mCounter;
+  private:
+    float mGameFPS;
+    int mFPS;
+    int mFPSCounter;
+    bool mFramedrop;
+    bool mDrawFPS;
+    static SpeedController* mMainInstance;
+    int mOldTicks;
+
+    // internal data
+    unsigned int mBeginSecond;
+    int mCounter;
 };
-
-

@@ -33,50 +33,47 @@ enum class KeyAction;
 
 class JoystickPool : public ObjectCounter<JoystickPool>
 {
-	public:
-		JoystickPool() = default;
-		~JoystickPool();
-		SDL_Joystick* getJoystick(int id);
+  public:
+    JoystickPool() = default;
+    ~JoystickPool();
+    SDL_Joystick* getJoystick(int id);
 
-		void openJoystick(const int joyId);
-		void closeJoystick(const int joyId);
-		void probeJoysticks();
-		SDL_GameController* getController(int slot) const;
-		bool isController(int id) const;
+    void openJoystick(const int joyId);
+    void closeJoystick(const int joyId);
+    void probeJoysticks();
+    SDL_GameController* getController(int slot) const;
+    bool isController(int id) const;
 
-	private:
-		typedef std::map<int, SDL_Joystick*> JoyMap;
-		JoyMap mJoyMap;
-		std::array<SDL_GameController*, 2> mControllers{{nullptr, nullptr}};
+  private:
+    typedef std::map<int, SDL_Joystick*> JoyMap;
+    JoyMap mJoyMap;
+    std::array<SDL_GameController*, 2> mControllers{{nullptr, nullptr}};
 };
 
 struct JoystickAction : public ObjectCounter<JoystickAction>
 {
-	enum Type
-	{
-		NONE,
-		AXIS,
-		BUTTON,
-// 	We don't implement these exotic input methods here
-//		HAT,
-//		TRACKBALL
-	};
+    enum Type
+    {
+        NONE,
+        AXIS,
+        BUTTON,
+        // 	We don't implement these exotic input methods here
+        //		HAT,
+        //		TRACKBALL
+    };
 
-	explicit JoystickAction(std::string string);
-	JoystickAction(int _joyid, Type _type, int _number)
-		: type(_type)
-		, joyid(_joyid)
-		, number(_number) {}
-	~JoystickAction();
-	JoystickAction(const JoystickAction& action) = default;
+    explicit JoystickAction(std::string string);
+    JoystickAction(int _joyid, Type _type, int _number) : type(_type), joyid(_joyid), number(_number) {}
+    ~JoystickAction();
+    JoystickAction(const JoystickAction& action) = default;
 
-	std::string toString() const;
-	KeyAction toKeyAction() const;
+    std::string toString() const;
+    KeyAction toKeyAction() const;
 
-	Type type;
-	int joyid;
+    Type type;
+    int joyid;
 
-	// Note: Axis are stored as the SDL axis +1, so we can use
-	// the signedness as direction indication
-	int number;
+    // Note: Axis are stored as the SDL axis +1, so we can use
+    // the signedness as direction indication
+    int number;
 };

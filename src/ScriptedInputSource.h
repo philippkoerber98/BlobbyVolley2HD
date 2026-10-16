@@ -25,14 +25,14 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 #pragma once
 
-#include <string>
-#include <random>
 #include <deque>
+#include <random>
+#include <string>
 
 #include "Global.h"
+#include "IScriptableComponent.h"
 #include "InputSource.h"
 #include "Vector.h"
-#include "IScriptableComponent.h"
 
 /// \class ScriptedInputSource
 /// \brief Bot controller
@@ -50,47 +50,45 @@ class DuelMatch;
 
 class ScriptedInputSource : public InputSource, public IScriptableComponent
 {
-	public:
-		/// The constructor automatically loads and initializes the script
-		/// with the given filename. The side parameter tells the script
-		/// which side is it on.
-		ScriptedInputSource(const std::string& filename, PlayerSide side, unsigned int difficulty,
-							const DuelMatch* match);
-		~ScriptedInputSource() override;
+  public:
+    /// The constructor automatically loads and initializes the script
+    /// with the given filename. The side parameter tells the script
+    /// which side is it on.
+    ScriptedInputSource(const std::string& filename, PlayerSide side, unsigned int difficulty,
+                        const DuelMatch* match);
+    ~ScriptedInputSource() override;
 
-		void setWaitTime(int wait_in_ms);
+    void setWaitTime(int wait_in_ms);
 
-		PlayerInputAbs getNextInput() override;
+    PlayerInputAbs getNextInput() override;
 
-	private:
+  private:
+    void setInputDelay(int delay);
+    void setBallError(int duration, float amount);
+    int getCurrentDifficulty() const;
 
-		void setInputDelay(int delay);
-		void setBallError(int duration, float amount);
-		int getCurrentDifficulty() const;
+    unsigned int mStartTime;
+    unsigned int mWaitTime = WAITING_TIME;
 
-		unsigned int mStartTime;
-		unsigned int mWaitTime = WAITING_TIME;
+    PlayerSide mSide;
 
+    // Difficulty setting of the AI. Small values mean stronger AI
+    int mDifficulty;
 
-		PlayerSide mSide;
+    // artificial reaction delay data
+    int mReactionTime = 0;
+    int mRoundStepCounter = 0;
+    int mOldOppTouches = 0;
+    int mOldOwnTouches = 0;
+    float mOldBallVx = 0;
 
-		// Difficulty setting of the AI. Small values mean stronger AI
-		int mDifficulty;
+    // artificial ball position error
+    Vector2 mBallPosError{0, 0};
+    Vector2 mBallVelError{0, 0};
+    int mBallPosErrorTimer = 0;
 
-		// artificial reaction delay data
-		int mReactionTime = 0;
-		int mRoundStepCounter = 0;
-		int mOldOppTouches = 0;
-		int mOldOwnTouches = 0;
-		float mOldBallVx = 0;
+    int mBlobPosError = 0;
 
-		// artificial ball position error
-		Vector2 mBallPosError{0, 0};
-		Vector2 mBallVelError{0, 0};
-		int mBallPosErrorTimer = 0;
-
-		int mBlobPosError = 0;
-
-		std::default_random_engine mRandom;
-		const DuelMatch* mMatch;
+    std::default_random_engine mRandom;
+    const DuelMatch* mMatch;
 };

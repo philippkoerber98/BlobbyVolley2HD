@@ -24,8 +24,8 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 /* includes */
 #include <cassert>
 
-#include "IReplayLoader.h"
 #include "DuelMatch.h"
+#include "IReplayLoader.h"
 
 /* implementation */
 ReplayPlayer::ReplayPlayer() = default;
@@ -34,137 +34,136 @@ ReplayPlayer::~ReplayPlayer() = default;
 
 bool ReplayPlayer::endOfFile() const
 {
-	return (mPosition >= mLength);
+    return (mPosition >= mLength);
 }
 
 void ReplayPlayer::load(const std::string& filename)
 {
-	loader.reset(IReplayLoader::createReplayLoader(filename));
-	mCourtWidth=loader->getRules().rfind("-- BLOBBY_HD_WIDE_V1",0)==0 ? 3200.f/3.f : 800.f;
+    loader.reset(IReplayLoader::createReplayLoader(filename));
+    mCourtWidth = loader->getRules().rfind("-- BLOBBY_HD_WIDE_V1", 0) == 0 ? 3200.f / 3.f : 800.f;
 
-	mPlayerNames[LEFT_PLAYER] = loader->getPlayerName(LEFT_PLAYER);
-	mPlayerNames[RIGHT_PLAYER] = loader->getPlayerName(RIGHT_PLAYER);
+    mPlayerNames[LEFT_PLAYER] = loader->getPlayerName(LEFT_PLAYER);
+    mPlayerNames[RIGHT_PLAYER] = loader->getPlayerName(RIGHT_PLAYER);
 
-	mPosition = 0;
-	mLength = loader->getLength();
+    mPosition = 0;
+    mLength = loader->getLength();
 }
 
 std::string ReplayPlayer::getPlayerName(const PlayerSide side) const
 {
-	return mPlayerNames[side];
+    return mPlayerNames[side];
 }
 
 Color ReplayPlayer::getBlobColor(const PlayerSide side) const
 {
-	return loader->getBlobColor(side);
+    return loader->getBlobColor(side);
 }
 
 int ReplayPlayer::getGameSpeed() const
 {
-	return loader->getSpeed();
+    return loader->getSpeed();
 }
 
 float ReplayPlayer::getPlayProgress() const
 {
-	return (float)mPosition / mLength;
+    return (float)mPosition / mLength;
 }
 
 int ReplayPlayer::getReplayPosition() const
 {
-	return mPosition;
+    return mPosition;
 }
 
 int ReplayPlayer::getReplayLength() const
 {
-	return mLength;
+    return mLength;
 }
 
 std::string ReplayPlayer::getRules() const
 {
-	return loader->getRules();
+    return loader->getRules();
 }
 
 bool ReplayPlayer::play(DuelMatch* virtual_match)
 {
-	virtual_match->setCourtWidth(getCourtWidth());
-	mPosition++;
-	if( mPosition < mLength )
-	{
-		loader->getInputAt(mPosition,
-						   virtual_match->getInputSource( LEFT_PLAYER ).get(),
-						   virtual_match->getInputSource( RIGHT_PLAYER ).get() );
-		virtual_match->step();
+    virtual_match->setCourtWidth(getCourtWidth());
+    mPosition++;
+    if (mPosition < mLength)
+    {
+        loader->getInputAt(mPosition, virtual_match->getInputSource(LEFT_PLAYER).get(),
+                           virtual_match->getInputSource(RIGHT_PLAYER).get());
+        virtual_match->step();
 
-		int point;
-		if(loader->isSavePoint(mPosition, point))
-		{
-			ReplaySavePoint reference;
-			loader->readSavePoint(point, reference);
-			virtual_match->setState(reference.state);
-		}
+        int point;
+        if (loader->isSavePoint(mPosition, point))
+        {
+            ReplaySavePoint reference;
+            loader->readSavePoint(point, reference);
+            virtual_match->setState(reference.state);
+        }
 
+        // everything was as expected
+        return true;
+    }
 
-		// everything was as expected
-		return true;
-	}
-
-	// error or end of file
-	return false;
+    // error or end of file
+    return false;
 }
 
 bool ReplayPlayer::gotoPlayingPosition(int rep_position, DuelMatch* virtual_match)
 {
-	virtual_match->setCourtWidth(getCourtWidth());
-	/// \todo add validity check for rep_position
-	/// \todo replay clock does not work!
+    virtual_match->setCourtWidth(getCourtWidth());
+    /// \todo add validity check for rep_position
+    /// \todo replay clock does not work!
 
-	// find next safepoint
-	int save_position = -1;
-	int savepoint = loader->getSavePoint(rep_position, save_position);
-	// save position contains game step at which the save point is
-	// savepoint is index of save point in array
+    // find next safepoint
+    int save_position = -1;
+    int savepoint = loader->getSavePoint(rep_position, save_position);
+    // save position contains game step at which the save point is
+    // savepoint is index of save point in array
 
-	// now compare safepoint and actual position
-	// if we have to forward and save_position is nearer than current position, jump
-	if( (rep_position < mPosition || save_position > mPosition) && savepoint >= 0)
-	{
-		// can't use mPosition
-		// set match to safepoint
-		ReplaySavePoint state;
-		loader->readSavePoint(savepoint, state);
+    // now compare safepoint and actual position
+    // if we have to forward and save_position is nearer than current position, jump
+    if ((rep_position < mPosition || save_position > mPosition) && savepoint >= 0)
+    {
+        // can't use mPosition
+        // set match to safepoint
+        ReplaySavePoint state;
+        loader->readSavePoint(savepoint, state);
 
-		// set position and update match
-		mPosition = save_position;
-		virtual_match->setState(state.state);
-	}
-	// otherwise, use current position
+        // set position and update match
+        mPosition = save_position;
+        virtual_match->setState(state.state);
+    }
+    // otherwise, use current position
 
-	// this is legacy code which will make fast forwarding possible even
-	// when we have no safepoint and have to go back
-	if(rep_position < mPosition)
-	{
-		// reset the match and simulate from start!
-		virtual_match->reset();
-		mPosition = 0;
-	}
+    // this is legacy code which will make fast forwarding possible even
+    // when we have no safepoint and have to go back
+    if (rep_position < mPosition)
+    {
+        // reset the match and simulate from start!
+        virtual_match->reset();
+        mPosition = 0;
+    }
 
-	// in the end, simulate the remaining steps
-	// maximum: 100 steps
-	for(int i = 0; i < 100; ++i)
-	{
-		// check if we have to do another step
-		if(endOfFile() || rep_position == mPosition)
-			return true;
+    // in the end, simulate the remaining steps
+    // maximum: 100 steps
+    for (int i = 0; i < 100; ++i)
+    {
+        // check if we have to do another step
+        if (endOfFile() || rep_position == mPosition)
+        {
+            return true;
+        }
 
-		// do one play step
-		play(virtual_match);
+        // do one play step
+        play(virtual_match);
+    }
 
-	}
-
-	return false;
+    return false;
 }
 
 float ReplayPlayer::getCourtWidth() const
 {
- return mCourtWidth;
+    return mCourtWidth;
 }

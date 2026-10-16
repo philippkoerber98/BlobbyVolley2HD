@@ -31,82 +31,81 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 // Blood class
 // ------------
 
-Blood::Blood(const Vector2& position, const Vector2& direction, int player):
-	mPos(position),
-	mDir(direction),
-	mPlayer(player),
-	mLastFrame(SDL_GetTicks())
+Blood::Blood(const Vector2& position, const Vector2& direction, int player)
+    : mPos(position), mDir(direction), mPlayer(player), mLastFrame(SDL_GetTicks())
 {
 }
 
 void Blood::step(RenderManager& renderer)
 {
-	const float GRAVITY = 3;
-	/// \todo this is the only place where we do step-rate independent calculations.
-	///			is this intended behaviour???
-	int diff = SDL_GetTicks() - mLastFrame;
-	renderer.drawParticle(mPos, mPlayer);
-	const int SPEED = 45;
-	
-	//this calculation is NOT based on physical rules
-	mDir.y += GRAVITY / SPEED * diff;
-	mPos.x += mDir.x / SPEED * diff;
-	mPos.y += mDir.y / SPEED * diff;
-	mLastFrame = SDL_GetTicks();
+    const float GRAVITY = 3;
+    /// \todo this is the only place where we do step-rate independent calculations.
+    ///			is this intended behaviour???
+    int diff = SDL_GetTicks() - mLastFrame;
+    renderer.drawParticle(mPos, mPlayer);
+    const int SPEED = 45;
+
+    // this calculation is NOT based on physical rules
+    mDir.y += GRAVITY / SPEED * diff;
+    mPos.x += mDir.x / SPEED * diff;
+    mPos.y += mDir.y / SPEED * diff;
+    mLastFrame = SDL_GetTicks();
 }
 
 // BloodManager class
 // -------------------
 
-
-BloodManager::BloodManager(bool enabled) : mEnabled(enabled)
-{
-}
+BloodManager::BloodManager(bool enabled) : mEnabled(enabled) {}
 
 void BloodManager::step(RenderManager& renderer)
 {
-	// don't do any processing if there are no particles
-	if ( !mEnabled || mParticles.empty() )
-		return;
-	
-	// start drawing
-	renderer.startDrawParticles();
-	
-	// iterate over all particles
-	for(auto& pt : mParticles) {
-		pt.step(renderer);
-	}
-	
-	// finish drawing
-	renderer.endDrawParticles();
+    // don't do any processing if there are no particles
+    if (!mEnabled || mParticles.empty())
+    {
+        return;
+    }
 
-	// delete old particles
-	mParticles.erase(std::remove_if(begin(mParticles), end(mParticles), [](const Blood& particle) {
-		return particle.getPosition().y > 600;
-	}), mParticles.end());
+    // start drawing
+    renderer.startDrawParticles();
+
+    // iterate over all particles
+    for (auto& pt : mParticles)
+    {
+        pt.step(renderer);
+    }
+
+    // finish drawing
+    renderer.endDrawParticles();
+
+    // delete old particles
+    mParticles.erase(std::remove_if(begin(mParticles), end(mParticles),
+                                    [](const Blood& particle) { return particle.getPosition().y > 600; }),
+                     mParticles.end());
 }
 
 void BloodManager::spillBlood(Vector2 pos, float intensity, int player)
 {
-	const double EL_X_AXIS = 30;
-	const double EL_Y_AXIS = 50;
-	for (int c = 0; c <= int(intensity*50); c++)
-	{
-		/// \todo maybe we can find a better algorithm, but for now,
-		///		we just discard particles outside the ellipses
-		///		so it doesn't look that much like a square.
-		int x = random(int(-EL_X_AXIS * intensity), int(EL_X_AXIS * intensity));
-		int y = random(int(-EL_Y_AXIS * intensity), 3);
-		
-		if( ( y * y / (EL_Y_AXIS * EL_Y_AXIS) + x * x / (EL_X_AXIS * EL_X_AXIS) ) > intensity * intensity)
-			continue;
-		
-		mParticles.emplace_back(pos, Vector2(x, y), player );
-	}
+    const double EL_X_AXIS = 30;
+    const double EL_Y_AXIS = 50;
+    for (int c = 0; c <= int(intensity * 50); c++)
+    {
+        /// \todo maybe we can find a better algorithm, but for now,
+        ///		we just discard particles outside the ellipses
+        ///		so it doesn't look that much like a square.
+        int x = random(int(-EL_X_AXIS * intensity), int(EL_X_AXIS * intensity));
+        int y = random(int(-EL_Y_AXIS * intensity), 3);
+
+        if ((y * y / (EL_Y_AXIS * EL_Y_AXIS) + x * x / (EL_X_AXIS * EL_X_AXIS)) > intensity * intensity)
+        {
+            continue;
+        }
+
+        mParticles.emplace_back(pos, Vector2(x, y), player);
+    }
 }
 
 int BloodManager::random(int min, int max)
 {
-	std::uniform_int_distribution<int> dist(min, max);
-	return dist(mRng);
+    std::uniform_int_distribution<int> dist(min, max);
+    return dist(mRng);
 }

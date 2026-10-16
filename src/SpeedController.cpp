@@ -28,7 +28,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 /* implementation */
 /// this is required to reduce rounding errors. now we have a resolution of
-/// 1�s. This is much better than SDL_Delay can handle, but we prevent 
+/// 1�s. This is much better than SDL_Delay can handle, but we prevent
 /// accumulation errors.
 const int PRECISION_FACTOR = 1000;
 
@@ -36,102 +36,111 @@ SpeedController* SpeedController::mMainInstance = nullptr;
 
 SpeedController::SpeedController(float gameFPS)
 {
-	mGameFPS = gameFPS;
-	mFramedrop = false;
-	mDrawFPS = true;
-	mFPSCounter = 0;
-	mOldTicks = SDL_GetTicks();
-	mFPS = 0;
-	mBeginSecond = mOldTicks;
-	mCounter = 0;
+    mGameFPS = gameFPS;
+    mFramedrop = false;
+    mDrawFPS = true;
+    mFPSCounter = 0;
+    mOldTicks = SDL_GetTicks();
+    mFPS = 0;
+    mBeginSecond = mOldTicks;
+    mCounter = 0;
 }
 
 SpeedController::~SpeedController() = default;
 
 void SpeedController::recordRenderedFrame()
 {
-	++mFPSCounter;
-	const Uint32 now = SDL_GetTicks();
-	const Uint32 elapsed = now - mOldTicks;
-	if (elapsed >= 1000)
-	{
-		mFPS = int(mFPSCounter * 1000.0 / elapsed + 0.5);
-		mFPSCounter = 0;
-		mOldTicks = now;
-	}
+    ++mFPSCounter;
+    const Uint32 now = SDL_GetTicks();
+    const Uint32 elapsed = now - mOldTicks;
+    if (elapsed >= 1000)
+    {
+        mFPS = int(mFPSCounter * 1000.0 / elapsed + 0.5);
+        mFPSCounter = 0;
+        mOldTicks = now;
+    }
 }
 
 void SpeedController::setGameSpeed(float fps)
 {
-	if (fps < 5)
-		fps = 5;
-	mGameFPS = fps;
-	
-	/// \todo maybe we should reset only if speed changed?
-	mBeginSecond = mOldTicks;
-	mCounter = 0;
+    if (fps < 5)
+    {
+        fps = 5;
+    }
+    mGameFPS = fps;
+
+    /// \todo maybe we should reset only if speed changed?
+    mBeginSecond = mOldTicks;
+    mCounter = 0;
 }
 
 bool SpeedController::doFramedrop() const
 {
-	return mFramedrop;
+    return mFramedrop;
 }
 
 void SpeedController::update()
 {
-	int rateTicks = std::max( static_cast<int>(PRECISION_FACTOR * 1000 / mGameFPS), 1);
-	
-	static int lastTicks = SDL_GetTicks();
+    int rateTicks = std::max(static_cast<int>(PRECISION_FACTOR * 1000 / mGameFPS), 1);
 
-	if (mCounter == mGameFPS)
-	{
-		const int delta = SDL_GetTicks() - mBeginSecond;
-		int wait = 1000 - delta;
-		if (wait > 0)
-			SDL_Delay(wait);
-	}
-	if (mBeginSecond + 1000 <= SDL_GetTicks())
-	{
-		mBeginSecond = SDL_GetTicks();
-		mCounter = 0;
-	}
+    static int lastTicks = SDL_GetTicks();
 
-	const int delta = SDL_GetTicks() - mBeginSecond;
-	if ( (PRECISION_FACTOR * delta) / rateTicks <= mCounter)
-	{
-		int wait = ((mCounter+1)*rateTicks/PRECISION_FACTOR) - delta;
-		if (wait > 0)
-			SDL_Delay(wait);
-	}
-	
-	// do we need framedrop?
-	// if passed time > time when we should have drawn next frame
-	// maybe we should limit the number of consecutive framedrops?
-	// for now: we can't do a framedrop if we did a framedrop last frame
-	if ( delta * PRECISION_FACTOR > rateTicks * (mCounter + 1) && !mFramedrop)
-	{
-		mFramedrop = true;
-	} else
-		mFramedrop = false;
+    if (mCounter == mGameFPS)
+    {
+        const int delta = SDL_GetTicks() - mBeginSecond;
+        int wait = 1000 - delta;
+        if (wait > 0)
+        {
+            SDL_Delay(wait);
+        }
+    }
+    if (mBeginSecond + 1000 <= SDL_GetTicks())
+    {
+        mBeginSecond = SDL_GetTicks();
+        mCounter = 0;
+    }
 
-	mCounter++;
+    const int delta = SDL_GetTicks() - mBeginSecond;
+    if ((PRECISION_FACTOR * delta) / rateTicks <= mCounter)
+    {
+        int wait = ((mCounter + 1) * rateTicks / PRECISION_FACTOR) - delta;
+        if (wait > 0)
+        {
+            SDL_Delay(wait);
+        }
+    }
 
-	//calculate the FPS of drawn frames:
-	if (mDrawFPS)
-	{
-		if (lastTicks >= mOldTicks + 1000)
-		{
-			mOldTicks = lastTicks;
-			mFPS = mFPSCounter;
-			mFPSCounter = 0;
-		}
+    // do we need framedrop?
+    // if passed time > time when we should have drawn next frame
+    // maybe we should limit the number of consecutive framedrops?
+    // for now: we can't do a framedrop if we did a framedrop last frame
+    if (delta * PRECISION_FACTOR > rateTicks * (mCounter + 1) && !mFramedrop)
+    {
+        mFramedrop = true;
+    }
+    else
+    {
+        mFramedrop = false;
+    }
 
-		if (!mFramedrop)
-			mFPSCounter++;
-	}
+    mCounter++;
 
-	//update for next call:
-	lastTicks = SDL_GetTicks();
+    // calculate the FPS of drawn frames:
+    if (mDrawFPS)
+    {
+        if (lastTicks >= mOldTicks + 1000)
+        {
+            mOldTicks = lastTicks;
+            mFPS = mFPSCounter;
+            mFPSCounter = 0;
+        }
+
+        if (!mFramedrop)
+        {
+            mFPSCounter++;
+        }
+    }
+
+    // update for next call:
+    lastTicks = SDL_GetTicks();
 }
-
-

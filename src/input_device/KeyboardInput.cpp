@@ -29,18 +29,20 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 // ********************************************************************************************************
 
 /*! \class KeyboardInputDevice
-	\brief Ingame keyboard input
+    \brief Ingame keyboard input
 */
 class KeyboardInputDevice : public InputDevice
 {
-	private:
-		SDL_Keycode mLeftKey;
-		SDL_Keycode mRightKey;
-		SDL_Keycode mJumpKey;
-	public:
-		~KeyboardInputDevice() override = default;
-		KeyboardInputDevice(InputManager* inputMgr, SDL_Keycode leftKey, SDL_Keycode rightKey, SDL_Keycode jumpKey);
-		PlayerInputAbs transferInput() override;
+  private:
+    SDL_Keycode mLeftKey;
+    SDL_Keycode mRightKey;
+    SDL_Keycode mJumpKey;
+
+  public:
+    ~KeyboardInputDevice() override = default;
+    KeyboardInputDevice(InputManager* inputMgr, SDL_Keycode leftKey, SDL_Keycode rightKey,
+                        SDL_Keycode jumpKey);
+    PlayerInputAbs transferInput() override;
 };
 
 // ********************************************************************************************************
@@ -51,25 +53,24 @@ class KeyboardInputDevice : public InputDevice
 //		Creator Function
 // -------------------------------------------------------------------------------------------------
 
-std::unique_ptr<InputDevice> createKeyboardInput(InputManager* inputMgr, SDL_Keycode left, SDL_Keycode right, SDL_Keycode jump)
+std::unique_ptr<InputDevice> createKeyboardInput(InputManager* inputMgr, SDL_Keycode left, SDL_Keycode right,
+                                                 SDL_Keycode jump)
 {
-	return std::unique_ptr<InputDevice>{new KeyboardInputDevice(inputMgr, left, right, jump)};
+    return std::unique_ptr<InputDevice>{new KeyboardInputDevice(inputMgr, left, right, jump)};
 }
 
 // -------------------------------------------------------------------------------------------------
 // 		Keyboard Input Device
 // -------------------------------------------------------------------------------------------------
 
-KeyboardInputDevice::KeyboardInputDevice(InputManager* inputMgr, SDL_Keycode leftKey, SDL_Keycode rightKey, SDL_Keycode jumpKey)
-	: InputDevice(inputMgr), mLeftKey(leftKey), mRightKey(rightKey), mJumpKey(jumpKey)
+KeyboardInputDevice::KeyboardInputDevice(InputManager* inputMgr, SDL_Keycode leftKey, SDL_Keycode rightKey,
+                                         SDL_Keycode jumpKey)
+    : InputDevice(inputMgr), mLeftKey(leftKey), mRightKey(rightKey), mJumpKey(jumpKey)
 {
 }
 
 PlayerInputAbs KeyboardInputDevice::transferInput()
 {
-	return {mInputManager->isKeyPressed(mLeftKey),
-		    mInputManager->isKeyPressed(mRightKey),
-		    mInputManager->isKeyPressed(mJumpKey)};
+    return {mInputManager->isKeyPressed(mLeftKey), mInputManager->isKeyPressed(mRightKey),
+            mInputManager->isKeyPressed(mJumpKey)};
 }
-
-

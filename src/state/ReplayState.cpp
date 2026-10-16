@@ -22,16 +22,16 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #include "ReplayState.h"
 
 /* includes */
-#include "IMGUI.h"
-#include "replays/ReplayPlayer.h"
 #include "DuelMatch.h"
-#include "SoundManager.h"
-#include "TextManager.h"
-#include "SpeedController.h"
-#include "IUserConfigReader.h"
-#include "ReplaySelectionState.h"
-#include "InputManager.h"
 #include "FileWrite.h"
+#include "IMGUI.h"
+#include "IUserConfigReader.h"
+#include "InputManager.h"
+#include "ReplaySelectionState.h"
+#include "SoundManager.h"
+#include "SpeedController.h"
+#include "TextManager.h"
+#include "replays/ReplayPlayer.h"
 
 /* implementation */
 
@@ -39,198 +39,202 @@ extern const std::string DUMMY_RULES_NAME;
 
 ReplayState::ReplayState()
 {
-	mPositionJump = -1;
-	mPaused = false;
+    mPositionJump = -1;
+    mPaused = false;
 
-	mSpeedValue = 8;
-	mSpeedTimer = 0;
+    mSpeedValue = 8;
+    mSpeedTimer = 0;
 }
 
 void ReplayState::init()
 {
-	playSound(SoundManager::WHISTLE, ROUND_START_SOUND_VOLUME);
+    playSound(SoundManager::WHISTLE, ROUND_START_SOUND_VOLUME);
 }
-
 
 ReplayState::~ReplayState() = default;
 
 void ReplayState::loadReplay(const std::string& file)
 {
-	mReplayPlayer.reset( new ReplayPlayer() );
+    mReplayPlayer.reset(new ReplayPlayer());
 
-	//try
-	//{
-		mReplayPlayer->load(std::string("replays/" + file + ".bvr"));
-		FileWrite rulesFile("rules/"+TEMP_RULES_NAME);
-		rulesFile.write(mReplayPlayer->getRules());
-		rulesFile.close();
-		mMatch.reset(new DuelMatch(false,TEMP_RULES_NAME,0,mReplayPlayer->getCourtWidth()));
+    // try
+    //{
+    mReplayPlayer->load(std::string("replays/" + file + ".bvr"));
+    FileWrite rulesFile("rules/" + TEMP_RULES_NAME);
+    rulesFile.write(mReplayPlayer->getRules());
+    rulesFile.close();
+    mMatch.reset(new DuelMatch(false, TEMP_RULES_NAME, 0, mReplayPlayer->getCourtWidth()));
 
-		mMatch->setPlayers(PlayerIdentity{mReplayPlayer->getPlayerName(LEFT_PLAYER)},
-		                   PlayerIdentity{mReplayPlayer->getPlayerName(RIGHT_PLAYER)});
+    mMatch->setPlayers(PlayerIdentity{mReplayPlayer->getPlayerName(LEFT_PLAYER)},
+                       PlayerIdentity{mReplayPlayer->getPlayerName(RIGHT_PLAYER)});
 
-		mMatch->getPlayer(LEFT_PLAYER).setStaticColor(mReplayPlayer->getBlobColor(LEFT_PLAYER));
-		mMatch->getPlayer(RIGHT_PLAYER).setStaticColor(mReplayPlayer->getBlobColor(RIGHT_PLAYER));
+    mMatch->getPlayer(LEFT_PLAYER).setStaticColor(mReplayPlayer->getBlobColor(LEFT_PLAYER));
+    mMatch->getPlayer(RIGHT_PLAYER).setStaticColor(mReplayPlayer->getBlobColor(RIGHT_PLAYER));
 
-		SpeedController::getMainInstance()->setGameSpeed(
-				(float)IUserConfigReader::createUserConfigReader("config.xml")->getInteger("gamefps")
-			);
+    SpeedController::getMainInstance()->setGameSpeed(
+        (float)IUserConfigReader::createUserConfigReader("config.xml")->getInteger("gamefps"));
 
-	//}
-	/*
-	catch (VersionMismatchException& e)
-	{
-		delete mReplayRecorder;
-		mReplayRecorder = 0;
-		mVersionError = true;
-	}*/
-	/// \todo reintroduce error handling
+    //}
+    /*
+    catch (VersionMismatchException& e)
+    {
+        delete mReplayRecorder;
+        mReplayRecorder = 0;
+        mVersionError = true;
+    }*/
+    /// \todo reintroduce error handling
 }
 
 void ReplayState::step_impl()
 {
-	IMGUI& imgui = getIMGUI();
+    IMGUI& imgui = getIMGUI();
 
-	// only draw cursor when mouse moved or clicked in the last second
-	if(mLastMousePosition != getInputMgr().position() || clicked())
-	{
-		/// \todo we must do this framerate independent
-		mMouseShowTimer = 75;
-	}
+    // only draw cursor when mouse moved or clicked in the last second
+    if (mLastMousePosition != getInputMgr().position() || clicked())
+    {
+        /// \todo we must do this framerate independent
+        mMouseShowTimer = 75;
+    }
 
-	if(mMouseShowTimer > 0)
-	{
-		imgui.doCursor();
-		mMouseShowTimer--;
-	}
+    if (mMouseShowTimer > 0)
+    {
+        imgui.doCursor();
+        mMouseShowTimer--;
+    }
 
-	mLastMousePosition = getInputMgr().position();
+    mLastMousePosition = getInputMgr().position();
 
+    if (mPositionJump != -1)
+    {
+        if (mReplayPlayer->gotoPlayingPosition(mPositionJump, mMatch.get()))
+        {
+            mPositionJump = -1;
+        }
+    }
+    else if (!mPaused)
+    {
+        while (mSpeedTimer >= 8)
+        {
+            mPaused = !mReplayPlayer->play(mMatch.get());
+            mSpeedTimer -= 8;
+            presentGame();
+        }
+        mSpeedTimer += mSpeedValue;
+    }
 
-	if(mPositionJump != -1)
-	{
-		if(mReplayPlayer->gotoPlayingPosition(mPositionJump, mMatch.get()))
-			mPositionJump = -1;
-	}
-	else if(!mPaused)
-	{
-		while( mSpeedTimer >= 8)
-		{
-			mPaused = !mReplayPlayer->play(mMatch.get());
-			mSpeedTimer -= 8;
-			presentGame();
-		}
-		mSpeedTimer += mSpeedValue;
+    mMatch->setMatchTimeMs(1000 * mReplayPlayer->getReplayPosition() / mReplayPlayer->getGameSpeed());
 
-	}
+    // draw the progress bar
+    Vector2 prog_pos = Vector2(50, 600 - 22);
+    imgui.doOverlay(GEN_ID, prog_pos, Vector2(750, 600 - 3), Color(0, 0, 0));
+    imgui.doOverlay(GEN_ID, prog_pos, Vector2(700 * mReplayPlayer->getPlayProgress() + 50, 600 - 3),
+                    Color(0, 255, 0));
 
-	mMatch->setMatchTimeMs( 1000 * mReplayPlayer->getReplayPosition() / mReplayPlayer->getGameSpeed() );
+    PlayerSide side = NO_PLAYER;
+    if (mReplayPlayer->endOfFile())
+    {
+        int diff = mMatch->getScore(LEFT_PLAYER) - mMatch->getScore(RIGHT_PLAYER);
+        if (diff > 0)
+        {
+            side = LEFT_PLAYER;
+        }
+        else if (diff < 0)
+        {
+            side = RIGHT_PLAYER;
+        }
+    }
 
-	// draw the progress bar
-	Vector2 prog_pos = Vector2(50, 600-22);
-	imgui.doOverlay(GEN_ID, prog_pos, Vector2(750, 600-3), Color(0,0,0));
-	imgui.doOverlay(GEN_ID, prog_pos, Vector2(700*mReplayPlayer->getPlayProgress()+50, 600-3), Color(0,255,0));
+    // play/pause button
+    imgui.doOverlay(GEN_ID, Vector2(350, 535.0), Vector2(450, 575.0));
+    bool pause_click = imgui.doImageButton(GEN_ID, Vector2(400, 555), Vector2(24, 24),
+                                           mPaused ? "gfx/btn_play.bmp" : "gfx/btn_pause.bmp");
+    bool fast_click = imgui.doImageButton(GEN_ID, Vector2(430, 555), Vector2(24, 24), "gfx/btn_fast.bmp");
+    bool slow_click = imgui.doImageButton(GEN_ID, Vector2(370, 555), Vector2(24, 24), "gfx/btn_slow.bmp");
 
-	PlayerSide side = NO_PLAYER;
-	if (mReplayPlayer->endOfFile())
-	{
-		int diff = mMatch->getScore(LEFT_PLAYER) - mMatch->getScore(RIGHT_PLAYER);
-		if (diff > 0)
-		{
-			side = LEFT_PLAYER;
-		}
-		else if (diff < 0)
-		{
-			side = RIGHT_PLAYER;
-		}
-	}
+    // handle these image buttons. IMGUI is not capable of doing this.
+    if (side == NO_PLAYER)
+    {
+        // control replay position
+        Vector2 mousepos = getInputMgr().position();
+        if (mousepos.x + 5 > prog_pos.x && mousepos.y > prog_pos.y && mousepos.x < prog_pos.x + 700 &&
+            mousepos.y < prog_pos.y + 24.0)
+        {
 
-	// play/pause button
-	imgui.doOverlay(GEN_ID, Vector2(350, 535.0), Vector2(450, 575.0));
-	bool pause_click = imgui.doImageButton(GEN_ID, Vector2(400, 555), Vector2(24, 24), mPaused ? "gfx/btn_play.bmp" : "gfx/btn_pause.bmp");
-	bool fast_click = imgui.doImageButton(GEN_ID, Vector2(430, 555), Vector2(24, 24),  "gfx/btn_fast.bmp");
-	bool slow_click = imgui.doImageButton(GEN_ID, Vector2(370, 555), Vector2(24, 24),  "gfx/btn_slow.bmp");
+            if (clicked())
+            {
+                float pos = (mousepos.x - prog_pos.x) / 700.f;
+                mPositionJump = pos * mReplayPlayer->getReplayLength();
+            }
+        }
 
-	// handle these image buttons. IMGUI is not capable of doing this.
-	if(side == NO_PLAYER)
-	{
-		// control replay position
-		Vector2 mousepos = getInputMgr().position();
-		if (mousepos.x + 5 > prog_pos.x && mousepos.y > prog_pos.y &&
-			mousepos.x < prog_pos.x + 700 && mousepos.y < prog_pos.y + 24.0)
-		{
+        if (pause_click)
+        {
+            if (mPaused)
+            {
+                if (mReplayPlayer->endOfFile())
+                {
+                    mPositionJump = 0;
+                }
+            }
+            mPaused = !mPaused;
+        }
 
-			if (clicked())
-			{
-				float pos = (mousepos.x - prog_pos.x) / 700.f;
-				mPositionJump = pos * mReplayPlayer->getReplayLength();
-			}
-		}
+        if (fast_click)
+        {
+            mSpeedValue *= 2;
+            if (mSpeedValue > 64)
+            {
+                mSpeedValue = 64;
+            }
+        }
 
-		if (pause_click)
-		{
-			if(mPaused)
-			{
-				if(mReplayPlayer->endOfFile())
-					mPositionJump = 0;
-			}
-			mPaused = !mPaused;
-		}
+        if (slow_click)
+        {
+            mSpeedValue /= 2;
+            if (mSpeedValue < 1)
+            {
+                mSpeedValue = 1;
+            }
+        }
 
-		if (fast_click)
-		{
-			mSpeedValue *= 2;
-			if(mSpeedValue > 64)
-				mSpeedValue = 64;
-		}
+        if (is_exiting())
+        {
+            switchState(new ReplaySelectionState());
+            return;
+        }
+    }
+    else
+    {
+        displayWinningPlayerScreen(side);
 
-		if (slow_click)
-		{
-			mSpeedValue /= 2;
-			if(mSpeedValue < 1)
-				mSpeedValue = 1;
-		}
+        const int action = displayVictoryActions(true, true);
+        if (action == 2)
+        {
+            switchState(new ReplaySelectionState());
+            return;
+        }
+        if (action == 1)
+        {
+            // we don't have to reset the match, because we don't use lua rules
+            // we just have to jump to the beginning
+            playSound(SoundManager::WHISTLE, ROUND_START_SOUND_VOLUME);
 
-		if (is_exiting())
-		{
-			switchState(new ReplaySelectionState());
-			return;
-		}
-	}
-	else
-	{
-		displayWinningPlayerScreen(side);
+            // do we really need this?
+            // maybe, users want to replay the game on the current speed
+            SpeedController::getMainInstance()->setGameSpeed(
+                (float)IUserConfigReader::createUserConfigReader("config.xml")->getInteger("gamefps"));
 
-		const int action=displayVictoryActions(true,true);
-		if (action==2)
-		{
-			switchState(new ReplaySelectionState());
-			return;
-		}
-		if (action==1)
-		{
-			// we don't have to reset the match, because we don't use lua rules
-			// we just have to jump to the beginning
-			playSound(SoundManager::WHISTLE, ROUND_START_SOUND_VOLUME);
+            mPaused = false;
+            mPositionJump = 0;
+        }
+        imgui.doCursor();
+    }
 
-			// do we really need this?
-			// maybe, users want to replay the game on the current speed
-			SpeedController::getMainInstance()->setGameSpeed(
-					(float)IUserConfigReader::createUserConfigReader("config.xml")->getInteger("gamefps")
-				);
-
-			mPaused = false;
-			mPositionJump = 0;
-		}
-		imgui.doCursor();
-	}
-
-	// show the game ui
-	presentGameUI();
+    // show the game ui
+    presentGameUI();
 }
 
 const char* ReplayState::getStateName() const
 {
-	return "ReplayState";
+    return "ReplayState";
 }
-

@@ -20,64 +20,63 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 #pragma once
 
-#include <string>
 #include <memory>
+#include <string>
 
-#include "raknet/NetworkTypes.h"
-#include "raknet/BitStream.h"
-#include "Global.h"
 #include "../BlobbyDebug.h"
+#include "Global.h"
 #include "PlayerIdentity.h"
+#include "raknet/BitStream.h"
+#include "raknet/NetworkTypes.h"
 
 class NetworkGame;
 
 /*! \brief class for managing an online player
-	\details This class manages an online player,
-		that is, his identity (name, color, ...),
-		his network address and associated game
+    \details This class manages an online player,
+        that is, his identity (name, color, ...),
+        his network address and associated game
 */
 /// \todo add data to log when last packet arrived
 class NetworkPlayer : public ObjectCounter<NetworkPlayer>
 {
-	public:
-		NetworkPlayer();
+  public:
+    NetworkPlayer();
 
-		NetworkPlayer(PlayerID id, const std::string& name, Color color, PlayerSide side);
+    NetworkPlayer(PlayerID id, const std::string& name, Color color, PlayerSide side);
 
-		NetworkPlayer(PlayerID id, RakNet::BitStream& stream);
+    NetworkPlayer(PlayerID id, RakNet::BitStream& stream);
 
-		NetworkPlayer(const NetworkPlayer&) = delete;
-		NetworkPlayer& operator=(const NetworkPlayer&) = delete;
+    NetworkPlayer(const NetworkPlayer&) = delete;
+    NetworkPlayer& operator=(const NetworkPlayer&) = delete;
 
-		bool valid() const;
+    bool valid() const;
 
-		// gets network ID of this player
-		const PlayerID& getID() const;
-		// gets name of this player
-		const std::string& getName() const;
-		// gets colour of this player
-		Color getColor() const;
-		// gets side this player wants to play on
-		PlayerSide getDesiredSide() const;
-		// gets the complete player identity
-		PlayerIdentity getIdentity() const;
+    // gets network ID of this player
+    const PlayerID& getID() const;
+    // gets name of this player
+    const std::string& getName() const;
+    // gets colour of this player
+    Color getColor() const;
+    // gets side this player wants to play on
+    PlayerSide getDesiredSide() const;
+    // gets the complete player identity
+    PlayerIdentity getIdentity() const;
 
-		// get game the player currently is in
-		const std::shared_ptr<NetworkGame>& getGame() const;
+    // get game the player currently is in
+    const std::shared_ptr<NetworkGame>& getGame() const;
 
-		void setGame(std::shared_ptr<NetworkGame>);
+    void setGame(std::shared_ptr<NetworkGame>);
 
-	private:
-		/* Network ID */
-		PlayerID mID;
-		/* Identity */
-		PlayerIdentity mIdentity;
+  private:
+    /* Network ID */
+    PlayerID mID;
+    /* Identity */
+    PlayerIdentity mIdentity;
 
-		/* Game Data */
-		std::shared_ptr<NetworkGame> mGame;
+    /* Game Data */
+    std::shared_ptr<NetworkGame> mGame;
 
-		/* we could add more data such as stats,
-			account info, etc later.
-		*/
+    /* we could add more data such as stats,
+        account info, etc later.
+    */
 };
-

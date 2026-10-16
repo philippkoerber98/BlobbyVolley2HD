@@ -32,80 +32,79 @@ class InputManager;
 #define GEN_ID getIMGUI().getNextId()
 
 /*! \class State
-	\brief Base class for all programme states.
-	\details A program state describes which state a programme is in
-			( e.g. MainMenu, OptionsMenu, SinglePlayerGame etc. ). It defines
-			an abstract step function which is called each frame for the
-			currently active state.
-			Switching to a new state is a little cumbersome right now, as
-			it requires deleting the current State (deleteCurrentState())
-			and setting the new state afterwards. This approach is
-			very error prone and generally not nice, so I hope we can
-			replace it someday with something better ;)
+    \brief Base class for all programme states.
+    \details A program state describes which state a programme is in
+            ( e.g. MainMenu, OptionsMenu, SinglePlayerGame etc. ). It defines
+            an abstract step function which is called each frame for the
+            currently active state.
+            Switching to a new state is a little cumbersome right now, as
+            it requires deleting the current State (deleteCurrentState())
+            and setting the new state afterwards. This approach is
+            very error prone and generally not nice, so I hope we can
+            replace it someday with something better ;)
 */
 class State
 {
-public:
-	virtual ~State() = default;
+  public:
+    virtual ~State() = default;
 
-	// step function defines the steps actual work
-	virtual void step_impl() = 0;
-	virtual void render(float alpha) {}
-	// this is called just before the step function is invoked for the first time.
-	virtual void init() {}
-	virtual const char* getStateName() const = 0;
+    // step function defines the steps actual work
+    virtual void step_impl() = 0;
+    virtual void render(float alpha) {}
+    // this is called just before the step function is invoked for the first time.
+    virtual void init() {}
+    virtual const char* getStateName() const = 0;
 
-protected:
-	/// generic state constructor. automatically resets imgui selection
-	State();
+  protected:
+    /// generic state constructor. automatically resets imgui selection
+    State();
 
-	BlobbyApp& getApp() const;
-	IMGUI& getIMGUI() const;
-	InputManager& getInputMgr() const;
+    BlobbyApp& getApp() const;
+    IMGUI& getIMGUI() const;
+    InputManager& getInputMgr() const;
 
-	// shortcuts
-	void playSound(const std::string& sound, float volume);
-	bool is_exiting() const;
-	bool clicked() const;
+    // shortcuts
+    void playSound(const std::string& sound, float volume);
+    bool is_exiting() const;
+    bool clicked() const;
 
-	void switchState(State* newState);
-private:
+    void switchState(State* newState);
 
-	friend class BlobbyApp;
-	void setApp(BlobbyApp* app);
+  private:
+    friend class BlobbyApp;
+    void setApp(BlobbyApp* app);
 
-	BlobbyApp* m_App = nullptr;
-
+    BlobbyApp* m_App = nullptr;
 };
 
 /*! \class MainMenuState
-	\brief state for main menu
+    \brief state for main menu
 */
 class MainMenuState : public State
 {
-public:
-	MainMenuState();
-	void init() override;
-	~MainMenuState() override;
-	void step_impl() override;
-	const char* getStateName() const override;
-private:
-	struct Menu;
-	std::unique_ptr<Menu> mMenu;
-	void draw(bool interactive);
+  public:
+    MainMenuState();
+    void init() override;
+    ~MainMenuState() override;
+    void step_impl() override;
+    const char* getStateName() const override;
+
+  private:
+    struct Menu;
+    std::unique_ptr<Menu> mMenu;
+    void draw(bool interactive);
 };
 
 /*! \class CreditsState
-	\brief State for credits screen
+    \brief State for credits screen
 */
 class CreditsState : public State
 {
-public:
-	CreditsState();
-	void step_impl() override;
-	const char* getStateName() const override;
-private:
-	float mYPosition;
+  public:
+    CreditsState();
+    void step_impl() override;
+    const char* getStateName() const override;
+
+  private:
+    float mYPosition;
 };
-
-

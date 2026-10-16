@@ -20,8 +20,8 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 #pragma once
 
-#include <memory>
 #include "DisplaySettings.h"
+#include <memory>
 
 class State;
 class SoundManager;
@@ -31,56 +31,60 @@ class IMGUI;
 class RenderManager;
 struct SDL_Window;
 
-class BlobbyApp {
-	public:
-		explicit BlobbyApp(std::unique_ptr<State> initState, const IUserConfigReader& config);
-		~BlobbyApp();
+class BlobbyApp
+{
+  public:
+    explicit BlobbyApp(std::unique_ptr<State> initState, const IUserConfigReader& config);
+    ~BlobbyApp();
 
-		void step();
-		void render(float alpha);
-		void updateDisplaySettings(bool force = false);
-		const DisplaySettings& displaySettings() const { return mDisplaySettings; }
-		void setFrameLimit(int fps);
-		int renderFPS() const;
+    void step();
+    void render(float alpha);
+    void updateDisplaySettings(bool force = false);
+    const DisplaySettings& displaySettings() const
+    {
+        return mDisplaySettings;
+    }
+    void setFrameLimit(int fps);
+    int renderFPS() const;
 
-		void switchToState(std::unique_ptr<State> newState);
+    void switchToState(std::unique_ptr<State> newState);
 
-		/// get the currently active state
-		State& getCurrentState() const;
+    /// get the currently active state
+    State& getCurrentState() const;
 
-		/// get the sound manager
-		SoundManager& getSoundManager() const;
+    /// get the sound manager
+    SoundManager& getSoundManager() const;
 
-		/// get the input manager
-		InputManager& getInputManager() const;
+    /// get the input manager
+    InputManager& getInputManager() const;
 
-		/// gets the gui manager
-		IMGUI& getIMGUI() const;
+    /// gets the gui manager
+    IMGUI& getIMGUI() const;
 
-		/// gets the name of the currently active state
-		const char* getCurrenStateName() const;
+    /// gets the name of the currently active state
+    const char* getCurrenStateName() const;
 
-		/// gets the render manager
-		RenderManager& getRenderManager() const;
+    /// gets the render manager
+    RenderManager& getRenderManager() const;
 
-		/// Gets the game window
-		SDL_Window* getWindow() const;
+    /// Gets the game window
+    SDL_Window* getWindow() const;
 
-		void setupRenderManager(const IUserConfigReader& config);
+    void setupRenderManager(const IUserConfigReader& config);
 
-	private:
-		// We keep two references to states: One for the currently active one, and one
-		// that is set to the new state if we want to switch states. This is because we
-		// want to make sure that the current state, which called switchState, is not
-		// destroyed while its `step` member function is still running.
-		std::unique_ptr<State> mCurrentState;
-		std::unique_ptr<State> mStateToSwitchTo;
+  private:
+    // We keep two references to states: One for the currently active one, and one
+    // that is set to the new state if we want to switch states. This is because we
+    // want to make sure that the current state, which called switchState, is not
+    // destroyed while its `step` member function is still running.
+    std::unique_ptr<State> mCurrentState;
+    std::unique_ptr<State> mStateToSwitchTo;
 
-		std::unique_ptr<SoundManager> mSoundManager;
-		std::unique_ptr<IMGUI> mIMGUI;
-		std::unique_ptr<InputManager> mInputMgr;
-		std::unique_ptr<RenderManager> mRenderMgr;
-		DisplaySettings mDisplaySettings;
-		Uint32 mLastDisplayQuery = 0;
-		int mFrameLimit = 0; // zero = monitor synchronization
+    std::unique_ptr<SoundManager> mSoundManager;
+    std::unique_ptr<IMGUI> mIMGUI;
+    std::unique_ptr<InputManager> mInputMgr;
+    std::unique_ptr<RenderManager> mRenderMgr;
+    DisplaySettings mDisplaySettings;
+    Uint32 mLastDisplayQuery = 0;
+    int mFrameLimit = 0; // zero = monitor synchronization
 };

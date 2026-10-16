@@ -22,29 +22,29 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 #include <string>
 
-#include "Global.h"
 #include "Color.h"
+#include "Global.h"
 
 class PlayerIdentity
 {
-	public:
-		PlayerIdentity() = default;
-		explicit PlayerIdentity(std::string name);
-		PlayerIdentity(std::string name, Color color, bool osci, PlayerSide pref);
+  public:
+    PlayerIdentity() = default;
+    explicit PlayerIdentity(std::string name);
+    PlayerIdentity(std::string name, Color color, bool osci, PlayerSide pref);
 
-		const std::string& getName() const;
-		Color getStaticColor() const;
-		bool getOscillating() const;
-		PlayerSide getPreferredSide() const;
+    const std::string& getName() const;
+    Color getStaticColor() const;
+    bool getOscillating() const;
+    PlayerSide getPreferredSide() const;
 
-		void setName(const std::string& nname);
-		void setStaticColor(Color ncol);
-		void setOscillating(bool oc);
-		void setPreferredSide(PlayerSide side);
+    void setName(const std::string& nname);
+    void setStaticColor(Color ncol);
+    void setOscillating(bool oc);
+    void setPreferredSide(PlayerSide side);
 
-	private:
-		std::string mName;
-		Color mStaticColor;
-		bool mOscillating;
-		PlayerSide mPreferredSide;
+  private:
+    std::string mName;
+    Color mStaticColor;
+    bool mOscillating;
+    PlayerSide mPreferredSide;
 };

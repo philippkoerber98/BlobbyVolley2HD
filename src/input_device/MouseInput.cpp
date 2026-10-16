@@ -34,21 +34,21 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 // ********************************************************************************************************
 
 /*! \class MouseInputDevice
-	\brief Ingame mouse control
+    \brief Ingame mouse control
 */
 class MouseInputDevice : public InputDevice
 {
-	public:
-		~MouseInputDevice() override;
-		MouseInputDevice(InputManager* inputMgr, PlayerSide player, int jumpbutton, float sensitivity);
-		PlayerInputAbs transferInput() override;
+  public:
+    ~MouseInputDevice() override;
+    MouseInputDevice(InputManager* inputMgr, PlayerSide player, int jumpbutton, float sensitivity);
+    PlayerInputAbs transferInput() override;
 
-	private:
-		PlayerSide mPlayer;
-		int mJumpButton;
-		int mMarkerX;
-		bool mDelay; // The pressed button of the mainmenu must be ignored
-		float mSensitivity;
+  private:
+    PlayerSide mPlayer;
+    int mJumpButton;
+    int mMarkerX;
+    bool mDelay; // The pressed button of the mainmenu must be ignored
+    float mSensitivity;
 };
 
 // ********************************************************************************************************
@@ -59,65 +59,75 @@ class MouseInputDevice : public InputDevice
 //		Creator Function
 // -------------------------------------------------------------------------------------------------
 
-std::unique_ptr<InputDevice> createMouseInput(InputManager* inputMgr, PlayerSide player, int jumpbutton, float s)
+std::unique_ptr<InputDevice> createMouseInput(InputManager* inputMgr, PlayerSide player, int jumpbutton,
+                                              float s)
 {
-	float maxFactor = 3;
-	// mapping  [0:1]  -> [-1:1] 	: se = (s - 0.5) * 2
-	// mapping  [-1:1] -> [1/m, m]
-	//		exp(a) = m
-	//		exp(-a) = 1/m
-	//		exp(0) = 1
-	//    => a =  ln(m)
-	//	sensitivity = exp(ln(m) * se)
-	float se = (s - 0.5) * 2;
-	float sensitivity = std::exp(std::log(maxFactor) * se);
+    float maxFactor = 3;
+    // mapping  [0:1]  -> [-1:1] 	: se = (s - 0.5) * 2
+    // mapping  [-1:1] -> [1/m, m]
+    //		exp(a) = m
+    //		exp(-a) = 1/m
+    //		exp(0) = 1
+    //    => a =  ln(m)
+    //	sensitivity = exp(ln(m) * se)
+    float se = (s - 0.5) * 2;
+    float sensitivity = std::exp(std::log(maxFactor) * se);
 
-	return std::unique_ptr<InputDevice>{new MouseInputDevice(inputMgr, player, jumpbutton, sensitivity)};
+    return std::unique_ptr<InputDevice>{new MouseInputDevice(inputMgr, player, jumpbutton, sensitivity)};
 }
 
 // -------------------------------------------------------------------------------------------------
 // 		Keyboard Input Device
 // -------------------------------------------------------------------------------------------------
-MouseInputDevice::MouseInputDevice(InputManager* inputMgr, PlayerSide player, int jumpbutton, float sensitivity)
-	: InputDevice(inputMgr), mPlayer(player), mJumpButton(jumpbutton), mMarkerX(0), mSensitivity( sensitivity )
+MouseInputDevice::MouseInputDevice(InputManager* inputMgr, PlayerSide player, int jumpbutton,
+                                   float sensitivity)
+    : InputDevice(inputMgr), mPlayer(player), mJumpButton(jumpbutton), mMarkerX(0), mSensitivity(sensitivity)
 {
-	if (SDL_GetMouseState(nullptr, nullptr))
-		mDelay = true;
-	else
-		mDelay = false;
+    if (SDL_GetMouseState(nullptr, nullptr))
+    {
+        mDelay = true;
+    }
+    else
+    {
+        mDelay = false;
+    }
 
-	assert(mInputManager->isMouseCaptured() == false);
-	mInputManager->captureMouse( true );
+    assert(mInputManager->isMouseCaptured() == false);
+    mInputManager->captureMouse(true);
 }
 
 MouseInputDevice::~MouseInputDevice()
 {
-	assert(mInputManager->isMouseCaptured() == true);
-	mInputManager->captureMouse( false );
-	mInputManager->setMouseMarker( -6 );
+    assert(mInputManager->isMouseCaptured() == true);
+    mInputManager->captureMouse(false);
+    mInputManager->setMouseMarker(-6);
 }
 
 PlayerInputAbs MouseInputDevice::transferInput()
 {
-	PlayerInputAbs input = PlayerInputAbs();
+    PlayerInputAbs input = PlayerInputAbs();
 
-	int deltaX;
-	int mouseState = SDL_GetRelativeMouseState(&deltaX, nullptr);
+    int deltaX;
+    int mouseState = SDL_GetRelativeMouseState(&deltaX, nullptr);
 
-	if (mouseState == 0)
-		mDelay = false;
+    if (mouseState == 0)
+    {
+        mDelay = false;
+    }
 
-	if((mouseState & SDL_BUTTON(mJumpButton)) && !mDelay)
-		input.setJump( true );
+    if ((mouseState & SDL_BUTTON(mJumpButton)) && !mDelay)
+    {
+        input.setJump(true);
+    }
 
-	const int half=int(mInputManager->courtWidth()/4);
-	const int playerOffset = mPlayer == RIGHT_PLAYER ? half*3 : half;
-	mMarkerX += deltaX * mSensitivity;
-	mMarkerX = std::max(-half, std::min(half, mMarkerX));
+    const int half = int(mInputManager->courtWidth() / 4);
+    const int playerOffset = mPlayer == RIGHT_PLAYER ? half * 3 : half;
+    mMarkerX += deltaX * mSensitivity;
+    mMarkerX = std::max(-half, std::min(half, mMarkerX));
 
-	input.setTarget( mMarkerX + playerOffset, mPlayer );
+    input.setTarget(mMarkerX + playerOffset, mPlayer);
 
-	mInputManager->setMouseMarker(mMarkerX + playerOffset);
+    mInputManager->setMouseMarker(mMarkerX + playerOffset);
 
-	return input;
+    return input;
 }

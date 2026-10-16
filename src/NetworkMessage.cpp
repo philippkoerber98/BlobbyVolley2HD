@@ -22,108 +22,102 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #include "NetworkMessage.h"
 
 /* includes */
+#include <cassert>
 #include <cstring>
 #include <ostream>
-#include <cassert>
 
-#include "UserConfig.h"
 #include "PlayerIdentity.h"
+#include "UserConfig.h"
 
 /* implementation */
 ServerInfo::ServerInfo(RakNet::BitStream& stream, const char* ip, uint16_t p)
 {
-	strncpy(hostname, ip, sizeof(hostname));
-	hostname[sizeof(hostname) - 1] = 0;
+    strncpy(hostname, ip, sizeof(hostname));
+    hostname[sizeof(hostname) - 1] = 0;
 
-	port = p;
+    port = p;
 
-	stream.Read(activegames);
-	stream.Read(name, sizeof(name));
-	stream.Read(waitingplayers);
-	stream.Read(description, sizeof(description));
+    stream.Read(activegames);
+    stream.Read(name, sizeof(name));
+    stream.Read(waitingplayers);
+    stream.Read(description, sizeof(description));
 }
 
 ServerInfo::ServerInfo(const IUserConfigReader& config)
 {
-	/// \todo we only need a config reader here!
+    /// \todo we only need a config reader here!
 
-	// default values
-	std::string n = "Blobby Volley 2 Server";
-	std::string d = "no description available";
+    // default values
+    std::string n = "Blobby Volley 2 Server";
+    std::string d = "no description available";
 
-	activegames = 0;
-	memset(hostname, 0, sizeof(hostname));
-	memset(name, 0, sizeof(name));
-	memset(description, 0, sizeof(description));
-	waitingplayers = 0;
+    activegames = 0;
+    memset(hostname, 0, sizeof(hostname));
+    memset(name, 0, sizeof(name));
+    memset(description, 0, sizeof(description));
+    waitingplayers = 0;
 
-	std::string tmp;
-	tmp = config.getString("name", n);
-	strncpy(name, tmp.c_str(), sizeof(name) - 1);
-	tmp = config.getString("description", d);
-	strncpy(description, tmp.c_str(), sizeof(description) - 1);
-	port = config.getInteger("port", BLOBBY_PORT);
+    std::string tmp;
+    tmp = config.getString("name", n);
+    strncpy(name, tmp.c_str(), sizeof(name) - 1);
+    tmp = config.getString("description", d);
+    strncpy(description, tmp.c_str(), sizeof(description) - 1);
+    port = config.getInteger("port", BLOBBY_PORT);
 }
 
 ServerInfo::ServerInfo(const std::string& playername)
 {
-	activegames = 0;
-	memset(hostname, 0, sizeof(hostname));
-	memset(name, 0, sizeof(name));
-	memset(description, 0, sizeof(description));
-	waitingplayers = 0;
+    activegames = 0;
+    memset(hostname, 0, sizeof(hostname));
+    memset(name, 0, sizeof(name));
+    memset(description, 0, sizeof(description));
+    waitingplayers = 0;
 
-	std::strncpy(hostname, "localhost", sizeof(hostname));
-	port = BLOBBY_PORT;
+    std::strncpy(hostname, "localhost", sizeof(hostname));
+    port = BLOBBY_PORT;
 
-	std::strncpy(name, std::string(playername + "'s game").c_str(), sizeof(name) - 1);
-	std::strncpy(description, "client hosted game", sizeof(description) - 1);
+    std::strncpy(name, std::string(playername + "'s game").c_str(), sizeof(name) - 1);
+    std::strncpy(description, "client hosted game", sizeof(description) - 1);
 }
 
 void ServerInfo::writeToBitstream(RakNet::BitStream& stream)
 {
-	stream.Write(activegames);
-	stream.Write(name, sizeof(name));
-	stream.Write(waitingplayers);
-	stream.Write(description, sizeof(description));
-	assert( stream.GetNumberOfBytesUsed() == static_cast<int>(BLOBBY_SERVER_PRESENT_PACKET_SIZE) );
+    stream.Write(activegames);
+    stream.Write(name, sizeof(name));
+    stream.Write(waitingplayers);
+    stream.Write(description, sizeof(description));
+    assert(stream.GetNumberOfBytesUsed() == static_cast<int>(BLOBBY_SERVER_PRESENT_PACKET_SIZE));
 }
 
-const size_t ServerInfo::BLOBBY_SERVER_PRESENT_PACKET_SIZE = sizeof((unsigned char)ID_BLOBBY_SERVER_PRESENT)
-		+ 2 * sizeof(int) 	// activegames &  waiting players
-		+ 32				// name
-		+ 192;			// description
-
-
+const size_t ServerInfo::BLOBBY_SERVER_PRESENT_PACKET_SIZE = sizeof((unsigned char)ID_BLOBBY_SERVER_PRESENT) +
+                                                             2 * sizeof(int) // activegames &  waiting players
+                                                             + 32            // name
+                                                             + 192;          // description
 
 void makeEnterServerPacket(RakNet::BitStream& stream, const PlayerIdentity& player)
 {
-	stream.Write((unsigned char)ID_ENTER_SERVER);
+    stream.Write((unsigned char)ID_ENTER_SERVER);
 
-	// Send preferred side
-	stream.Write( player.getPreferredSide() );
+    // Send preferred side
+    stream.Write(player.getPreferredSide());
 
-	// Send playername
-	char myname[16];
-	strncpy(myname, player.getName().c_str(), sizeof(myname));
-	stream.Write(myname, sizeof(myname));
+    // Send playername
+    char myname[16];
+    strncpy(myname, player.getName().c_str(), sizeof(myname));
+    stream.Write(myname, sizeof(myname));
 
-	// send color settings
-	stream.Write(player.getStaticColor().toInt());
+    // send color settings
+    stream.Write(player.getStaticColor().toInt());
 }
 
-
-
-bool operator == (const ServerInfo& lval, const ServerInfo& rval)
+bool operator==(const ServerInfo& lval, const ServerInfo& rval)
 {
-	// check if ip and port are identical!
-	/// \todo maybe we should user raknets pladerId directly?
-	return lval.port == rval.port && !strncmp(lval.hostname, rval.hostname,
-			sizeof(lval.hostname));
+    // check if ip and port are identical!
+    /// \todo maybe we should user raknets pladerId directly?
+    return lval.port == rval.port && !strncmp(lval.hostname, rval.hostname, sizeof(lval.hostname));
 }
 
 std::ostream& operator<<(std::ostream& stream, const ServerInfo& val)
 {
-	return stream << val.name << " (" << val.hostname << ":" << val.port << ")";
+    return stream << val.name << " (" << val.hostname << ":" << val.port << ")";
 }
-

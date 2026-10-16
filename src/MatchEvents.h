@@ -25,30 +25,26 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 // encoding of events that can happen in the physics subsystem
 struct MatchEvent
 {
-	// this characterizes the event type
-	enum EventType
-	{
-		// physic events
-		BALL_HIT_BLOB = 1,
-		BALL_HIT_WALL,
-		BALL_HIT_GROUND,
-		BALL_HIT_NET,
-		BALL_HIT_NET_TOP,
-		// logic events
-		PLAYER_ERROR,				// a player made an error
-		RESET_BALL					// the ball was reset for next serve
-	};
+    // this characterizes the event type
+    enum EventType
+    {
+        // physic events
+        BALL_HIT_BLOB = 1,
+        BALL_HIT_WALL,
+        BALL_HIT_GROUND,
+        BALL_HIT_NET,
+        BALL_HIT_NET_TOP,
+        // logic events
+        PLAYER_ERROR, // a player made an error
+        RESET_BALL    // the ball was reset for next serve
+    };
 
-	// type of the event
-	EventType event;
-	// side on which the event happened
-	PlayerSide side;
-	// intensity of the event (only set if required by the event type)
-	float intensity;
+    // type of the event
+    EventType event;
+    // side on which the event happened
+    PlayerSide side;
+    // intensity of the event (only set if required by the event type)
+    float intensity;
 
-	MatchEvent(EventType e, PlayerSide s, float i = 0) : event(e), side(s), intensity(i)
-	{
-
-	}
+    MatchEvent(EventType e, PlayerSide s, float i = 0) : event(e), side(s), intensity(i) {}
 };
-

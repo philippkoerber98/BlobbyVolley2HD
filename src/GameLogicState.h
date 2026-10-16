@@ -20,32 +20,30 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 #pragma once
 
-
 #include <iosfwd>
 
-#include "Global.h"
 #include "GenericIOFwd.h"
+#include "Global.h"
 
 struct GameLogicState
 {
-	unsigned int leftScore;
-	unsigned int rightScore;
-	unsigned int hitCount[MAX_PLAYERS];
-	PlayerSide servingPlayer;
-	PlayerSide winningPlayer = NO_PLAYER;
+    unsigned int leftScore;
+    unsigned int rightScore;
+    unsigned int hitCount[MAX_PLAYERS];
+    PlayerSide servingPlayer;
+    PlayerSide winningPlayer = NO_PLAYER;
 
-	unsigned int squish[MAX_PLAYERS];
-	unsigned int squishWall;
-	unsigned int squishGround;
+    unsigned int squish[MAX_PLAYERS];
+    unsigned int squishWall;
+    unsigned int squishGround;
 
-	bool isGameRunning;
-	bool isBallValid;
+    bool isGameRunning;
+    bool isBallValid;
 
+    void swapSides();
 
-	void swapSides();
-
-	void serialize(GenericOut* io) const;
-	void deserialize(GenericIn* io);
+    void serialize(GenericOut* io) const;
+    void deserialize(GenericIn* io);
 };
 
 std::ostream& operator<<(std::ostream&, const GameLogicState&);

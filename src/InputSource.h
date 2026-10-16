@@ -20,44 +20,44 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 #pragma once
 
-#include "PlayerInput.h"
 #include "BlobbyDebug.h"
+#include "PlayerInput.h"
 
 class DuelMatch;
 
 /*! \class InputSource
-	\brief abstracts several possible input sources.
-	\details This class abstracts several possible input sources, like local input
-		from InputDevices, input from a scripted player or input over network
-		which in turn can all be recorded by a recorder.
-		The updateInput method has to be called (and is called)
-		once per frame in DuelMatch in local mode, so input written with
-		setInput will be overwritten in these cases.*/
+    \brief abstracts several possible input sources.
+    \details This class abstracts several possible input sources, like local input
+        from InputDevices, input from a scripted player or input over network
+        which in turn can all be recorded by a recorder.
+        The updateInput method has to be called (and is called)
+        once per frame in DuelMatch in local mode, so input written with
+        setInput will be overwritten in these cases.*/
 class InputSource : public ObjectCounter<InputSource>
 {
-	public:
-		InputSource();
+  public:
+    InputSource();
 
-		virtual ~InputSource();
+    virtual ~InputSource();
 
-		/// forces a recalculation of the input
-		PlayerInputAbs updateInput();
+    /// forces a recalculation of the input
+    PlayerInputAbs updateInput();
 
-		/// get original input data
-		PlayerInputAbs getRealInput() const;
+    /// get original input data
+    PlayerInputAbs getRealInput() const;
 
-		/// set input which is returned on next call
-		/// of getInput
-		void setInput(PlayerInput ip);
+    /// set input which is returned on next call
+    /// of getInput
+    void setInput(PlayerInput ip);
 
-		/// set input which is returned on next call
-		/// of getInput
-		void setInput(PlayerInputAbs ip);
+    /// set input which is returned on next call
+    /// of getInput
+    void setInput(PlayerInputAbs ip);
 
-	private:
-		/// method that actually calculates the new input
-		virtual PlayerInputAbs getNextInput();
+  private:
+    /// method that actually calculates the new input
+    virtual PlayerInputAbs getNextInput();
 
-		/// cached input
-		PlayerInputAbs mInput;
+    /// cached input
+    PlayerInputAbs mInput;
 };

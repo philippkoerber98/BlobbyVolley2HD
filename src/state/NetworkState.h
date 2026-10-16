@@ -24,8 +24,8 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #include "NetworkMessage.h"
 #include "PlayerIdentity.h"
 
-#include <vector>
 #include <memory>
+#include <vector>
 
 class RakClient;
 class RakServer;
@@ -36,55 +36,55 @@ class PlayerIdentity;
 class DedicatedServer;
 
 /*! \class NetworkGameState
-	\brief State for Network Game
-	\details state which is responsible for presenting a network game, sending player input to the
-				server, managing chat etc.
+    \brief State for Network Game
+    \details state which is responsible for presenting a network game, sending player input to the
+                server, managing chat etc.
 */
 class NetworkGameState : public GameState
 {
-public:
-	/// create a NetworkGameState with connection to a certain server
-	/// \param client A client which has an established connection to the server we want to start the game on.
-	NetworkGameState(std::shared_ptr<RakClient> client, int rule_checksum, int score_to_win);
+  public:
+    /// create a NetworkGameState with connection to a certain server
+    /// \param client A client which has an established connection to the server we want to start the game on.
+    NetworkGameState(std::shared_ptr<RakClient> client, int rule_checksum, int score_to_win);
 
-	~NetworkGameState() override;
-	void step_impl() override;
-	void init() override;
-	const char* getStateName() const override;
+    ~NetworkGameState() override;
+    void step_impl() override;
+    void init() override;
+    const char* getStateName() const override;
 
-private:
-	enum
-	{
-		WAITING_FOR_OPPONENT,
-		OPPONENT_DISCONNECTED,
-		DISCONNECTED,
-		SERVER_FULL,
-		PLAYING,
-		PLAYER_WON,
-		PAUSING
-	} mNetworkState;
+  private:
+    enum
+    {
+        WAITING_FOR_OPPONENT,
+        OPPONENT_DISCONNECTED,
+        DISCONNECTED,
+        SERVER_FULL,
+        PLAYING,
+        PLAYER_WON,
+        PAUSING
+    } mNetworkState;
 
-	// these are pointers to mLeftPlayer or mRightPlayer respectively, so we don't need a smart pointer here
-	PlayerIdentity* mLocalPlayer;
-	PlayerIdentity* mRemotePlayer;
+    // these are pointers to mLeftPlayer or mRightPlayer respectively, so we don't need a smart pointer here
+    PlayerIdentity* mLocalPlayer;
+    PlayerIdentity* mRemotePlayer;
 
-	bool mUseRemoteColor;
+    bool mUseRemoteColor;
 
-	std::unique_ptr<InputSource> mLocalInput;
+    std::unique_ptr<InputSource> mLocalInput;
 
-	bool mWaitingForReplay;
+    bool mWaitingForReplay;
 
-	std::shared_ptr<RakClient> mClient;
-	PlayerSide mOwnSide;
-	PlayerSide mWinningPlayer;
+    std::shared_ptr<RakClient> mClient;
+    PlayerSide mOwnSide;
+    PlayerSide mWinningPlayer;
 
-	// Chat Vars
-	std::vector<std::string> mChatlog;
-	std::vector<bool > mChatOrigin;
-	unsigned mSelectedChatmessage;
-	unsigned mChatCursorPosition;
-	std::string mChattext;
+    // Chat Vars
+    std::vector<std::string> mChatlog;
+    std::vector<bool> mChatOrigin;
+    unsigned mSelectedChatmessage;
+    unsigned mChatCursorPosition;
+    std::string mChattext;
 
-	// somewhat ugly: we need to keep the rules checksum until we actually initialize the state
-	int mRulesChecksum;
+    // somewhat ugly: we need to keep the rules checksum until we actually initialize the state
+    int mRulesChecksum;
 };

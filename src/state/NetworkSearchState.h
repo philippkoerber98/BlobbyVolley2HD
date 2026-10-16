@@ -20,13 +20,13 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 #pragma once
 
-#include "State.h"
 #include "NetworkMessage.h"
+#include "State.h"
 
-#include <vector>
-#include <list>
-#include <future>
 #include <atomic>
+#include <future>
+#include <list>
+#include <vector>
 
 class RakClient;
 class RakServer;
@@ -34,75 +34,74 @@ class DuelMatch;
 class NetworkGame;
 
 /*! \class NetworkSearchState
-	\brief Base class for search states
-	\details This class provides a search interface.
-			The actual search process has to be implemented
-			by derived class by overriding the searchServers()
-			method.
+    \brief Base class for search states
+    \details This class provides a search interface.
+            The actual search process has to be implemented
+            by derived class by overriding the searchServers()
+            method.
 */
 class NetworkSearchState : public State
 {
-public:
-	NetworkSearchState();
-	~NetworkSearchState() override;
+  public:
+    NetworkSearchState();
+    ~NetworkSearchState() override;
 
-	void step_impl() override;
-	// onlinegames connect to the masterserver
-	// LAN games send a broadcast to local network
-	void searchServers();
+    void step_impl() override;
+    // onlinegames connect to the masterserver
+    // LAN games send a broadcast to local network
+    void searchServers();
 
-	const char* getStateName() const override;
-protected:
-	std::vector<ServerInfo> mScannedServers;
-	std::unique_ptr<RakClient> mPingClient;
-	// set this to true to step pinging before we are finished
-	std::atomic<bool> mCancelPing;
+    const char* getStateName() const override;
 
-private:
-	virtual void doSearchServers() = 0;
+  protected:
+    std::vector<ServerInfo> mScannedServers;
+    std::unique_ptr<RakClient> mPingClient;
+    // set this to true to step pinging before we are finished
+    std::atomic<bool> mCancelPing;
 
-	typedef std::list<RakClient*> ClientList;
+  private:
+    virtual void doSearchServers() = 0;
 
-	ClientList mQueryClients;
-	RakClient* mDirectConnectClient;
+    typedef std::list<RakClient*> ClientList;
 
-	std::future<void> mPingJob;
+    ClientList mQueryClients;
+    RakClient* mDirectConnectClient;
 
-	unsigned mSelectedServer;
-	bool mDisplayInfo;
-	bool mEnteringServer;
-	bool mDisplayUpdateNotification;
+    std::future<void> mPingJob;
 
-	std::unique_ptr<ServerInfo> mHostedServer;
+    unsigned mSelectedServer;
+    bool mDisplayInfo;
+    bool mEnteringServer;
+    bool mDisplayUpdateNotification;
 
-	std::string mEnteredServer;
-	unsigned mServerBoxPosition;
+    std::unique_ptr<ServerInfo> mHostedServer;
+
+    std::string mEnteredServer;
+    unsigned mServerBoxPosition;
 };
 
 /*! \class OnlineSearchState
-	\brief State for online server search screen.
+    \brief State for online server search screen.
 */
 class OnlineSearchState : public NetworkSearchState
 {
-public:
-	OnlineSearchState();
-	~OnlineSearchState() override = default;
-	void doSearchServers() override;
-	const char* getStateName() const override;
+  public:
+    OnlineSearchState();
+    ~OnlineSearchState() override = default;
+    void doSearchServers() override;
+    const char* getStateName() const override;
 };
 
-
 /*! \class LANSearchState
-	\brief State for LAN game search screen.
+    \brief State for LAN game search screen.
 */
 class LANSearchState : public NetworkSearchState
 {
-public:
-	LANSearchState();
-	~LANSearchState() override = default;
-	const char* getStateName() const override;
+  public:
+    LANSearchState();
+    ~LANSearchState() override = default;
+    const char* getStateName() const override;
 
-private:
-	void doSearchServers() override;
+  private:
+    void doSearchServers() override;
 };
-

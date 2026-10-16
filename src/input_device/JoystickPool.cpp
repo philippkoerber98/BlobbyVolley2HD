@@ -1,8 +1,8 @@
 #include "JoystickPool.h"
 
-#include <iostream>
 #include <cstdio>
 #include <cstring>
+#include <iostream>
 #include <sstream>
 
 #include <SDL.h>
@@ -12,160 +12,186 @@
 // Joystick Pool
 JoystickPool::~JoystickPool()
 {
-	for (auto* c : mControllers) if (c) SDL_GameControllerClose(c);
-	for (auto& iter : mJoyMap)
-	{
-		SDL_JoystickClose(iter.second);
-	}
+    for (auto* c : mControllers)
+    {
+        if (c)
+        {
+            SDL_GameControllerClose(c);
+        }
+    }
+    for (auto& iter : mJoyMap)
+    {
+        SDL_JoystickClose(iter.second);
+    }
 }
-
 
 SDL_Joystick* JoystickPool::getJoystick(int id)
 {
-	auto it = mJoyMap.find(id);
-	return it == mJoyMap.end() ? nullptr : it->second;
+    auto it = mJoyMap.find(id);
+    return it == mJoyMap.end() ? nullptr : it->second;
 }
 
 void JoystickPool::probeJoysticks()
 {
-	int numJoysticks = SDL_NumJoysticks();
-	for(int i = 0; i < numJoysticks; i++)
-		openJoystick(i);
+    int numJoysticks = SDL_NumJoysticks();
+    for (int i = 0; i < numJoysticks; i++)
+    {
+        openJoystick(i);
+    }
 }
 
 void JoystickPool::openJoystick(const int joyIndex)
 {
-	if (mJoyMap.count(SDL_JoystickGetDeviceInstanceID(joyIndex))) return;
-	SDL_Joystick* joystickInstance = SDL_JoystickOpen(joyIndex);
-	if (joystickInstance != nullptr)
-	{
-		mJoyMap[SDL_JoystickInstanceID(joystickInstance)] = joystickInstance;
-		if (SDL_IsGameController(joyIndex))
-			for (auto& c : mControllers) if (!c) { c = SDL_GameControllerOpen(joyIndex); break; }
-	}
+    if (mJoyMap.count(SDL_JoystickGetDeviceInstanceID(joyIndex)))
+    {
+        return;
+    }
+    SDL_Joystick* joystickInstance = SDL_JoystickOpen(joyIndex);
+    if (joystickInstance != nullptr)
+    {
+        mJoyMap[SDL_JoystickInstanceID(joystickInstance)] = joystickInstance;
+        if (SDL_IsGameController(joyIndex))
+        {
+            for (auto& c : mControllers)
+            {
+                if (!c)
+                {
+                    c = SDL_GameControllerOpen(joyIndex);
+                    break;
+                }
+            }
+        }
+    }
 }
 
 void JoystickPool::closeJoystick(const int joyId)
 {
-	for (auto& c : mControllers)
-		if (c && SDL_JoystickInstanceID(SDL_GameControllerGetJoystick(c)) == joyId)
-		{ SDL_GameControllerClose(c); c = nullptr; }
-	SDL_Joystick* joystickInstance = getJoystick(joyId);
-	if (joystickInstance != nullptr)
-	{
-		SDL_JoystickClose(joystickInstance);
-	}
-	mJoyMap.erase(joyId);
+    for (auto& c : mControllers)
+    {
+        if (c && SDL_JoystickInstanceID(SDL_GameControllerGetJoystick(c)) == joyId)
+        {
+            SDL_GameControllerClose(c);
+            c = nullptr;
+        }
+    }
+    SDL_Joystick* joystickInstance = getJoystick(joyId);
+    if (joystickInstance != nullptr)
+    {
+        SDL_JoystickClose(joystickInstance);
+    }
+    mJoyMap.erase(joyId);
 }
 
 // Joystick Action
 SDL_GameController* JoystickPool::getController(int slot) const
 {
-	return slot >= 0 && slot < 2 ? mControllers[slot] : nullptr;
+    return slot >= 0 && slot < 2 ? mControllers[slot] : nullptr;
 }
 
 bool JoystickPool::isController(int id) const
 {
-	return SDL_GameControllerFromInstanceID(id) != nullptr;
+    return SDL_GameControllerFromInstanceID(id) != nullptr;
 }
 
 JoystickAction::JoystickAction(std::string string)
 {
-	type = AXIS;
-	number = 0;
-	joyid = 0;
-	try
-	{
-		const char* str = string.c_str();
-		if (std::strstr(str, "button"))
-		{
-			type = BUTTON;
-			if (sscanf(str, "joy_%d_button_%d", &joyid, &number) < 2)
-				throw string;
-		}
-		else if (std::strstr(str, "axis"))
-		{
-			if (sscanf(str, "joy_%d_axis_%d", &joyid, &number) < 2)
-				throw string;
-		}
-	}
-	catch (const std::string& e)
-	{
-		std::cerr << "Parse error in joystick config: " << e << std::endl;
-	}
+    type = AXIS;
+    number = 0;
+    joyid = 0;
+    try
+    {
+        const char* str = string.c_str();
+        if (std::strstr(str, "button"))
+        {
+            type = BUTTON;
+            if (sscanf(str, "joy_%d_button_%d", &joyid, &number) < 2)
+            {
+                throw string;
+            }
+        }
+        else if (std::strstr(str, "axis"))
+        {
+            if (sscanf(str, "joy_%d_axis_%d", &joyid, &number) < 2)
+            {
+                throw string;
+            }
+        }
+    }
+    catch (const std::string& e)
+    {
+        std::cerr << "Parse error in joystick config: " << e << std::endl;
+    }
 }
 
 JoystickAction::~JoystickAction() = default;
 
 std::string JoystickAction::toString() const
 {
-	const char* typestr = "unknown";
-	if (type == AXIS)
-	{
-		typestr = "axis";
-	}
+    const char* typestr = "unknown";
+    if (type == AXIS)
+    {
+        typestr = "axis";
+    }
 
-	if (type == BUTTON)
-	{
-		typestr = "button";
-	}
+    if (type == BUTTON)
+    {
+        typestr = "button";
+    }
 
-	std::stringstream buf;
-	buf << "joy_" << joyid << "_" << typestr << "_" << number;
-	return buf.str();
+    std::stringstream buf;
+    buf << "joy_" << joyid << "_" << typestr << "_" << number;
+    return buf.str();
 }
 
 KeyAction JoystickAction::toKeyAction() const
 {
-	// This is an place holder
-	// Just to get simple gamepad support for the GUI
-	// TODO: Fix that! Use GUID -> ButtonMapping to get this think cleaned up
-	if (type == AXIS)
-	{
-		// X-Achse?!
-		if (abs(number) == 1)
-		{
+    // This is an place holder
+    // Just to get simple gamepad support for the GUI
+    // TODO: Fix that! Use GUID -> ButtonMapping to get this think cleaned up
+    if (type == AXIS)
+    {
+        // X-Achse?!
+        if (abs(number) == 1)
+        {
 
-			if (number < 0)
-			{
-				return KeyAction::LEFT;
-			}
-			else
-			{
-				return KeyAction::RIGHT;
-			}
-		}
+            if (number < 0)
+            {
+                return KeyAction::LEFT;
+            }
+            else
+            {
+                return KeyAction::RIGHT;
+            }
+        }
 
-		// Y-Achse?!
-		if (abs(number) == 2)
-		{
+        // Y-Achse?!
+        if (abs(number) == 2)
+        {
 
-			if (number < 0)
-			{
-				return KeyAction::UP;
-			}
-			else
-			{
-				return KeyAction::DOWN;
-			}
-		}
-	}
-	
-	if (type == BUTTON)
-	{
-		if(number == 0)
-		{
-			return KeyAction::SELECT;
-		}
-		if(number == 1)
-		{
-			// TODO: This is stupid, we must check if this button is used ingame so that
-			// the jumpbutton does not pause the game
-			//return JoystickEvent::BACK;
-			// We don't allow back at the moment -> game is not leavable
-			return KeyAction::NONE;
-		}
-	}
-	return KeyAction::NONE;
+            if (number < 0)
+            {
+                return KeyAction::UP;
+            }
+            else
+            {
+                return KeyAction::DOWN;
+            }
+        }
+    }
+    if (type == BUTTON)
+    {
+        if (number == 0)
+        {
+            return KeyAction::SELECT;
+        }
+        if (number == 1)
+        {
+            // TODO: This is stupid, we must check if this button is used ingame so that
+            // the jumpbutton does not pause the game
+            // return JoystickEvent::BACK;
+            // We don't allow back at the moment -> game is not leavable
+            return KeyAction::NONE;
+        }
+    }
+    return KeyAction::NONE;
 }
-

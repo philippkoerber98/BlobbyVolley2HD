@@ -20,27 +20,26 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 #pragma once
 
-#include <string>
 #include <memory>
+#include <string>
 
-#include "Global.h"
 #include "BlobbyDebug.h"
+#include "Global.h"
 
 class PlayerIdentity;
 class InputSource;
 
-
 class IUserConfigReader : public ObjectCounter<IUserConfigReader>
 {
-	public:
-		IUserConfigReader() = default;
-		static std::shared_ptr<IUserConfigReader> createUserConfigReader(const std::string& file);
-		virtual ~IUserConfigReader() = default;
+  public:
+    IUserConfigReader() = default;
+    static std::shared_ptr<IUserConfigReader> createUserConfigReader(const std::string& file);
+    virtual ~IUserConfigReader() = default;
 
-		virtual float getFloat(const std::string& name, float default_value = 0.f) const = 0;
-		virtual std::string getString(const std::string& name, const std::string& default_value = "") const = 0;
-		virtual bool getBool(const std::string& name, bool default_value = false) const = 0;
-		virtual int getInteger(const std::string& name, int default_value = 0) const = 0;
+    virtual float getFloat(const std::string& name, float default_value = 0.f) const = 0;
+    virtual std::string getString(const std::string& name, const std::string& default_value = "") const = 0;
+    virtual bool getBool(const std::string& name, bool default_value = false) const = 0;
+    virtual int getInteger(const std::string& name, int default_value = 0) const = 0;
 
-		virtual PlayerIdentity loadPlayerIdentity(PlayerSide player, bool force_human) const = 0;
+    virtual PlayerIdentity loadPlayerIdentity(PlayerSide player, bool force_human) const = 0;
 };

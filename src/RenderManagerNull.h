@@ -23,13 +23,13 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #include "RenderManager.h"
 
 /*! \class RenderManagerNull
-	\brief Render Manager for debugging purposes
-	\details 
-	This Render Manager can be used to build a client that does no rendering, e.g. for bot tournaments, 
-	bot benchmarks or debugging.
+    \brief Render Manager for debugging purposes
+    \details
+    This Render Manager can be used to build a client that does no rendering, e.g. for bot tournaments,
+    bot benchmarks or debugging.
 */
 class RenderManagerNull : public RenderManager
 {
-	public:
-		void drawGame(const DuelMatchState& gameState) override {}
+  public:
+    void drawGame(const DuelMatchState& gameState) override {}
 };

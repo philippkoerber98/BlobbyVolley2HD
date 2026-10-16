@@ -25,8 +25,8 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 #pragma once
 
-#include "IUserConfigReader.h"
 #include "BlobbyDebug.h"
+#include "IUserConfigReader.h"
 
 #include <string>
 #include <vector>
@@ -38,10 +38,10 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 struct UserConfigVar : public ObjectCounter<UserConfigVar>
 {
-	UserConfigVar(std::string name, std::string value);
+    UserConfigVar(std::string name, std::string value);
 
-	std::string Name;
-	std::string Value;
+    std::string Name;
+    std::string Value;
 };
 
 /*! \class UserConfig
@@ -50,28 +50,28 @@ struct UserConfigVar : public ObjectCounter<UserConfigVar>
              It allows saving/loading from disk and getting/setting floats, booleans,
              strings and integers by name
 */
-class UserConfig: public IUserConfigReader, public ObjectCounter<UserConfig>
+class UserConfig : public IUserConfigReader, public ObjectCounter<UserConfig>
 {
-	public:
-		bool loadFile(const std::string& filename);
-		bool saveFile(const std::string& filename) const;
+  public:
+    bool loadFile(const std::string& filename);
+    bool saveFile(const std::string& filename) const;
 
-		void setValue(const std::string& name, std::string value);
+    void setValue(const std::string& name, std::string value);
 
-		float getFloat(const std::string& name, float default_value = 0.f) const override;
-		std::string getString(const std::string& name, const std::string& default_value = "") const override;
-		bool getBool(const std::string& name, bool default_value = false) const override;
-		int getInteger(const std::string& name, int default_value = 0) const override;
+    float getFloat(const std::string& name, float default_value = 0.f) const override;
+    std::string getString(const std::string& name, const std::string& default_value = "") const override;
+    bool getBool(const std::string& name, bool default_value = false) const override;
+    int getInteger(const std::string& name, int default_value = 0) const override;
 
-		PlayerIdentity loadPlayerIdentity(PlayerSide player, bool force_human) const override;
+    PlayerIdentity loadPlayerIdentity(PlayerSide player, bool force_human) const override;
 
-		void setFloat(const std::string& name, float value);
-		void setString(const std::string& name, std::string value);
-		void setBool(const std::string& name, bool value);
-		void setInteger(const std::string& name, int value);
-	private:
+    void setFloat(const std::string& name, float value);
+    void setString(const std::string& name, std::string value);
+    void setBool(const std::string& name, bool value);
+    void setInteger(const std::string& name, int value);
 
-		std::vector<UserConfigVar> mVars;
-		const UserConfigVar* checkVarByName(const std::string& name) const;
-		UserConfigVar* createVar(std::string name, std::string value);
+  private:
+    std::vector<UserConfigVar> mVars;
+    const UserConfigVar* checkVarByName(const std::string& name) const;
+    UserConfigVar* createVar(std::string name, std::string value);
 };

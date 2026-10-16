@@ -25,9 +25,9 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 #pragma once
 
-#include <vector>
-#include <string>
 #include <map>
+#include <string>
+#include <vector>
 
 /// \brief class for managing the text
 /// \details multilanguage support
@@ -36,160 +36,160 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 class TextManager
 {
-	public:
-		/// enumeration for strings
-		enum STRING
-		{
-			// common labels
-			LBL_OK,
-			LBL_CANCEL,
-			LBL_YES,
-			LBL_NO,
-			LBL_CONF_QUIT,
-			LBL_CONTINUE,
+  public:
+    /// enumeration for strings
+    enum STRING
+    {
+        // common labels
+        LBL_OK,
+        LBL_CANCEL,
+        LBL_YES,
+        LBL_NO,
+        LBL_CONF_QUIT,
+        LBL_CONTINUE,
 
-			// labels for main menu
-			MNU_LABEL_ONLINE,
-			MNU_LABEL_LAN,
-			MNU_LABEL_START,
-			MNU_LABEL_OPTIONS,
-			MNU_LABEL_REPLAY,
-			MNU_LABEL_CREDITS,
-			MNU_LABEL_EXIT,
+        // labels for main menu
+        MNU_LABEL_ONLINE,
+        MNU_LABEL_LAN,
+        MNU_LABEL_START,
+        MNU_LABEL_OPTIONS,
+        MNU_LABEL_REPLAY,
+        MNU_LABEL_CREDITS,
+        MNU_LABEL_EXIT,
 
-			// credits
-			CRD_PROGRAMMERS,
-			CRD_GRAPHICS,
-			CRD_THX,
+        // credits
+        CRD_PROGRAMMERS,
+        CRD_GRAPHICS,
+        CRD_THX,
 
-			// replays
-			RP_SHOW_AGAIN,
-			RP_PLAY,
-			RP_DELETE,
-			RP_INFO,
-			RP_DURATION,
-			RP_RESULT,
-			RP_CHECKSUM,
-			RP_VERSION,
-			RP_FILE_OUTDATED,
-			RP_FILE_CORRUPT,
-			RP_SAVE_NAME,
-			RP_WAIT_REPLAY,
-			RP_SAVE,
+        // replays
+        RP_SHOW_AGAIN,
+        RP_PLAY,
+        RP_DELETE,
+        RP_INFO,
+        RP_DURATION,
+        RP_RESULT,
+        RP_CHECKSUM,
+        RP_VERSION,
+        RP_FILE_OUTDATED,
+        RP_FILE_CORRUPT,
+        RP_SAVE_NAME,
+        RP_WAIT_REPLAY,
+        RP_SAVE,
 
-			// game texts
-			GAME_WIN,
-			GAME_TRY_AGAIN,
-			GAME_WAITING,
-			GAME_OPP_LEFT,
-			GAME_PAUSED,
-			GAME_QUIT,
+        // game texts
+        GAME_WIN,
+        GAME_TRY_AGAIN,
+        GAME_WAITING,
+        GAME_OPP_LEFT,
+        GAME_PAUSED,
+        GAME_QUIT,
 
-			// network texts
-			NET_SERVER_SCAN,
-			NET_DIRECT_CONNECT,
-			NET_SERVER_INFO,
-			NET_ACTIVE_GAMES,
-			NET_WAITING_PLAYER,
-			NET_HOST_GAME,
-			NET_CONNECTING,
-			NET_DISCONNECT,
-			NET_CON_FAILED,
-			NET_SERVER_FULL,
-			NET_STAY_ON_SERVER,
-			NET_RANDOM_OPPONENT,
-			NET_OPEN_GAME,
-			NET_JOIN,
-			NET_LEAVE,
-			NET_SPEED,
-			NET_POINTS,
-			NET_RULES_TITLE,
-			NET_RULES_BY,
-			NET_CHALLENGER,
+        // network texts
+        NET_SERVER_SCAN,
+        NET_DIRECT_CONNECT,
+        NET_SERVER_INFO,
+        NET_ACTIVE_GAMES,
+        NET_WAITING_PLAYER,
+        NET_HOST_GAME,
+        NET_CONNECTING,
+        NET_DISCONNECT,
+        NET_CON_FAILED,
+        NET_SERVER_FULL,
+        NET_STAY_ON_SERVER,
+        NET_RANDOM_OPPONENT,
+        NET_OPEN_GAME,
+        NET_JOIN,
+        NET_LEAVE,
+        NET_SPEED,
+        NET_POINTS,
+        NET_RULES_TITLE,
+        NET_RULES_BY,
+        NET_CHALLENGER,
 
-			// options
-			OP_TOUCH_TYPE,
-			OP_TOUCH_ARROWS,
-			OP_TOUCH_DIRECT,
-			OP_INPUT_OP,
-			OP_GFX_OP,
-			OP_MISC,
-			OP_VIDEO,
-			OP_FULLSCREEN,
-			OP_WINDOW,
-			OP_RENDER_DEVICE,
-			OP_SHOW_SHADOW,
-			OP_BLOB_COLORS,
-			OP_LEFT_PLAYER,
-			OP_RIGHT_PLAYER,
-			OP_RED,
-			OP_GREEN,
-			OP_BLUE,
-			OP_MORPHING,
-			OP_KEYBOARD,
-			OP_MOUSE,
-			OP_JOYSTICK,
-			OP_JUMP_BUTTON,
-			OP_SET_ALL,
-			OP_LEFT_KEY,
-			OP_RIGHT_KEY,
-			OP_JUMP_KEY,
-			OP_LEFT_BUTTON,
-			OP_RIGHT_BUTTON,
-			OP_PRESS_MOUSE_BUTTON,
-			OP_PRESS_KEY_FOR,
-			OP_MOVING_LEFT,
-			OP_MOVING_RIGHT,
-			OP_JUMPING,
-			OP_PRESS_BUTTON_FOR,
-			OP_BACKGROUND,
-			OP_VOLUME,
-			OP_MUTE,
-			OP_FPS,
-			OP_BLOOD,
-			OP_NETWORK_SIDE,
-			OP_LEFT,
-			OP_RIGHT,
-			OP_SPEED,
-			OP_VSLOW,
-			OP_SLOW,
-			OP_DEFAULT,
-			OP_FAST,
-			OP_VFAST,
-			OP_LANGUAGE,
-			OP_DIFFICULTY,
-			OP_WEAK,
-			OP_MEDIUM,
-			OP_STRONG,
-			OP_RULES,
+        // options
+        OP_TOUCH_TYPE,
+        OP_TOUCH_ARROWS,
+        OP_TOUCH_DIRECT,
+        OP_INPUT_OP,
+        OP_GFX_OP,
+        OP_MISC,
+        OP_VIDEO,
+        OP_FULLSCREEN,
+        OP_WINDOW,
+        OP_RENDER_DEVICE,
+        OP_SHOW_SHADOW,
+        OP_BLOB_COLORS,
+        OP_LEFT_PLAYER,
+        OP_RIGHT_PLAYER,
+        OP_RED,
+        OP_GREEN,
+        OP_BLUE,
+        OP_MORPHING,
+        OP_KEYBOARD,
+        OP_MOUSE,
+        OP_JOYSTICK,
+        OP_JUMP_BUTTON,
+        OP_SET_ALL,
+        OP_LEFT_KEY,
+        OP_RIGHT_KEY,
+        OP_JUMP_KEY,
+        OP_LEFT_BUTTON,
+        OP_RIGHT_BUTTON,
+        OP_PRESS_MOUSE_BUTTON,
+        OP_PRESS_KEY_FOR,
+        OP_MOVING_LEFT,
+        OP_MOVING_RIGHT,
+        OP_JUMPING,
+        OP_PRESS_BUTTON_FOR,
+        OP_BACKGROUND,
+        OP_VOLUME,
+        OP_MUTE,
+        OP_FPS,
+        OP_BLOOD,
+        OP_NETWORK_SIDE,
+        OP_LEFT,
+        OP_RIGHT,
+        OP_SPEED,
+        OP_VSLOW,
+        OP_SLOW,
+        OP_DEFAULT,
+        OP_FAST,
+        OP_VFAST,
+        OP_LANGUAGE,
+        OP_DIFFICULTY,
+        OP_WEAK,
+        OP_MEDIUM,
+        OP_STRONG,
+        OP_RULES,
 
-			UPDATE_NOTIFICATION,
+        UPDATE_NOTIFICATION,
 
-			COUNT
-		};
+        COUNT
+    };
 
-		explicit TextManager(std::string language);
+    explicit TextManager(std::string language);
 
-		/// returns the string identified by str
-		const std::string& getString(STRING str) const;
+    /// returns the string identified by str
+    const std::string& getString(STRING str) const;
 
-		std::string getLang() const;
+    std::string getLang() const;
 
-		/// returns count of utf-8 characters
-		static const int getUTF8Length(const std::string& str);
+    /// returns count of utf-8 characters
+    static const int getUTF8Length(const std::string& str);
 
-		static const std::map<std::string, std::string>& languageNames();
-	private:
+    static const std::map<std::string, std::string>& languageNames();
 
-		/// vector with all strings
-		std::vector<std::string> mStrings;
+  private:
+    /// vector with all strings
+    std::vector<std::string> mStrings;
 
-		/// string with language name
-		std::string lang;
+    /// string with language name
+    std::string lang;
 
-		/// loads the language data from an xml file
-		bool loadFromXML(const std::string& file);
+    /// loads the language data from an xml file
+    bool loadFromXML(const std::string& file);
 
-		/// sets the strings to the default values
-		void setDefault();
+    /// sets the strings to the default values
+    void setDefault();
 };

@@ -20,25 +20,25 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 #pragma once
 
+#include "GenericIOFwd.h"
 #include "Global.h"
 #include "Vector.h"
-#include "GenericIOFwd.h"
 
 namespace RakNet
 {
-	class BitStream;
+class BitStream;
 }
 
 struct PhysicState
 {
-	Vector2 blobPosition[MAX_PLAYERS];
-	Vector2 blobVelocity[MAX_PLAYERS];
-	float   blobState[MAX_PLAYERS];
+    Vector2 blobPosition[MAX_PLAYERS];
+    Vector2 blobVelocity[MAX_PLAYERS];
+    float blobState[MAX_PLAYERS];
 
-	Vector2 ballPosition;
-	Vector2 ballVelocity;
-	float   ballRotation;
-	float   ballAngularVelocity;
+    Vector2 ballPosition;
+    Vector2 ballVelocity;
+    float ballRotation;
+    float ballAngularVelocity;
 
-	void swapSides(float courtWidth = 800.f);
+    void swapSides(float courtWidth = 800.f);
 };

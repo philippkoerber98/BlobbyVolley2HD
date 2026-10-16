@@ -23,67 +23,69 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #include <string>
 #include <vector>
 
-#include "FileExceptions.h"
 #include "BlobbyDebug.h"
+#include "FileExceptions.h"
 
 // some convenience wrappers around physfs
 
 class FileSystem : public ObjectCounter<FileSystem>
 {
-	public:
-		explicit FileSystem(const std::string& path);
-		~FileSystem();
+  public:
+    explicit FileSystem(const std::string& path);
+    ~FileSystem();
 
-		FileSystem(const FileSystem&) = delete;
-		FileSystem& operator=(const FileSystem&) = delete;
+    FileSystem(const FileSystem&) = delete;
+    FileSystem& operator=(const FileSystem&) = delete;
 
-		/// \brief gets the file system
-		/// \details throws an error when file system has
-		/// not been initialised.
-		static FileSystem& getSingleton();
+    /// \brief gets the file system
+    /// \details throws an error when file system has
+    /// not been initialised.
+    static FileSystem& getSingleton();
 
-		/// \brief enumerates files
-		/// \details searches for all files in a certain directory with a given extension. The found files
-		///			are returned as a vector containing the filenames. The extension is removed from the filenames.
-		/// \param directory where to search
-		///	\param extension file types to search for.
-		/// \param keepExtension If true, the return vector contains the full filenames, if false [default behaviour], 
-		///						only the filenames without the extensions are saved.
-		std::vector<std::string> enumerateFiles(const std::string& directory, const std::string& extension, bool keepExtension = false);
+    /// \brief enumerates files
+    /// \details searches for all files in a certain directory with a given extension. The found files
+    ///			are returned as a vector containing the filenames. The extension is removed from the
+    /// filenames.
+    /// \param directory where to search
+    ///	\param extension file types to search for.
+    /// \param keepExtension If true, the return vector contains the full filenames, if false [default
+    /// behaviour],
+    ///						only the filenames without the extensions are saved.
+    std::vector<std::string> enumerateFiles(const std::string& directory, const std::string& extension,
+                                            bool keepExtension = false);
 
-		/// \brief deletes a file
-		bool deleteFile(const std::string& filename);
+    /// \brief deletes a file
+    bool deleteFile(const std::string& filename);
 
-		/// \brief tests whether a file exists
-		bool exists(const std::string& filename) const;
+    /// \brief tests whether a file exists
+    bool exists(const std::string& filename) const;
 
-		/// \brief tests whether given path is a directory
-		bool isDirectory(const std::string& dirname) const;
+    /// \brief tests whether given path is a directory
+    bool isDirectory(const std::string& dirname) const;
 
-		/// \brief creates a directory and reports success/failure
-		/// \return true, if the directory could be created
-		bool mkdir(const std::string& dirname);
+    /// \brief creates a directory and reports success/failure
+    /// \return true, if the directory could be created
+    bool mkdir(const std::string& dirname);
 
+    // general setup methods
+    void addToSearchPath(const std::string& dirname, bool append = true);
+    void removeFromSearchPath(const std::string& dirname);
+    /// \details automatically registers this directory as primary read directory!
+    void setWriteDir(const std::string& dirname);
 
-		// general setup methods
-		void addToSearchPath(const std::string& dirname, bool append = true);
-		void removeFromSearchPath(const std::string& dirname);
-		/// \details automatically registers this directory as primary read directory!
-		void setWriteDir(const std::string& dirname);
+    /// \todo this method is currently only copied code. it needs some review and a spec what it really should
+    /// do. also, its uses should be looked at again.
+    void probeDir(const std::string& dir);
 
-		/// \todo this method is currently only copied code. it needs some review and a spec what it really should 
-		/// do. also, its uses should be looked at again.
-		void probeDir(const std::string& dir);
+    /// \brief Get path seperator
+    std::string getDirSeparator();
 
-		/// \brief Get path seperator
-		std::string getDirSeparator();
+    /// \brief Get the path where the application resides
+    std::string getBaseDir();
 
-		/// \brief Get the path where the application resides
-		std::string getBaseDir();
+    /// \brief Get the user-and-app-specific path where files can be written
+    std::string getPrefDir();
 
-		/// \brief Get the user-and-app-specific path where files can be written
-		std::string getPrefDir();
-
-		/// \brief Concatenates two path components with exactly one directory separator
-		std::string join(const std::string& first, const std::string& second);
+    /// \brief Concatenates two path components with exactly one directory separator
+    std::string join(const std::string& first, const std::string& second);
 };

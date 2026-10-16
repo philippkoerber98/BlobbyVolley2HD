@@ -26,101 +26,110 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 /* implementation */
 
-namespace {
-	template<class T>
-	Clock::seconds to_seconds(T input) {
-		return std::chrono::duration_cast<Clock::seconds>(input);
-	}
+namespace
+{
+template <class T> Clock::seconds to_seconds(T input)
+{
+    return std::chrono::duration_cast<Clock::seconds>(input);
 }
+} // namespace
 
 void Clock::reset()
 {
-	// set all variables to their default values
-	mRunning = false;
-	mGameRunning = duration_t(0);
-	mLastTime = clock_t::now();
+    // set all variables to their default values
+    mRunning = false;
+    mGameRunning = duration_t(0);
+    mLastTime = clock_t::now();
 }
 
 void Clock::start()
 {
-	mLastTime = clock_t::now();
-	mRunning = true;
+    mLastTime = clock_t::now();
+    mRunning = true;
 }
 
 void Clock::stop()
 {
-	mRunning = false;
+    mRunning = false;
 }
 
 bool Clock::isRunning() const
 {
-	return mRunning;
+    return mRunning;
 }
 
 Clock::seconds Clock::getTime() const
 {
-	return to_seconds(mGameRunning);
+    return to_seconds(mGameRunning);
 }
 
 void Clock::setTime(milliseconds newTime)
 {
-	updateGameTime(newTime);
+    updateGameTime(newTime);
 }
 
 std::string Clock::makeTimeString(seconds time)
 {
-	int time_sec = time.count();
-	int seconds = time_sec % 60;
-	int minutes = ((time_sec - seconds) / 60) % 60;
-	int hours = ((time_sec - 60 * minutes - seconds) / 3600) % 60;
+    int time_sec = time.count();
+    int seconds = time_sec % 60;
+    int minutes = ((time_sec - seconds) / 60) % 60;
+    int hours = ((time_sec - 60 * minutes - seconds) / 3600) % 60;
 
-	// now convert to string via stringstream
-	std::stringstream stream;
+    // now convert to string via stringstream
+    std::stringstream stream;
 
-	// only write hours if already player more than 1h
-	if(hours > 0)
-		stream << hours << ":";
+    // only write hours if already player more than 1h
+    if (hours > 0)
+    {
+        stream << hours << ":";
+    }
 
-	// write minutes
-	// leading 0 if minutes < 10
-	if(minutes < 10)
-		stream << "0";
+    // write minutes
+    // leading 0 if minutes < 10
+    if (minutes < 10)
+    {
+        stream << "0";
+    }
 
-	stream << minutes << ":";
+    stream << minutes << ":";
 
-	// write seconds
-	// leading 0 if seconds < 10
-	if(seconds < 10)
-		stream << "0";
+    // write seconds
+    // leading 0 if seconds < 10
+    if (seconds < 10)
+    {
+        stream << "0";
+    }
 
-	stream << seconds;
+    stream << seconds;
 
-	// convert stringstream to string and return
-	return stream.str();
+    // convert stringstream to string and return
+    return stream.str();
 }
 
 const std::string& Clock::getTimeString() const
 {
-	return mCurrentTimeString;
+    return mCurrentTimeString;
 }
 
 void Clock::step()
 {
-	if(mRunning)
-	{
-		auto newTime = clock_t::now();
-		updateGameTime(mGameRunning + (newTime - mLastTime));
-		mLastTime = newTime;
-	}
+    if (mRunning)
+    {
+        auto newTime = clock_t::now();
+        updateGameTime(mGameRunning + (newTime - mLastTime));
+        mLastTime = newTime;
+    }
 }
 
-void Clock::updateGameTime(duration_t new_time) {
-	auto old_sec = to_seconds( mGameRunning );
-	auto new_sec = to_seconds( new_time);
-	mGameRunning = new_time;
+void Clock::updateGameTime(duration_t new_time)
+{
+    auto old_sec = to_seconds(mGameRunning);
+    auto new_sec = to_seconds(new_time);
+    mGameRunning = new_time;
 
-	// update time string only when the seconds change.
-	if(old_sec != new_sec) {
-		mCurrentTimeString = makeTimeString(new_sec);
-	}
+    // update time string only when the seconds change.
+    if (old_sec != new_sec)
+    {
+        mCurrentTimeString = makeTimeString(new_sec);
+    }
 }

@@ -26,10 +26,9 @@ const float RIGHT_PLANE = 800.0;
 // These numbers should include the blobbys width, but in the original game
 // the blobbys can go a bit into the walls too.
 
-
 // Blobby Settings
 const float BLOBBY_HEIGHT = 89;
-//const float BLOBBY_WIDTH = 75;		// what is the meaning of this value ???????
+// const float BLOBBY_WIDTH = 75;		// what is the meaning of this value ???????
 const float BLOBBY_UPPER_SPHERE = 19;
 const float BLOBBY_UPPER_RADIUS = 25;
 const float BLOBBY_LOWER_SPHERE = 13;
@@ -39,28 +38,26 @@ const float BLOBBY_LOWER_RADIUS = 33;
 const float GROUND_PLANE_HEIGHT_MAX = 500;
 const float GROUND_PLANE_HEIGHT = GROUND_PLANE_HEIGHT_MAX - BLOBBY_HEIGHT / 2.f;
 
-
 // This is exactly the half of the gravitation, I checked it in
 // the original code
-const float BLOBBY_MAX_JUMP_HEIGHT = GROUND_PLANE_HEIGHT - 206.375f;	// GROUND_Y - MAX_Y
+const float BLOBBY_MAX_JUMP_HEIGHT = GROUND_PLANE_HEIGHT - 206.375f; // GROUND_Y - MAX_Y
 const float BLOBBY_JUMP_ACCELERATION = -15.1;
 
 // these values are calculated from the other two
 const float GRAVITATION = BLOBBY_JUMP_ACCELERATION * BLOBBY_JUMP_ACCELERATION / BLOBBY_MAX_JUMP_HEIGHT;
 const float BLOBBY_JUMP_BUFFER = GRAVITATION / 2;
 
-
 // Ball Settings
 const float BALL_RADIUS = 31.5;
 const float BALL_GRAVITATION = 0.287;
-const float BALL_COLLISION_VELOCITY = std::sqrt(0.75f * RIGHT_PLANE * BALL_GRAVITATION); /// \todo work on a full-fledged physics spec
-
+const float BALL_COLLISION_VELOCITY =
+    std::sqrt(0.75f * RIGHT_PLANE * BALL_GRAVITATION); /// \todo work on a full-fledged physics spec
 
 // Volley Ball Net
 const float NET_POSITION_X = RIGHT_PLANE / 2;
 const float NET_POSITION_Y = 438;
 const float NET_RADIUS = 7;
-//const float NET_SPHERE = 154;		// what is the meaning of this value ???????
+// const float NET_SPHERE = 154;		// what is the meaning of this value ???????
 const float NET_SPHERE_POSITION = 284;
 
 const float STANDARD_BALL_HEIGHT = 269 + BALL_RADIUS;

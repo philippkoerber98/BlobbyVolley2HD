@@ -19,24 +19,23 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 #pragma once
 
-#include <string>
-#include <vector>
 #include <cstdint>
+#include <string>
 #include <type_traits>
+#include <vector>
 
 // encodes an arbitrary pointer range
-std::string encode( const char* begin, const char* end, int newlines = -1);
+std::string encode(const char* begin, const char* end, int newlines = -1);
 
-template<class T>
-std::string encode(const std::vector<T>& data_vec, int newlines = -1)
+template <class T> std::string encode(const std::vector<T>& data_vec, int newlines = -1)
 {
-	static_assert( std::is_pod<T>::value, "T has to be a POD type");
-	auto start = &*data_vec.begin();
-	auto begin = reinterpret_cast<const char*>(start);
-	auto end   = reinterpret_cast<const char*>(start + data_vec.size());
-	return encode( begin, end, newlines );
+    static_assert(std::is_pod<T>::value, "T has to be a POD type");
+    auto start = &*data_vec.begin();
+    auto begin = reinterpret_cast<const char*>(start);
+    auto end = reinterpret_cast<const char*>(start + data_vec.size());
+    return encode(begin, end, newlines);
 }
 
 /// decodes a base64 encoded string into a byte vector. All characters
 /// that are not valid encodings are ignored (i.e. linefeeds).
-std::vector<uint8_t> decode(const std::string& data );
+std::vector<uint8_t> decode(const std::string& data);

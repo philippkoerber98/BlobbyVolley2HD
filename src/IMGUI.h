@@ -20,24 +20,24 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 #pragma once
 
-#include <vector>
-#include <string>
-#include <queue>
 #include <functional>
+#include <queue>
+#include <string>
+#include <vector>
 
-#include "Vector.h"
 #include "Global.h"
+#include "Vector.h"
 
-#include "RenderManager.h"
-#include "InputManager.h"
-#include "TextManager.h" /// needed because we can't forward declare that enum
 #include "BlobbyDebug.h"
+#include "InputManager.h"
+#include "RenderManager.h"
+#include "TextManager.h" /// needed because we can't forward declare that enum
 
 enum SelectBoxAction
 {
-	SBA_NONE = 0,
-	SBA_SELECT,
-	SBA_DBL_CLICK
+    SBA_NONE = 0,
+    SBA_SELECT,
+    SBA_DBL_CLICK
 };
 
 struct QueueObject;
@@ -45,72 +45,88 @@ struct QueueObject;
 typedef std::queue<QueueObject> RenderQueue;
 
 /*! \class IMGUI
-	\brief GUI Manager
-	\details This class manages drawing and input handling of the blobby GUI.
-			It is poorly designed, does not use OOP and makes extension difficult, so
-			it needs a complete rewrite.
+    \brief GUI Manager
+    \details This class manages drawing and input handling of the blobby GUI.
+            It is poorly designed, does not use OOP and makes extension difficult, so
+            it needs a complete rewrite.
 */
 class IMGUI : public ObjectCounter<IMGUI>
 {
-	public:
-		explicit IMGUI(InputManager* inputMgr);
-		~IMGUI();
+  public:
+    explicit IMGUI(InputManager* inputMgr);
+    ~IMGUI();
 
-		void begin();
-		void end(RenderManager& renderer);
-		void resetSelection();
-		void prepend(const std::function<void()>& draw);
-		bool hasSceneBlur() const { return mHasSceneBlur; }
-		void doSceneBlur(int id, const std::string& key);
-		void doConfetti(int id, Uint32 started);
+    void begin();
+    void end(RenderManager& renderer);
+    void resetSelection();
+    void prepend(const std::function<void()>& draw);
+    bool hasSceneBlur() const
+    {
+        return mHasSceneBlur;
+    }
+    void doSceneBlur(int id, const std::string& key);
+    void doConfetti(int id, Uint32 started);
 
-		void doImage(int id, const Vector2& position, const std::string& name, const Vector2& size = Vector2(0,0));
-		void doText(int id, const Vector2& position, const std::string& text, unsigned int flags = TF_NORMAL);
-		void doText(int id, const Vector2& position, TextManager::STRING text, unsigned int flags = TF_NORMAL);
-		void doMenuText(int id, const Vector2& position, const std::string& text, float height = 22, int style = 0);
-		void doOverlay(int id, const Vector2& pos1, const Vector2& pos2, const Color& col = Color(0, 0, 0), float alpha = 0.65);
-		void doCursor(bool draw = true);
-		void doRoundedPanel(int id, const Vector2& pos1, const Vector2& pos2, const Color& col, float alpha);
+    void doImage(int id, const Vector2& position, const std::string& name,
+                 const Vector2& size = Vector2(0, 0));
+    void doText(int id, const Vector2& position, const std::string& text, unsigned int flags = TF_NORMAL);
+    void doText(int id, const Vector2& position, TextManager::STRING text, unsigned int flags = TF_NORMAL);
+    void doMenuText(int id, const Vector2& position, const std::string& text, float height = 22,
+                    int style = 0);
+    void doOverlay(int id, const Vector2& pos1, const Vector2& pos2, const Color& col = Color(0, 0, 0),
+                   float alpha = 0.65);
+    void doCursor(bool draw = true);
+    void doRoundedPanel(int id, const Vector2& pos1, const Vector2& pos2, const Color& col, float alpha);
 
-		bool doButton(int id, const Vector2& position, const std::string& text, unsigned int flags = TF_NORMAL);
-		bool doButton(int id, const Vector2& position, TextManager::STRING text, unsigned int flags = TF_NORMAL);
+    bool doButton(int id, const Vector2& position, const std::string& text, unsigned int flags = TF_NORMAL);
+    bool doButton(int id, const Vector2& position, TextManager::STRING text, unsigned int flags = TF_NORMAL);
 
-		// draws an image that also works as a button
-		// for now, it is not included in keyboard navigation, so it is more like a clickable image than a real button
-		/// \todo the size parameter should be calculated from the passed image
-		bool doImageButton(int id, const Vector2& position, const Vector2& size, const std::string& image);
+    // draws an image that also works as a button
+    // for now, it is not included in keyboard navigation, so it is more like a clickable image than a real
+    // button
+    /// \todo the size parameter should be calculated from the passed image
+    bool doImageButton(int id, const Vector2& position, const Vector2& size, const std::string& image);
 
-		bool doScrollbar(int id, const Vector2& position, float& value);
-		bool doEditbox(int id, const Vector2& position, unsigned length, std::string& text, unsigned& cpos, unsigned int flags = TF_NORMAL, bool force_active = false);
-		SelectBoxAction doSelectbox(int id, const Vector2& pos1, const Vector2& pos2, const std::vector<std::string>& entries, unsigned& selected, unsigned int flags = TF_NORMAL);
-		void doChatbox(int id, const Vector2& pos1, const Vector2& pos2, const std::vector<std::string>& entries, unsigned& selected, const std::vector<bool>& local, unsigned int flags = TF_NORMAL);
-		bool doBlob(int id, const Vector2& position, const Color& col, float scale = 1);
+    bool doScrollbar(int id, const Vector2& position, float& value);
+    bool doEditbox(int id, const Vector2& position, unsigned length, std::string& text, unsigned& cpos,
+                   unsigned int flags = TF_NORMAL, bool force_active = false);
+    SelectBoxAction doSelectbox(int id, const Vector2& pos1, const Vector2& pos2,
+                                const std::vector<std::string>& entries, unsigned& selected,
+                                unsigned int flags = TF_NORMAL);
+    void doChatbox(int id, const Vector2& pos1, const Vector2& pos2, const std::vector<std::string>& entries,
+                   unsigned& selected, const std::vector<bool>& local, unsigned int flags = TF_NORMAL);
+    bool doBlob(int id, const Vector2& position, const Color& col, float scale = 1);
 
-		bool usingCursor() const;
-		void doInactiveMode(bool inactive) { mInactive = inactive; }
+    bool usingCursor() const;
+    void doInactiveMode(bool inactive)
+    {
+        mInactive = inactive;
+    }
 
-		int getNextId() { return mIdCounter++; };
+    int getNextId()
+    {
+        return mIdCounter++;
+    };
 
-		const TextManager& textMgr() const;
-		const std::string& getText(TextManager::STRING id) const;
-		void setTextMgr(std::string lang);
+    const TextManager& textMgr() const;
+    const std::string& getText(TextManager::STRING id) const;
+    void setTextMgr(std::string lang);
 
-	private:
-		int mActiveButton;
-		int mHeldWidget;
-		KeyAction mLastKeyAction;
-		int mLastWidget;
-		bool mDrawCursor;
-		bool mHasSceneBlur = false;
-		bool mButtonReset;
-		bool mInactive;
-		bool mUsingCursor;
+  private:
+    int mActiveButton;
+    int mHeldWidget;
+    KeyAction mLastKeyAction;
+    int mLastWidget;
+    bool mDrawCursor;
+    bool mHasSceneBlur = false;
+    bool mButtonReset;
+    bool mInactive;
+    bool mUsingCursor;
 
-		int mIdCounter;
+    int mIdCounter;
 
-		std::unique_ptr<TextManager> mTextManager;
-		InputManager* mInputManager;
+    std::unique_ptr<TextManager> mTextManager;
+    InputManager* mInputManager;
 
-		std::unique_ptr<RenderQueue> mQueue;
+    std::unique_ptr<RenderQueue> mQueue;
 };
-

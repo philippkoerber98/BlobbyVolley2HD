@@ -20,11 +20,11 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 #pragma once
 
-#include <mutex>
-#include <memory>
-#include "raknet/PacketPriority.h"
 #include "raknet/NetworkTypes.h"
+#include "raknet/PacketPriority.h"
 #include "raknet/RakServer.h"
+#include <memory>
+#include <mutex>
 
 /*! \brief Wraps a RakServer, so that it can only be accessed while a mutex is locked.
  *  \details Any interaction with the underlying RakServer has to go through the `access`
@@ -34,22 +34,24 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *  As `Send`ing a packet is by far the most common operation, we provide a specialized convenience
  *  function.
  */
-class ThreadSafeRakServer {
-public:
-	ThreadSafeRakServer() : mServer(new RakServer()) {};
+class ThreadSafeRakServer
+{
+  public:
+    ThreadSafeRakServer() : mServer(new RakServer()) {};
 
-	template<class F>
-	auto access(F&& f) -> decltype(f(std::declval<RakServer&>())) {
-		std::lock_guard<std::mutex> lock(mMutex);
-		return f(*mServer);
-	}
+    template <class F> auto access(F&& f) -> decltype(f(std::declval<RakServer&>()))
+    {
+        std::lock_guard<std::mutex> lock(mMutex);
+        return f(*mServer);
+    }
 
-	void Send(const RakNet::BitStream& stream, PacketPriority priority, PacketReliability reliability, PlayerID target,
-			  bool broadcast=false) {
-		access([&](RakServer& server){ server.Send(&stream, priority, reliability, 0, target, broadcast); });
-	}
+    void Send(const RakNet::BitStream& stream, PacketPriority priority, PacketReliability reliability,
+              PlayerID target, bool broadcast = false)
+    {
+        access([&](RakServer& server) { server.Send(&stream, priority, reliability, 0, target, broadcast); });
+    }
 
-private:
-	std::mutex mMutex;
-	std::unique_ptr<RakServer> mServer;
+  private:
+    std::mutex mMutex;
+    std::unique_ptr<RakServer> mServer;
 };

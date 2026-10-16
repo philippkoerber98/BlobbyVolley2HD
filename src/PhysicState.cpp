@@ -27,43 +27,43 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 USER_SERIALIZER_IMPLEMENTATION_HELPER(PhysicState)
 {
-	io.number( value.blobPosition[LEFT_PLAYER].x );
-	io.number( value.blobPosition[LEFT_PLAYER].y );
+    io.number(value.blobPosition[LEFT_PLAYER].x);
+    io.number(value.blobPosition[LEFT_PLAYER].y);
 
-	io.number( value.blobVelocity[LEFT_PLAYER].x );
-	io.number( value.blobVelocity[LEFT_PLAYER].y );
+    io.number(value.blobVelocity[LEFT_PLAYER].x);
+    io.number(value.blobVelocity[LEFT_PLAYER].y);
 
-	io.number( value.blobPosition[RIGHT_PLAYER].x );
-	io.number( value.blobPosition[RIGHT_PLAYER].y );
+    io.number(value.blobPosition[RIGHT_PLAYER].x);
+    io.number(value.blobPosition[RIGHT_PLAYER].y);
 
-	io.number( value.blobVelocity[RIGHT_PLAYER].x );
-	io.number( value.blobVelocity[RIGHT_PLAYER].y );
+    io.number(value.blobVelocity[RIGHT_PLAYER].x);
+    io.number(value.blobVelocity[RIGHT_PLAYER].y);
 
-	io.number( value.blobState[LEFT_PLAYER] );
-	io.number( value.blobState[RIGHT_PLAYER] );
+    io.number(value.blobState[LEFT_PLAYER]);
+    io.number(value.blobState[RIGHT_PLAYER]);
 
-	io.number( value.ballPosition.x );
-	io.number( value.ballPosition.y );
+    io.number(value.ballPosition.x);
+    io.number(value.ballPosition.y);
 
-	io.number( value.ballVelocity.x );
-	io.number( value.ballVelocity.y );
+    io.number(value.ballVelocity.x);
+    io.number(value.ballVelocity.y);
 
-	io.number( value.ballRotation );
-	io.number( value.ballAngularVelocity );
+    io.number(value.ballRotation);
+    io.number(value.ballAngularVelocity);
 }
 
 void PhysicState::swapSides(float courtWidth)
 {
-	blobPosition[LEFT_PLAYER].x = courtWidth - blobPosition[LEFT_PLAYER].x;
-	blobPosition[RIGHT_PLAYER].x = courtWidth - blobPosition[RIGHT_PLAYER].x;
-	blobVelocity[LEFT_PLAYER].x = -blobVelocity[LEFT_PLAYER].x;
-	blobVelocity[RIGHT_PLAYER].x = -blobVelocity[RIGHT_PLAYER].x;
-	std::swap(blobPosition[LEFT_PLAYER], blobPosition[RIGHT_PLAYER]);
-	std::swap(blobVelocity[LEFT_PLAYER], blobVelocity[RIGHT_PLAYER]);
-	std::swap(blobState[LEFT_PLAYER], blobState[RIGHT_PLAYER]);
+    blobPosition[LEFT_PLAYER].x = courtWidth - blobPosition[LEFT_PLAYER].x;
+    blobPosition[RIGHT_PLAYER].x = courtWidth - blobPosition[RIGHT_PLAYER].x;
+    blobVelocity[LEFT_PLAYER].x = -blobVelocity[LEFT_PLAYER].x;
+    blobVelocity[RIGHT_PLAYER].x = -blobVelocity[RIGHT_PLAYER].x;
+    std::swap(blobPosition[LEFT_PLAYER], blobPosition[RIGHT_PLAYER]);
+    std::swap(blobVelocity[LEFT_PLAYER], blobVelocity[RIGHT_PLAYER]);
+    std::swap(blobState[LEFT_PLAYER], blobState[RIGHT_PLAYER]);
 
-	ballPosition.x = courtWidth - ballPosition.x;
-	ballVelocity.x = -ballVelocity.x;
-	ballAngularVelocity = -ballAngularVelocity;
-	ballRotation = 2*M_PI - ballRotation;
+    ballPosition.x = courtWidth - ballPosition.x;
+    ballVelocity.x = -ballVelocity.x;
+    ballAngularVelocity = -ballAngularVelocity;
+    ballRotation = 2 * M_PI - ballRotation;
 }

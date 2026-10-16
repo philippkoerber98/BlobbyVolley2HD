@@ -23,103 +23,99 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #include "File.h"
 #include <memory>
 #include <vector>
- 
+
 // forward declarations for convenience functions
 struct lua_State;
 namespace tinyxml2
 {
-	class XMLDocument;
+class XMLDocument;
 }
 
 using XMLDocumentPtr = std::shared_ptr<tinyxml2::XMLDocument>;
 
 /**
-	\class FileRead
-	\brief Extension of file interface for reading file access.	
-	\details Provides various methods
-			for reading numbers, strings and raw bytes from a file.
-	\todo add more convenience methods for easier integration with lua script loading
-			and tinyXML.
-	\sa FileWrite
+    \class FileRead
+    \brief Extension of file interface for reading file access.
+    \details Provides various methods
+            for reading numbers, strings and raw bytes from a file.
+    \todo add more convenience methods for easier integration with lua script loading
+            and tinyXML.
+    \sa FileWrite
 */
 class FileRead : public File
 {
-	public:
-	
-		/// \brief default ctor
-		/// \details File has to be opened with open()
-		/// \throw nothing
-		explicit FileRead();
-		
-		/// \brief constructor which opens a file.
-		/// \param filename File to be opened for reading
-		/// \throw FileLoadException, if the file could not be loaded
-		explicit FileRead(const std::string& filename);
-		
-		/// \brief opens a file.
-		/// \param filename File to be opened for reading
-		/// \throw FileLoadException, if the file could not be loaded
-		/// \pre No file is currently opened.
-		void open(const std::string& filename);
-		
-		/// destructor, closes the file (if any open)
-		/// \sa close()
-		/// \throw nothing
-		~FileRead();
-		
-		// ------------------------------------
-		//  reading interface
-		// ------------------------------------
-		/// reads bytes into a buffer
-		/// \param target buffer to read into
-		/// \param num_of_bytes number of bytes to read
-		/// \throw PhysfsFileException when nothing could be read
-		/// \throw NoFileOpenedException when called while no file is opened.
-		/// \throw EOFException when less than \p num_of_bytes bytes are available.
-		uint32_t readRawBytes( char* target, std::size_t num_of_bytes );
-		
-		
-		/// reads bytes and returns the buffer
-		/// the buffer is allocated by this function and has a size of \p num_of_bytes
-		/// \param num_of_bytes Number of bytes to read; size of buffer
-		/// \throw PhysfsFileException when nothing could be read
-		/// \throw NoFileOpenedException when called while no file is opened.
-		/// \throw EOFException when less than \p num_of_bytes bytes are available.
-		std::vector<char> readRawBytes( std::size_t num_of_bytes );
-		
-		/// reads exactly one byte
-		/// \throw PhysfsFileException when Physfs reports an error
-		/// \throw NoFileOpenedException when called while no file is opened.
-		char readByte();
-		
-		/// reads an unsigned 32 bit integer from the next four bytes in the file
-		/// the integer is expected to be in little-endian-order and is converted
-		/// to the native format.
-		/// \throw PhysfsFileException when Physfs reports an error
-		/// \throw NoFileOpenedException when called while no file is opened.
-		uint32_t readUInt32();
-		
-		/// reads a 32 bit float from the next four bytes in the file
-		/// \throw PhysfsFileException when Physfs reports an error
-		/// \throw NoFileOpenedException when called while no file is opened.
-		float readFloat();
-		
-		/// reads a null-terminated string from the file
-		/// \throw PhysfsFileException when Physfs reports an error
-		/// \throw NoFileOpenedException when called while no file is opened.
-		std::string readString();
-		
-		
-		// helper function for checksum
-		/// calculates a crc checksum of the file contents beginning at posInFile till the end of the file.
-		uint32_t calcChecksum(uint32_t start);
-		
-		
-		// -----------------------------------------------------------------------------------------
-		// 								LUA/XML reading helper function
-		// -----------------------------------------------------------------------------------------
-		static std::string makeLuaFilename(std::string filename);
-		static int readLuaScript(const std::string& filename, lua_State* mState);
-		
-		static XMLDocumentPtr readXMLDocument(const std::string& filename);
+  public:
+    /// \brief default ctor
+    /// \details File has to be opened with open()
+    /// \throw nothing
+    explicit FileRead();
+
+    /// \brief constructor which opens a file.
+    /// \param filename File to be opened for reading
+    /// \throw FileLoadException, if the file could not be loaded
+    explicit FileRead(const std::string& filename);
+
+    /// \brief opens a file.
+    /// \param filename File to be opened for reading
+    /// \throw FileLoadException, if the file could not be loaded
+    /// \pre No file is currently opened.
+    void open(const std::string& filename);
+
+    /// destructor, closes the file (if any open)
+    /// \sa close()
+    /// \throw nothing
+    ~FileRead();
+
+    // ------------------------------------
+    //  reading interface
+    // ------------------------------------
+    /// reads bytes into a buffer
+    /// \param target buffer to read into
+    /// \param num_of_bytes number of bytes to read
+    /// \throw PhysfsFileException when nothing could be read
+    /// \throw NoFileOpenedException when called while no file is opened.
+    /// \throw EOFException when less than \p num_of_bytes bytes are available.
+    uint32_t readRawBytes(char* target, std::size_t num_of_bytes);
+
+    /// reads bytes and returns the buffer
+    /// the buffer is allocated by this function and has a size of \p num_of_bytes
+    /// \param num_of_bytes Number of bytes to read; size of buffer
+    /// \throw PhysfsFileException when nothing could be read
+    /// \throw NoFileOpenedException when called while no file is opened.
+    /// \throw EOFException when less than \p num_of_bytes bytes are available.
+    std::vector<char> readRawBytes(std::size_t num_of_bytes);
+
+    /// reads exactly one byte
+    /// \throw PhysfsFileException when Physfs reports an error
+    /// \throw NoFileOpenedException when called while no file is opened.
+    char readByte();
+
+    /// reads an unsigned 32 bit integer from the next four bytes in the file
+    /// the integer is expected to be in little-endian-order and is converted
+    /// to the native format.
+    /// \throw PhysfsFileException when Physfs reports an error
+    /// \throw NoFileOpenedException when called while no file is opened.
+    uint32_t readUInt32();
+
+    /// reads a 32 bit float from the next four bytes in the file
+    /// \throw PhysfsFileException when Physfs reports an error
+    /// \throw NoFileOpenedException when called while no file is opened.
+    float readFloat();
+
+    /// reads a null-terminated string from the file
+    /// \throw PhysfsFileException when Physfs reports an error
+    /// \throw NoFileOpenedException when called while no file is opened.
+    std::string readString();
+
+    // helper function for checksum
+    /// calculates a crc checksum of the file contents beginning at posInFile till the end of the file.
+    uint32_t calcChecksum(uint32_t start);
+
+    // -----------------------------------------------------------------------------------------
+    // 								LUA/XML reading helper function
+    // -----------------------------------------------------------------------------------------
+    static std::string makeLuaFilename(std::string filename);
+    static int readLuaScript(const std::string& filename, lua_State* mState);
+
+    static XMLDocumentPtr readXMLDocument(const std::string& filename);
 };

@@ -22,31 +22,30 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 #include "State.h"
 
-#include <vector>
 #include <memory>
+#include <vector>
 
 class DuelMatch;
 class ReplayPlayer;
 class IReplayLoader;
 
 /*! \class ReplaySelectionState
-	\brief State for replay selection screen
+    \brief State for replay selection screen
 */
 class ReplaySelectionState : public State
 {
-public:
-	ReplaySelectionState();
-	void step_impl() override;
-	void init() override;
-	const char* getStateName() const override;
+  public:
+    ReplaySelectionState();
+    void step_impl() override;
+    void init() override;
+    const char* getStateName() const override;
 
-private:
+  private:
+    std::vector<std::string> mReplayFiles;
+    unsigned mSelectedReplay;
+    bool mShowReplayInfo;
+    std::unique_ptr<IReplayLoader> mReplayLoader;
 
-	std::vector<std::string> mReplayFiles;
-	unsigned mSelectedReplay;
-	bool mShowReplayInfo;
-	std::unique_ptr<IReplayLoader> mReplayLoader;
-
-	bool mChecksumError;
-	bool mVersionError;
+    bool mChecksumError;
+    bool mVersionError;
 };

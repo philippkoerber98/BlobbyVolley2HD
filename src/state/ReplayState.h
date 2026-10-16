@@ -29,32 +29,32 @@ class DuelMatch;
 class ReplayPlayer;
 
 /*! \class ReplayState
-	\brief State playing a replay
+    \brief State playing a replay
 */
 class ReplayState : public GameState
 {
-public:
-	ReplayState();
-	~ReplayState() override;
-	void step_impl() override;
-	void init() override;
-	const char* getStateName() const override;
-	void loadReplay(const std::string& replay);
+  public:
+    ReplayState();
+    ~ReplayState() override;
+    void step_impl() override;
+    void init() override;
+    const char* getStateName() const override;
+    void loadReplay(const std::string& replay);
 
-private:
-	std::unique_ptr<ReplayPlayer> mReplayPlayer;
+  private:
+    std::unique_ptr<ReplayPlayer> mReplayPlayer;
 
-	//bool mChecksumError;
-	//bool mVersionError;
+    // bool mChecksumError;
+    // bool mVersionError;
 
-	Vector2 mLastMousePosition;
-	int mMouseShowTimer;
+    Vector2 mLastMousePosition;
+    int mMouseShowTimer;
 
-	// controls
-	int mPositionJump;
-	bool mPaused;
+    // controls
+    int mPositionJump;
+    bool mPaused;
 
-	// replay speed control
-	int mSpeedValue;
-	int mSpeedTimer;
+    // replay speed control
+    int mSpeedValue;
+    int mSpeedTimer;
 };

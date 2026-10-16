@@ -27,13 +27,16 @@ const unsigned int REPLAY_STEP_EMPTY = UINT_MAX;
 
 USER_SERIALIZER_IMPLEMENTATION_HELPER(ReplaySavePoint)
 {
-	io.template generic<DuelMatchState> (value.state);
-	io.uint32(value.step);
+    io.template generic<DuelMatchState>(value.state);
+    io.uint32(value.step);
 }
 
 void ReplaySavePoint::reset()
 {
-	step = REPLAY_STEP_EMPTY;
+    step = REPLAY_STEP_EMPTY;
 }
 
-bool ReplaySavePoint::isEmpty() const { return step == REPLAY_STEP_EMPTY; }
+bool ReplaySavePoint::isEmpty() const
+{
+    return step == REPLAY_STEP_EMPTY;
+}

@@ -20,90 +20,87 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 #pragma once
 
-#include "Global.h"
-#include "Vector.h"
-#include "PlayerInput.h"
 #include "BlobbyDebug.h"
-#include "PhysicState.h"
+#include "Global.h"
 #include "MatchEvents.h"
-#include <functional>	// for std::function used for the callback
+#include "PhysicState.h"
+#include "PlayerInput.h"
+#include "Vector.h"
+#include <functional> // for std::function used for the callback
 
 /*! \brief blobby world
-	\details This class encapsulates the physical world where blobby happens. It manages the two blobs,
-			the ball and collisions between them and the environment, it calculates object movements etc.
+    \details This class encapsulates the physical world where blobby happens. It manages the two blobs,
+            the ball and collisions between them and the environment, it calculates object movements etc.
 */
 class PhysicWorld : public ObjectCounter<PhysicWorld>
 {
-	// callback function type
-	typedef std::function<void(MatchEvent)> event_callback_fn;
+    // callback function type
+    typedef std::function<void(MatchEvent)> event_callback_fn;
 
-	public:
-		explicit PhysicWorld(float width = 800.f, float speed = 4.5f);
-		~PhysicWorld();
+  public:
+    explicit PhysicWorld(float width = 800.f, float speed = 4.5f);
+    ~PhysicWorld();
 
-		// set the callback
-		void setEventCallback( event_callback_fn );
+    // set the callback
+    void setEventCallback(event_callback_fn);
 
-		// ball information queries
-		Vector2 getBallPosition() const;
-		void setBallPosition( Vector2 newPosition );
-		Vector2 getBallVelocity() const;
-		void setBallVelocity( Vector2 newVelocity );
-		float getBallRotation() const;
-		void setBallAngularVelocity( float angular_velocity );
+    // ball information queries
+    Vector2 getBallPosition() const;
+    void setBallPosition(Vector2 newPosition);
+    Vector2 getBallVelocity() const;
+    void setBallVelocity(Vector2 newVelocity);
+    float getBallRotation() const;
+    void setBallAngularVelocity(float angular_velocity);
 
-		// blobby information queries
-		Vector2 getBlobPosition(PlayerSide player) const;
-		Vector2 getBlobVelocity(PlayerSide player) const;
-		float getBlobState(PlayerSide player) const;
-		// this function calculates whether the player is on the ground
-		bool blobHitGround(PlayerSide player) const;
+    // blobby information queries
+    Vector2 getBlobPosition(PlayerSide player) const;
+    Vector2 getBlobVelocity(PlayerSide player) const;
+    float getBlobState(PlayerSide player) const;
+    // this function calculates whether the player is on the ground
+    bool blobHitGround(PlayerSide player) const;
 
-		// One deterministic unit step; normal wall-clock rate is 75 steps/second.
-		// Rendering may run at any independent rate.
-		void step(const PlayerInput& leftInput, const PlayerInput& rightInput,
-					bool isBallValid, bool isGameRunning);
+    // One deterministic unit step; normal wall-clock rate is 75 steps/second.
+    // Rendering may run at any independent rate.
+    void step(const PlayerInput& leftInput, const PlayerInput& rightInput, bool isBallValid,
+              bool isGameRunning);
 
-		// gets the physic state
-		PhysicState getState() const;
+    // gets the physic state
+    PhysicState getState() const;
 
-		// sets a new physic state
-		void setState(const PhysicState& state);
+    // sets a new physic state
+    void setState(const PhysicState& state);
 
-		// helper functions
-		/// this function calculates whether two circles overlap.
-		static bool circleCircleCollision(const Vector2& pos1, float rad_1, const Vector2& pos2, float rad_2);
+    // helper functions
+    /// this function calculates whether two circles overlap.
+    static bool circleCircleCollision(const Vector2& pos1, float rad_1, const Vector2& pos2, float rad_2);
 
-	private:
-		// Blobby animation methods
-		void blobbyStartAnimation(PlayerSide player);
-		void blobbyAnimationStep(PlayerSide player);
+  private:
+    // Blobby animation methods
+    void blobbyStartAnimation(PlayerSide player);
+    void blobbyAnimationStep(PlayerSide player);
 
-		inline bool playerTopBallCollision(int player) const;
-		inline bool playerBottomBallCollision(int player) const;
+    inline bool playerTopBallCollision(int player) const;
+    inline bool playerBottomBallCollision(int player) const;
 
-		// Do all blobby-related physic stuff which is independent of states
-		void handleBlob(PlayerSide player, PlayerInput input);
+    // Do all blobby-related physic stuff which is independent of states
+    void handleBlob(PlayerSide player, PlayerInput input);
 
-		// Detect and handle ball to blobby collisions
-		bool handleBlobbyBallCollision(PlayerSide player);
-		// calculate ball impacts vs wall, ground and net
-		void handleBallWorldCollisions();
+    // Detect and handle ball to blobby collisions
+    bool handleBlobbyBallCollision(PlayerSide player);
+    // calculate ball impacts vs wall, ground and net
+    void handleBallWorldCollisions();
 
-		float mWidth, mSpeed;
-		Vector2 mBlobPosition[MAX_PLAYERS];
-		Vector2 mBallPosition;
+    float mWidth, mSpeed;
+    Vector2 mBlobPosition[MAX_PLAYERS];
+    Vector2 mBallPosition;
 
-		Vector2 mBlobVelocity[MAX_PLAYERS];
-		Vector2 mBallVelocity;
+    Vector2 mBlobVelocity[MAX_PLAYERS];
+    Vector2 mBallVelocity;
 
-		float mBallRotation;
-		float mBallAngularVelocity;
-		float mBlobState[MAX_PLAYERS];
-		float mCurrentBlobbyAnimationSpeed[MAX_PLAYERS];
+    float mBallRotation;
+    float mBallAngularVelocity;
+    float mBlobState[MAX_PLAYERS];
+    float mCurrentBlobbyAnimationSpeed[MAX_PLAYERS];
 
-		event_callback_fn mCallback;
+    event_callback_fn mCallback;
 };
-
-
-

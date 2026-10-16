@@ -20,9 +20,9 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 #pragma once
 
-#include <string>
-#include <memory>
 #include "DuelMatchState.h"
+#include <memory>
+#include <string>
 
 struct lua_State;
 class DuelMatch;
@@ -30,47 +30,45 @@ class PhysicWorld;
 
 struct ScriptException : public std::exception
 {
-	std::string luaerror;
-	~ScriptException() noexcept override = default;
+    std::string luaerror;
+    ~ScriptException() noexcept override = default;
 };
 
-
 /*! \class IScriptableComponent
-	\brief Base class for lua scripted objects.
-	\details Use this class as base class for objects that support lua scripting. It defines some commonly used functions to make
-			coding easier. Does not define any public methods.
+    \brief Base class for lua scripted objects.
+    \details Use this class as base class for objects that support lua scripting. It defines some commonly
+   used functions to make coding easier. Does not define any public methods.
 */
 class IScriptableComponent
 {
-	public:
-		struct Access;
+  public:
+    struct Access;
 
-		const DuelMatchState& getMatchState() const;
+    const DuelMatchState& getMatchState() const;
 
-	protected:
-		IScriptableComponent();
-		virtual ~IScriptableComponent();
+  protected:
+    IScriptableComponent();
+    virtual ~IScriptableComponent();
 
-		void openScript(const std::string& file);
-		void setLuaGlobal(const char* name, double value);
-		bool getLuaFunction(const char* name) const;
+    void openScript(const std::string& file);
+    void setLuaGlobal(const char* name, double value);
+    bool getLuaFunction(const char* name) const;
 
-		// calls a lua function that is on the stack and performs error handling
-		void callLuaFunction(int arg_count = 0);
+    // calls a lua function that is on the stack and performs error handling
+    void callLuaFunction(int arg_count = 0);
 
-		// load lua functions
-		void setGameConstants();
-		void setSimulationGeometry(float width,float speed);
-		void setGameFunctions();
+    // load lua functions
+    void setGameConstants();
+    void setSimulationGeometry(float width, float speed);
+    void setGameFunctions();
 
-		void setMatchState(const DuelMatchState& state);
+    void setMatchState(const DuelMatchState& state);
 
-		lua_State* mState;
+    lua_State* mState;
 
-	private:
-		// we save a dummy physic world here to do simulations
-		std::unique_ptr<PhysicWorld> mDummyWorld;
+  private:
+    // we save a dummy physic world here to do simulations
+    std::unique_ptr<PhysicWorld> mDummyWorld;
 
-		DuelMatchState mCachedState;
+    DuelMatchState mCachedState;
 };
-

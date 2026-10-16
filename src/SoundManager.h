@@ -25,62 +25,61 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 #pragma once
 
-#include <SDL.h>
-#include <string>
-#include <map>
-#include <vector>
 #include "BlobbyDebug.h"
+#include <SDL.h>
+#include <map>
+#include <string>
+#include <vector>
 
 /// \brief struct for holding sound data
 struct Sound : public ObjectCounter<Sound>
 {
-	Sound(const Uint8* data_, int length_, float volume_);
+    Sound(const Uint8* data_, int length_, float volume_);
 
-	const Uint8* getCurrentSample() const;
-	int advance(int amount);
-	bool done() const;
+    const Uint8* getCurrentSample() const;
+    int advance(int amount);
+    bool done() const;
 
-	const Uint8* data = nullptr;
-	int length = 0;
-	int position = 0;
-	float volume = 1.f;
+    const Uint8* data = nullptr;
+    int length = 0;
+    int position = 0;
+    float volume = 1.f;
 };
 
 /*! \class SoundManager
-	\brief class managing game sound.
-	\details Managing loading, converting to target format, muting, setting volume
-			and, of couse, playing of sounds.
+    \brief class managing game sound.
+    \details Managing loading, converting to target format, muting, setting volume
+            and, of couse, playing of sounds.
 */
 class SoundManager : public ObjectCounter<SoundManager>
 {
-	public:
-		explicit SoundManager();
-		~SoundManager();
+  public:
+    explicit SoundManager();
+    ~SoundManager();
 
-		bool playSound(const std::string& filename, float volume);
-		void setVolume(float volume);
-		void setMute(bool mute);
+    bool playSound(const std::string& filename, float volume);
+    void setVolume(float volume);
+    void setMute(bool mute);
 
-		// Known Sounds
-		static constexpr const char* IMPACT  = "sounds/bums.wav";
-		static constexpr const char* WHISTLE = "sounds/pfiff.wav";
-		static constexpr const char* CHAT    = "sounds/chat.wav";
+    // Known Sounds
+    static constexpr const char* IMPACT = "sounds/bums.wav";
+    static constexpr const char* WHISTLE = "sounds/pfiff.wav";
+    static constexpr const char* CHAT = "sounds/chat.wav";
 
-	private:
+  private:
+    SDL_AudioDeviceID mAudioDevice = 0;
 
-		SDL_AudioDeviceID mAudioDevice = 0;
+    /// This maps filenames to sound buffers, which are always in
+    /// target format
+    std::map<std::string, std::vector<Uint8>> mSoundCache;
+    std::vector<Sound> mPlayingSound;
+    SDL_AudioSpec mAudioSpec;
 
-		/// This maps filenames to sound buffers, which are always in
-		/// target format
-		std::map<std::string, std::vector<Uint8>> mSoundCache;
-		std::vector<Sound> mPlayingSound;
-		SDL_AudioSpec mAudioSpec;
+    float mVolume;
+    bool mMute;
 
-		float mVolume;
-		bool mMute;
+    void handleCallback(Uint8* stream, int length);
 
-		void handleCallback(Uint8* stream, int length);
-
-		std::vector<Uint8> loadSound(const std::string& filename) const;
-		static void playCallback(void* sound_mgr, Uint8* stream, int length);
+    std::vector<Uint8> loadSound(const std::string& filename) const;
+    static void playCallback(void* sound_mgr, Uint8* stream, int length);
 };

@@ -20,34 +20,34 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 #pragma once
 
-#include "PhysicState.h"
-#include "GameLogicState.h"
-#include "PlayerInput.h"
 #include "BlobbyDebug.h"
+#include "GameLogicState.h"
+#include "PhysicState.h"
+#include "PlayerInput.h"
 
 struct DuelMatchState
 {
-	// info functions
-	// physics
-	Vector2 getBallPosition() const;
-	Vector2 getBallVelocity() const;
-	float getBallRotation() const;
-	Vector2 getBlobPosition(PlayerSide player) const;
-	Vector2 getBlobVelocity(PlayerSide player) const;
-	float getBlobState( PlayerSide player ) const;
+    // info functions
+    // physics
+    Vector2 getBallPosition() const;
+    Vector2 getBallVelocity() const;
+    float getBallRotation() const;
+    Vector2 getBlobPosition(PlayerSide player) const;
+    Vector2 getBlobVelocity(PlayerSide player) const;
+    float getBlobState(PlayerSide player) const;
 
-	// logic
-	PlayerSide getServingPlayer() const;
-	PlayerSide getWinningPlayer() const;
-	bool getBallDown() const;
-	bool getBallActive() const;
-	int getHitcount(PlayerSide player) const;
-	int getScore(PlayerSide player) const;
+    // logic
+    PlayerSide getServingPlayer() const;
+    PlayerSide getWinningPlayer() const;
+    bool getBallDown() const;
+    bool getBallActive() const;
+    int getHitcount(PlayerSide player) const;
+    int getScore(PlayerSide player) const;
 
-	void swapSides(float courtWidth = 800.f);
+    void swapSides(float courtWidth = 800.f);
 
-	PhysicState worldState;
-	GameLogicState logicState;
+    PhysicState worldState;
+    GameLogicState logicState;
 
-	PlayerInput playerInput[MAX_PLAYERS];
+    PlayerInput playerInput[MAX_PLAYERS];
 };

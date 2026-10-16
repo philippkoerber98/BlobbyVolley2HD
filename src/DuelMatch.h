@@ -20,138 +20,152 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 #pragma once
 
+#include <memory>
 #include <string>
 #include <vector>
-#include <memory>
 
-#include "GameLogic.h"
-#include "Vector.h"
-#include "PlayerInput.h"
-#include "PlayerIdentity.h"
 #include "BlobbyDebug.h"
+#include "GameLogic.h"
 #include "MatchEvents.h"
+#include "PlayerIdentity.h"
+#include "PlayerInput.h"
+#include "Vector.h"
 
 class InputSource;
 struct DuelMatchState;
 class PhysicWorld;
 
 /*! \class DuelMatch
-	\brief class representing a blobby game.
-	\details
-	This class represents a single game between two players
-	It applies the rules itself and provides an interface for querying
-	different parameters. For this purpose it is designed as something
-	similar to a singleton, but it can be instantiated
-	multiple times on a server or be completely unavailable
+    \brief class representing a blobby game.
+    \details
+    This class represents a single game between two players
+    It applies the rules itself and provides an interface for querying
+    different parameters. For this purpose it is designed as something
+    similar to a singleton, but it can be instantiated
+    multiple times on a server or be completely unavailable
 */
 class DuelMatch : public ObjectCounter<DuelMatch>
 {
-	public:
-		// If remote is true, only physical responses will be calculated
-		// but hit events and score events are received from network
+  public:
+    // If remote is true, only physical responses will be calculated
+    // but hit events and score events are received from network
 
-		DuelMatch(bool remote, const std::string& rules, int score_to_win = 0, float courtWidth = 800.f);
+    DuelMatch(bool remote, const std::string& rules, int score_to_win = 0, float courtWidth = 800.f);
 
-		void setPlayers(PlayerIdentity left_player, PlayerIdentity right_player);
-		void setInputSources(std::shared_ptr<InputSource> left_input, std::shared_ptr<InputSource> right_input );
+    void setPlayers(PlayerIdentity left_player, PlayerIdentity right_player);
+    void setInputSources(std::shared_ptr<InputSource> left_input, std::shared_ptr<InputSource> right_input);
 
-		~DuelMatch();
+    ~DuelMatch();
 
-		void setRules(const std::string& rulesFile, int score_to_win = 0);
+    void setRules(const std::string& rulesFile, int score_to_win = 0);
 
-		void reset();
-		float getCourtWidth() const { return mCourtWidth; }
-		float getMovementSpeed() const { return mCourtWidth>801.f ? 5.4f : 4.5f; }
-		void setCourtWidth(float width);
+    void reset();
+    float getCourtWidth() const
+    {
+        return mCourtWidth;
+    }
+    float getMovementSpeed() const
+    {
+        return mCourtWidth > 801.f ? 5.4f : 4.5f;
+    }
+    void setCourtWidth(float width);
 
-		// This steps through one frame
-		void step();
+    // This steps through one frame
+    void step();
 
-		// these methods allow external input
-		// events triggered by the network
-		void setScore(int left, int right);
-		void resetBall(PlayerSide side);
+    // these methods allow external input
+    // events triggered by the network
+    void setScore(int left, int right);
+    void resetBall(PlayerSide side);
 
-		// This reports the index of the winning player and -1 if the
-		// game is still running
-		PlayerSide winningPlayer() const;
+    // This reports the index of the winning player and -1 if the
+    // game is still running
+    PlayerSide winningPlayer() const;
 
-		// These methods report the current game state and a useful for
-		// the input manager, which needs information about the blob
-		// positions and for lua export, which makes them accessible
-		// for scripted input sources
+    // These methods report the current game state and a useful for
+    // the input manager, which needs information about the blob
+    // positions and for lua export, which makes them accessible
+    // for scripted input sources
 
-		int getScore(PlayerSide player) const;
-		int getScoreToWin() const;
-		PlayerSide getServingPlayer() const;
-		int getTouches(PlayerSide player) const;
+    int getScore(PlayerSide player) const;
+    int getScoreToWin() const;
+    PlayerSide getServingPlayer() const;
+    int getTouches(PlayerSide player) const;
 
-		int getHitcount(PlayerSide player) const;
+    int getHitcount(PlayerSide player) const;
 
-		Vector2 getBallPosition() const;
-		Vector2 getBallVelocity() const;
-		float getBallRotation() const;
-		Vector2 getBlobPosition(PlayerSide player) const;
-		Vector2 getBlobVelocity(PlayerSide player) const;
-		float getBlobState(PlayerSide player) const;
+    Vector2 getBallPosition() const;
+    Vector2 getBallVelocity() const;
+    float getBallRotation() const;
+    Vector2 getBlobPosition(PlayerSide player) const;
+    Vector2 getBlobVelocity(PlayerSide player) const;
+    float getBlobState(PlayerSide player) const;
 
-		const PhysicWorld& getWorld() const{ return *mPhysicWorld; };
+    const PhysicWorld& getWorld() const
+    {
+        return *mPhysicWorld;
+    };
 
-		// Timing
-		const std::string& getTimeString() const;
-		void setMatchTimeMs(int milliseconds);
+    // Timing
+    const std::string& getTimeString() const;
+    void setMatchTimeMs(int milliseconds);
 
-		bool getBallDown() const;
-		bool getBallActive() const;
-		bool canStartRound(PlayerSide servingPlayer) const;
+    bool getBallDown() const;
+    bool getBallActive() const;
+    bool canStartRound(PlayerSide servingPlayer) const;
 
-		void pause();
-		void unpause();
+    void pause();
+    void unpause();
 
-		bool isPaused() const{ return mPaused; }
+    bool isPaused() const
+    {
+        return mPaused;
+    }
 
-		// This functions returns true if the player launched
-		// and is jumping at the moment
-		bool getBlobJump(PlayerSide player) const;
+    // This functions returns true if the player launched
+    // and is jumping at the moment
+    bool getBlobJump(PlayerSide player) const;
 
-		/// Set a new state using a saved DuelMatchState
-		void setState(const DuelMatchState& state);
-		/// trigger an external event
-		void trigger( const MatchEvent& event );
+    /// Set a new state using a saved DuelMatchState
+    void setState(const DuelMatchState& state);
+    /// trigger an external event
+    void trigger(const MatchEvent& event);
 
-		/// gets the current state
-		DuelMatchState getState() const;
+    /// gets the current state
+    DuelMatchState getState() const;
 
-		//Input stuff for recording and playing replays
-		std::shared_ptr<InputSource> getInputSource(PlayerSide player) const;
+    // Input stuff for recording and playing replays
+    std::shared_ptr<InputSource> getInputSource(PlayerSide player) const;
 
-		PlayerIdentity getPlayer(PlayerSide player) const;
-		PlayerIdentity& getPlayer(PlayerSide player);
+    PlayerIdentity getPlayer(PlayerSide player) const;
+    PlayerIdentity& getPlayer(PlayerSide player);
 
-		void setServingPlayer(PlayerSide side);
+    void setServingPlayer(PlayerSide side);
 
-		const std::vector<MatchEvent>& getEvents() const { return mLastEvents; }
-		// this function will move all events into mLastEvents, so they will be returned by get events.
-		// use this if no match step is performed, but external events have to be processed.
-		void updateEvents();
+    const std::vector<MatchEvent>& getEvents() const
+    {
+        return mLastEvents;
+    }
+    // this function will move all events into mLastEvents, so they will be returned by get events.
+    // use this if no match step is performed, but external events have to be processed.
+    void updateEvents();
 
-	private:
+  private:
+    std::unique_ptr<PhysicWorld> mPhysicWorld;
 
-		std::unique_ptr<PhysicWorld> mPhysicWorld;
+    std::shared_ptr<InputSource> mInputSources[MAX_PLAYERS];
+    PlayerInput mTransformedInput[MAX_PLAYERS];
 
-		std::shared_ptr<InputSource> mInputSources[MAX_PLAYERS];
-		PlayerInput mTransformedInput[MAX_PLAYERS];
+    PlayerIdentity mPlayers[MAX_PLAYERS];
 
-		PlayerIdentity mPlayers[MAX_PLAYERS];
+    GameLogicPtr mLogic;
 
-		GameLogicPtr mLogic;
+    float mCourtWidth = 800.f;
+    bool mPaused;
 
-		float mCourtWidth = 800.f;
-		bool mPaused;
+    // accumulation of physic events since last event processing
+    std::vector<MatchEvent> mEvents;
+    std::vector<MatchEvent> mLastEvents; // events that were generated in the last processed frame
 
-		// accumulation of physic events since last event processing
-		std::vector<MatchEvent> mEvents;
-		std::vector<MatchEvent> mLastEvents;	// events that were generated in the last processed frame
-
-		bool mRemote;
+    bool mRemote;
 };

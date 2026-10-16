@@ -22,10 +22,10 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 #include <string>
 
-#include "Color.h"
-#include "ReplayDefs.h"
-#include "PlayerInput.h"
 #include "BlobbyDebug.h"
+#include "Color.h"
+#include "PlayerInput.h"
+#include "ReplayDefs.h"
 
 class DuelMatch;
 class IReplayLoader;
@@ -38,67 +38,66 @@ class IReplayLoader;
 ///			(a network connection on server).
 class ReplayPlayer : public ObjectCounter<ReplayPlayer>
 {
-	public:
-		ReplayPlayer();
-		~ReplayPlayer();
+  public:
+    ReplayPlayer();
+    ~ReplayPlayer();
 
-		void load(const std::string& filename);
-		std::string getRules() const;
+    void load(const std::string& filename);
+    std::string getRules() const;
 
-		// -----------------------------------------------------------------------------------------
-		// 							Replay Attributes
-		// -----------------------------------------------------------------------------------------
+    // -----------------------------------------------------------------------------------------
+    // 							Replay Attributes
+    // -----------------------------------------------------------------------------------------
 
-		std::string getPlayerName(const PlayerSide side) const;
-		Color getBlobColor(const PlayerSide side) const;
-		int getGameSpeed() const;
-		float getCourtWidth() const;
+    std::string getPlayerName(const PlayerSide side) const;
+    Color getBlobColor(const PlayerSide side) const;
+    int getGameSpeed() const;
+    float getCourtWidth() const;
 
-		// -----------------------------------------------------------------------------------------
-		// 							Status information
-		// -----------------------------------------------------------------------------------------
+    // -----------------------------------------------------------------------------------------
+    // 							Status information
+    // -----------------------------------------------------------------------------------------
 
-		/// \brief Replaying finished
-		/// \details This reports whether the record is played to the end, so the
-		/// blobbys don't have to stand around bored after an incomplete
-		/// input record.
-		bool endOfFile() const;
+    /// \brief Replaying finished
+    /// \details This reports whether the record is played to the end, so the
+    /// blobbys don't have to stand around bored after an incomplete
+    /// input record.
+    bool endOfFile() const;
 
-		/// \brief Replay Progress in percent
-		/// \details returns (an estimate for) the replay progress in percent. Depending on
-		///			replay file version, this is either exact or a guess of the system (when we
-		///				don't know how long the replay is).
-		float getPlayProgress() const;
+    /// \brief Replay Progress in percent
+    /// \details returns (an estimate for) the replay progress in percent. Depending on
+    ///			replay file version, this is either exact or a guess of the system (when we
+    ///				don't know how long the replay is).
+    float getPlayProgress() const;
 
-		/// \brief current replay position
-		/// \details returns the current position in replay in steps.
-		int getReplayPosition() const;
+    /// \brief current replay position
+    /// \details returns the current position in replay in steps.
+    int getReplayPosition() const;
 
-		/// \brief length of replay
-		/// \details returns the replay length in steps.
-		int getReplayLength() const;
+    /// \brief length of replay
+    /// \details returns the replay length in steps.
+    int getReplayLength() const;
 
-		// -----------------------------------------------------------------------------------------
-		// 							replaying interface
-		// -----------------------------------------------------------------------------------------
+    // -----------------------------------------------------------------------------------------
+    // 							replaying interface
+    // -----------------------------------------------------------------------------------------
 
-		/// \brief advances the game one step
-		bool play(DuelMatch* virtual_match);
+    /// \brief advances the game one step
+    bool play(DuelMatch* virtual_match);
 
-		/// \brief Jumps to a position in replay.
-		/// \details Goes to a certain position in replay. Simulates at most 100 steps per call
-		///			to prevent visual lags, so it is possible that this function has to be called
-		///			several times to reach the target.
-		/// \param rep_position target position in number of physic steps.
-		/// \return True, if desired position could be reached.
-		bool gotoPlayingPosition(int rep_position, DuelMatch* virtual_match);
+    /// \brief Jumps to a position in replay.
+    /// \details Goes to a certain position in replay. Simulates at most 100 steps per call
+    ///			to prevent visual lags, so it is possible that this function has to be called
+    ///			several times to reach the target.
+    /// \param rep_position target position in number of physic steps.
+    /// \return True, if desired position could be reached.
+    bool gotoPlayingPosition(int rep_position, DuelMatch* virtual_match);
 
-	private:
+  private:
+    float mCourtWidth = 800.f;
+    int mPosition;
+    int mLength;
+    std::unique_ptr<IReplayLoader> loader;
 
-		float mCourtWidth = 800.f;
-		int mPosition;
-		int mLength;
-		std::unique_ptr<IReplayLoader> loader;
-
-		std::string mPlayerNames[MAX_PLAYERS];
+    std::string mPlayerNames[MAX_PLAYERS];
 };

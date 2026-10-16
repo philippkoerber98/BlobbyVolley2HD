@@ -28,33 +28,32 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 #include <memory>
 
-#include "Color.h"
-#include "ReplaySavePoint.h"
-#include "PlayerInput.h"
 #include "BlobbyDebug.h"
+#include "Color.h"
 #include "GenericIOFwd.h"
+#include "PlayerInput.h"
+#include "ReplaySavePoint.h"
 
 namespace RakNet
 {
-	class BitStream;
+class BitStream;
 }
 
 class FileWrite;
 
 /*! \class VersionMismatchException
-	\brief thrown when replays of incompatible version are loaded.
+    \brief thrown when replays of incompatible version are loaded.
 */
 struct VersionMismatchException : public std::exception, public ObjectCounter<VersionMismatchException>
 {
-	VersionMismatchException(const std::string& filename, uint8_t major, uint8_t minor);
-	~VersionMismatchException() noexcept override;
+    VersionMismatchException(const std::string& filename, uint8_t major, uint8_t minor);
+    ~VersionMismatchException() noexcept override;
 
-	const char* what() const noexcept override;
+    const char* what() const noexcept override;
 
-	std::string error;
-	uint8_t major;
-	uint8_t minor;
-
+    std::string error;
+    uint8_t major;
+    uint8_t minor;
 };
 
 /// \brief recording game
@@ -62,36 +61,36 @@ struct VersionMismatchException : public std::exception, public ObjectCounter<Ve
 ///			which might be ineffective for huge replays (1h ~ 270kb)
 class ReplayRecorder : public ObjectCounter<ReplayRecorder>
 {
-	public:
-		ReplayRecorder();
-		~ReplayRecorder();
+  public:
+    ReplayRecorder();
+    ~ReplayRecorder();
 
-		void save(FileWrite& target) const;
+    void save(FileWrite& target) const;
 
-		void send(GenericOut& stream) const;
-		void receive(GenericIn& stream);
+    void send(GenericOut& stream) const;
+    void receive(GenericIn& stream);
 
-		// recording functions
-		void record(const DuelMatchState& input);
+    // recording functions
+    void record(const DuelMatchState& input);
 
-		// saves the final score
-		void finalize(unsigned int left, unsigned int right);
+    // saves the final score
+    void finalize(unsigned int left, unsigned int right);
 
-		// game setup setting
-		void setPlayerNames(const std::string& left, const std::string& right);
-		void setPlayerColors(Color left, Color right);
-		void setGameSpeed(int fps);
-		void setCourtWidth(float width);
-		void setGameRules( const std::string& rules );
+    // game setup setting
+    void setPlayerNames(const std::string& left, const std::string& right);
+    void setPlayerColors(Color left, Color right);
+    void setGameSpeed(int fps);
+    void setCourtWidth(float width);
+    void setGameRules(const std::string& rules);
 
-	private:
-		std::vector<uint8_t> mSaveData;
-		std::vector<ReplaySavePoint> mSavePoints;
+  private:
+    std::vector<uint8_t> mSaveData;
+    std::vector<ReplaySavePoint> mSavePoints;
 
-		// general replay attributes
-		std::string mPlayerNames[MAX_PLAYERS];
-		Color mPlayerColors[MAX_PLAYERS];
-		unsigned int mEndScore[MAX_PLAYERS];
-		unsigned int mGameSpeed;
-		std::string mGameRules;
+    // general replay attributes
+    std::string mPlayerNames[MAX_PLAYERS];
+    Color mPlayerColors[MAX_PLAYERS];
+    unsigned int mEndScore[MAX_PLAYERS];
+    unsigned int mGameSpeed;
+    std::string mGameRules;
 };

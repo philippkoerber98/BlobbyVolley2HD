@@ -22,15 +22,15 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #include "LocalGameState.h"
 
 /* includes */
-#include "DuelMatch.h"
 #include "BlobbyApp.h"
-#include "InputManager.h"
-#include "InputDevice.h"
+#include "DuelMatch.h"
 #include "IMGUI.h"
-#include "replays/ReplayRecorder.h"
+#include "IUserConfigReader.h"
+#include "InputDevice.h"
+#include "InputManager.h"
 #include "SoundManager.h"
 #include "SpeedController.h"
-#include "IUserConfigReader.h"
+#include "replays/ReplayRecorder.h"
 
 #include "LocalInputSource.h"
 #include "ScriptedInputSource.h"
@@ -38,136 +38,148 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 /* implementation */
 LocalGameState::~LocalGameState() = default;
 
-LocalGameState::LocalGameState()
-	: mWinner(false), mRecorder(new ReplayRecorder())
+LocalGameState::LocalGameState() : mWinner(false), mRecorder(new ReplayRecorder()) {}
+
+std::shared_ptr<InputSource> LocalGameState::createInputSource(IUserConfigReader& config, PlayerSide side,
+                                                               const DuelMatch* match)
 {
-
-}
-
-std::shared_ptr<InputSource> LocalGameState::createInputSource( IUserConfigReader& config, PlayerSide side, const DuelMatch* match ) {
-	std::string prefix = side == LEFT_PLAYER ? "left" : "right";
-	try
-	{
-		// these operations may throw, i.e., when the script is not found (should not happen)
-		//  or has errors
-		if (config.getBool(prefix + "_player_human"))
-		{
-			return std::make_shared<LocalInputSource>(getInputMgr().beginGame(side));
-		}
-		else
-		{
-			return std::make_shared<ScriptedInputSource>("scripts/" + config.getString(prefix + "_script_name"),
-														 side, config.getInteger(prefix + "_script_strength"), match);
-		}
-	} catch (std::exception& e)
-	{
-		/// \todo REWORK ERROR REPORTING
-		std::cerr << e.what() << std::endl;
-		return std::make_shared<InputSource>();
-	}
+    std::string prefix = side == LEFT_PLAYER ? "left" : "right";
+    try
+    {
+        // these operations may throw, i.e., when the script is not found (should not happen)
+        //  or has errors
+        if (config.getBool(prefix + "_player_human"))
+        {
+            return std::make_shared<LocalInputSource>(getInputMgr().beginGame(side));
+        }
+        else
+        {
+            return std::make_shared<ScriptedInputSource>(
+                "scripts/" + config.getString(prefix + "_script_name"), side,
+                config.getInteger(prefix + "_script_strength"), match);
+        }
+    }
+    catch (std::exception& e)
+    {
+        /// \todo REWORK ERROR REPORTING
+        std::cerr << e.what() << std::endl;
+        return std::make_shared<InputSource>();
+    }
 }
 
 void LocalGameState::init()
 {
-	std::shared_ptr<IUserConfigReader> config = IUserConfigReader::createUserConfigReader("config.xml");
-	PlayerIdentity leftPlayer = config->loadPlayerIdentity(LEFT_PLAYER, false);
-	PlayerIdentity rightPlayer = config->loadPlayerIdentity(RIGHT_PLAYER, false);
+    std::shared_ptr<IUserConfigReader> config = IUserConfigReader::createUserConfigReader("config.xml");
+    PlayerIdentity leftPlayer = config->loadPlayerIdentity(LEFT_PLAYER, false);
+    PlayerIdentity rightPlayer = config->loadPlayerIdentity(RIGHT_PLAYER, false);
 
-	// create default replay name
-	setDefaultReplayName(leftPlayer.getName(), rightPlayer.getName());
+    // create default replay name
+    setDefaultReplayName(leftPlayer.getName(), rightPlayer.getName());
 
-	// set speed
-	SpeedController::getMainInstance()->setGameSpeed( (float)config->getInteger("gamefps") );
+    // set speed
+    SpeedController::getMainInstance()->setGameSpeed((float)config->getInteger("gamefps"));
 
-	playSound(SoundManager::WHISTLE, ROUND_START_SOUND_VOLUME);
+    playSound(SoundManager::WHISTLE, ROUND_START_SOUND_VOLUME);
 
-	mMatch.reset(new DuelMatch(false,config->getString("rules"),0,config->getBool("court_widescreen",false)?3200.f/3.f:800.f));
-	std::shared_ptr<InputSource> leftInput = createInputSource(*config, LEFT_PLAYER, mMatch.get());
-	std::shared_ptr<InputSource> rightInput = createInputSource(*config, RIGHT_PLAYER, mMatch.get());
-	mMatch->setPlayers(leftPlayer, rightPlayer);
-	mMatch->setInputSources(leftInput, rightInput);
+    mMatch.reset(new DuelMatch(false, config->getString("rules"), 0,
+                               config->getBool("court_widescreen", false) ? 3200.f / 3.f : 800.f));
+    std::shared_ptr<InputSource> leftInput = createInputSource(*config, LEFT_PLAYER, mMatch.get());
+    std::shared_ptr<InputSource> rightInput = createInputSource(*config, RIGHT_PLAYER, mMatch.get());
+    mMatch->setPlayers(leftPlayer, rightPlayer);
+    mMatch->setInputSources(leftInput, rightInput);
 
-	mRecorder->setPlayerNames(leftPlayer.getName(), rightPlayer.getName());
-	mRecorder->setPlayerColors( leftPlayer.getStaticColor(), rightPlayer.getStaticColor() );
-	mRecorder->setGameSpeed((float)config->getInteger("gamefps"));
-	mRecorder->setGameRules( config->getString("rules") );
-	mRecorder->setCourtWidth(mMatch->getCourtWidth());
-	getApp().getRenderManager().setCourtWidth(mMatch->getCourtWidth());
-	presentGame();
-	presentGameUI();
+    mRecorder->setPlayerNames(leftPlayer.getName(), rightPlayer.getName());
+    mRecorder->setPlayerColors(leftPlayer.getStaticColor(), rightPlayer.getStaticColor());
+    mRecorder->setGameSpeed((float)config->getInteger("gamefps"));
+    mRecorder->setGameRules(config->getString("rules"));
+    mRecorder->setCourtWidth(mMatch->getCourtWidth());
+    getApp().getRenderManager().setCourtWidth(mMatch->getCourtWidth());
+    presentGame();
+    presentGameUI();
 }
-
-
 
 void LocalGameState::step_impl()
 {
-	IMGUI& imgui = getIMGUI();
+    IMGUI& imgui = getIMGUI();
 
-	if(!mErrorMessage.empty())
-	{
-		displayErrorMessageBox();
-	}
-	else if (mSaveReplay)
-	{
-		if ( displaySaveReplayPrompt() )
-		{
-			saveReplay( *mRecorder );
-		}
-	}
-	else if (mMatch->isPaused())
-	{
-		displayQueryPrompt(200,
-			TextManager::LBL_CONF_QUIT,
-			std::make_tuple(TextManager::LBL_YES, [&](){ switchState(new MainMenuState); }),
-			std::make_tuple(TextManager::LBL_NO,  [&](){ mMatch->unpause(); }),
-			std::make_tuple(TextManager::RP_SAVE, [&](){ mSaveReplay = true; imgui.resetSelection(); }));
+    if (!mErrorMessage.empty())
+    {
+        displayErrorMessageBox();
+    }
+    else if (mSaveReplay)
+    {
+        if (displaySaveReplayPrompt())
+        {
+            saveReplay(*mRecorder);
+        }
+    }
+    else if (mMatch->isPaused())
+    {
+        displayQueryPrompt(200, TextManager::LBL_CONF_QUIT,
+                           std::make_tuple(TextManager::LBL_YES, [&]() { switchState(new MainMenuState); }),
+                           std::make_tuple(TextManager::LBL_NO, [&]() { mMatch->unpause(); }),
+                           std::make_tuple(TextManager::RP_SAVE,
+                                           [&]()
+                                           {
+                                               mSaveReplay = true;
+                                               imgui.resetSelection();
+                                           }));
 
-		imgui.doCursor();
-	}
-	else if (mWinner)
-	{
-		displayWinningPlayerScreen( mMatch->winningPlayer() );
-        const int action=displayVictoryActions(true);
-        if(action==1)switchState(new LocalGameState());
-        if(action==2)switchState(new MainMenuState());
-        if(action==3){mSaveReplay=true;imgui.resetSelection();}
+        imgui.doCursor();
+    }
+    else if (mWinner)
+    {
+        displayWinningPlayerScreen(mMatch->winningPlayer());
+        const int action = displayVictoryActions(true);
+        if (action == 1)
+        {
+            switchState(new LocalGameState());
+        }
+        if (action == 2)
+        {
+            switchState(new MainMenuState());
+        }
+        if (action == 3)
+        {
+            mSaveReplay = true;
+            imgui.resetSelection();
+        }
+    }
+    else if (is_exiting())
+    {
+        if (mSaveReplay)
+        {
+            mSaveReplay = false;
+            getIMGUI().resetSelection();
+        }
+        else if (mMatch->isPaused())
+        {
+            switchState(new MainMenuState);
+        }
+        else
+        {
+            mMatch->pause();
+        }
+    }
+    else
+    {
+        mRecorder->record(mMatch->getState());
+        mMatch->step();
 
-	}
-	else if (is_exiting())
-	{
-		if (mSaveReplay)
-		{
-			mSaveReplay = false;
-			getIMGUI().resetSelection();
-		}
-		else if (mMatch->isPaused())
-		{
-			switchState(new MainMenuState);
-		}
-		else
-		{
-			mMatch->pause();
-		}
-	}
-	else
-	{
-		mRecorder->record(mMatch->getState());
-		mMatch->step();
+        if (mMatch->winningPlayer() != NO_PLAYER)
+        {
+            mWinner = true;
+            mRecorder->record(mMatch->getState());
+            mRecorder->finalize(mMatch->getScore(LEFT_PLAYER), mMatch->getScore(RIGHT_PLAYER));
+        }
 
-		if (mMatch->winningPlayer() != NO_PLAYER)
-		{
-			mWinner = true;
-			mRecorder->record(mMatch->getState());
-			mRecorder->finalize( mMatch->getScore(LEFT_PLAYER), mMatch->getScore(RIGHT_PLAYER) );
-		}
+        presentGame();
+    }
 
-		presentGame();
-	}
-
-	presentGameUI();
+    presentGameUI();
 }
 
 const char* LocalGameState::getStateName() const
 {
-	return "LocalGameState";
+    return "LocalGameState";
 }

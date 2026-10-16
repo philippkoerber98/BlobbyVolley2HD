@@ -21,26 +21,25 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #pragma once
 
 /** \file GenericIOFwd.h
-	
-	Including this header will declare the types 
-	\p GenericIn an \p GenericOut so they can be passed
-	as parameters etc. If you want to use these classes
-	for actual io, you have to include GenericIO.h.
-	Including this header spares the compiler from having to
-	parse all the template stuff, though.
+
+    Including this header will declare the types
+    \p GenericIn an \p GenericOut so they can be passed
+    as parameters etc. If you want to use these classes
+    for actual io, you have to include GenericIO.h.
+    Including this header spares the compiler from having to
+    parse all the template stuff, though.
 */
 
-/// base class template for all GenericIO operations. do not use this class directly. 
+/// base class template for all GenericIO operations. do not use this class directly.
 /// use the provided typedefs GenericIn and GenericOut instead.
-template<class tag>
-class GenericIO;
+template <class tag> class GenericIO;
 
 // implementation detail, if you just use GenericIO, ignore this namespace ;)
 namespace detail
 {
-	struct READER_TAG;
-	struct WRITER_TAG;
-}
+struct READER_TAG;
+struct WRITER_TAG;
+} // namespace detail
 
 // the two typedefs
 /// Base class for generic input operations.
@@ -48,12 +47,10 @@ typedef GenericIO<detail::READER_TAG> GenericIn;
 /// Base class for generic output operations.
 typedef GenericIO<detail::WRITER_TAG> GenericOut;
 
-
 /// to make GenericIO support a user defined type, you have to implement
 ///	the two functions in this template for that type.
-template<class T>
-struct UserSerializer
+template <class T> struct UserSerializer
 {
-	static void serialize( GenericOut& out, const T& value);
-	static void serialize( GenericIn& in, T& value);
+    static void serialize(GenericOut& out, const T& value);
+    static void serialize(GenericIn& in, T& value);
 };

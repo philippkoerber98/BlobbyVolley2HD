@@ -35,410 +35,431 @@ const float BLOBBY_ANIMATION_SPEED = 0.5;
 inline short set_fpu_single_precision();
 void reset_fpu_flags(short flags);
 
-PhysicWorld::PhysicWorld(float width,float speed)
-: mWidth(width), mSpeed(speed), mBallPosition(Vector2(width/4, STANDARD_BALL_HEIGHT))
-, mBallRotation(0)
-, mBallAngularVelocity(STANDARD_BALL_ANGULAR_VELOCITY)
-, mCallback( [](const MatchEvent& me) {} )
+PhysicWorld::PhysicWorld(float width, float speed)
+    : mWidth(width), mSpeed(speed), mBallPosition(Vector2(width / 4, STANDARD_BALL_HEIGHT)), mBallRotation(0),
+      mBallAngularVelocity(STANDARD_BALL_ANGULAR_VELOCITY), mCallback([](const MatchEvent& me) {})
 {
-	mCurrentBlobbyAnimationSpeed[LEFT_PLAYER] = 0.0;
-	mCurrentBlobbyAnimationSpeed[RIGHT_PLAYER] = 0.0;
+    mCurrentBlobbyAnimationSpeed[LEFT_PLAYER] = 0.0;
+    mCurrentBlobbyAnimationSpeed[RIGHT_PLAYER] = 0.0;
 
-	mBlobState[LEFT_PLAYER] = 0.0;
-	mBlobState[RIGHT_PLAYER] = 0.0;
+    mBlobState[LEFT_PLAYER] = 0.0;
+    mBlobState[RIGHT_PLAYER] = 0.0;
 
-	mBlobPosition[LEFT_PLAYER] = Vector2(width/4, GROUND_PLANE_HEIGHT);
-	mBlobPosition[RIGHT_PLAYER] = Vector2(width*3/4, GROUND_PLANE_HEIGHT);
+    mBlobPosition[LEFT_PLAYER] = Vector2(width / 4, GROUND_PLANE_HEIGHT);
+    mBlobPosition[RIGHT_PLAYER] = Vector2(width * 3 / 4, GROUND_PLANE_HEIGHT);
 }
 
 PhysicWorld::~PhysicWorld() = default;
 
 bool PhysicWorld::blobHitGround(PlayerSide player) const
 {
-	if (player == LEFT_PLAYER || player == RIGHT_PLAYER)
-	{
-		return (getBlobPosition(player).y >= GROUND_PLANE_HEIGHT);
-	}
-	else
-		return false;
+    if (player == LEFT_PLAYER || player == RIGHT_PLAYER)
+    {
+        return (getBlobPosition(player).y >= GROUND_PLANE_HEIGHT);
+    }
+    else
+    {
+        return false;
+    }
 }
 
 bool PhysicWorld::playerTopBallCollision(int player) const
 {
-	Vector2 blobby_position{mBlobPosition[player].x, mBlobPosition[player].y - BLOBBY_UPPER_SPHERE};
-	return circleCircleCollision( mBallPosition, BALL_RADIUS,
-								  blobby_position, BLOBBY_UPPER_RADIUS );
+    Vector2 blobby_position{mBlobPosition[player].x, mBlobPosition[player].y - BLOBBY_UPPER_SPHERE};
+    return circleCircleCollision(mBallPosition, BALL_RADIUS, blobby_position, BLOBBY_UPPER_RADIUS);
 }
 
 inline bool PhysicWorld::playerBottomBallCollision(int player) const
 {
-	Vector2 blobby_position{mBlobPosition[player].x, mBlobPosition[player].y + BLOBBY_LOWER_SPHERE};
-	return circleCircleCollision( mBallPosition, BALL_RADIUS,
-								  blobby_position, BLOBBY_LOWER_RADIUS );
+    Vector2 blobby_position{mBlobPosition[player].x, mBlobPosition[player].y + BLOBBY_LOWER_SPHERE};
+    return circleCircleCollision(mBallPosition, BALL_RADIUS, blobby_position, BLOBBY_LOWER_RADIUS);
 }
 
-inline bool PhysicWorld::circleCircleCollision(const Vector2& pos1, float rad1, const Vector2& pos2, float rad2)
+inline bool PhysicWorld::circleCircleCollision(const Vector2& pos1, float rad1, const Vector2& pos2,
+                                               float rad2)
 {
-	Vector2 distance = pos1 - pos2;
-	float sum_radii = rad1 + rad2;
-	return distance.lengthSQ() < sum_radii * sum_radii;
+    Vector2 distance = pos1 - pos2;
+    float sum_radii = rad1 + rad2;
+    return distance.lengthSQ() < sum_radii * sum_radii;
 }
 
 float PhysicWorld::getBallRotation() const
 {
-	return mBallRotation;
+    return mBallRotation;
 }
 
 Vector2 PhysicWorld::getBlobPosition(PlayerSide player) const
 {
-	return mBlobPosition[player];
+    return mBlobPosition[player];
 }
 
 Vector2 PhysicWorld::getBlobVelocity(PlayerSide player) const
 {
-	return mBlobVelocity[player];
+    return mBlobVelocity[player];
 }
 
 float PhysicWorld::getBlobState(PlayerSide player) const
 {
-	return mBlobState[player];
+    return mBlobState[player];
 }
 
 // Blobby animation methods
 void PhysicWorld::blobbyAnimationStep(PlayerSide player)
 {
-	if (mBlobState[player] < 0.0)
-	{
-		mCurrentBlobbyAnimationSpeed[player] = 0;
-		mBlobState[player] = 0;
-	}
+    if (mBlobState[player] < 0.0)
+    {
+        mCurrentBlobbyAnimationSpeed[player] = 0;
+        mBlobState[player] = 0;
+    }
 
-	if (mBlobState[player] >= 4.5)
-	{
-		mCurrentBlobbyAnimationSpeed[player] = -BLOBBY_ANIMATION_SPEED;
-	}
+    if (mBlobState[player] >= 4.5)
+    {
+        mCurrentBlobbyAnimationSpeed[player] = -BLOBBY_ANIMATION_SPEED;
+    }
 
-	mBlobState[player] += mCurrentBlobbyAnimationSpeed[player];
+    mBlobState[player] += mCurrentBlobbyAnimationSpeed[player];
 
-	if (mBlobState[player] >= 5)
-	{
-		mBlobState[player] = 4.99;
-	}
+    if (mBlobState[player] >= 5)
+    {
+        mBlobState[player] = 4.99;
+    }
 }
 
 void PhysicWorld::blobbyStartAnimation(PlayerSide player)
 {
-	if (mCurrentBlobbyAnimationSpeed[player] == 0)
-		mCurrentBlobbyAnimationSpeed[player] = BLOBBY_ANIMATION_SPEED;
+    if (mCurrentBlobbyAnimationSpeed[player] == 0)
+    {
+        mCurrentBlobbyAnimationSpeed[player] = BLOBBY_ANIMATION_SPEED;
+    }
 }
 
 void PhysicWorld::handleBlob(PlayerSide player, PlayerInput input)
 {
-	float currentBlobbyGravity = GRAVITATION;
+    float currentBlobbyGravity = GRAVITATION;
 
-	if (input.up)
-	{
-		if (blobHitGround(player))
-		{
-			mBlobVelocity[player].y = BLOBBY_JUMP_ACCELERATION;
-			blobbyStartAnimation( player );
-		}
+    if (input.up)
+    {
+        if (blobHitGround(player))
+        {
+            mBlobVelocity[player].y = BLOBBY_JUMP_ACCELERATION;
+            blobbyStartAnimation(player);
+        }
 
-		currentBlobbyGravity -= BLOBBY_JUMP_BUFFER;
-	}
+        currentBlobbyGravity -= BLOBBY_JUMP_BUFFER;
+    }
 
-	if ((input.left || input.right) && blobHitGround(player))
-	{
-		blobbyStartAnimation(player);
-	}
+    if ((input.left || input.right) && blobHitGround(player))
+    {
+        blobbyStartAnimation(player);
+    }
 
-	mBlobVelocity[player].x = (input.right ? mSpeed : 0) -
-								(input.left ? mSpeed : 0);
+    mBlobVelocity[player].x = (input.right ? mSpeed : 0) - (input.left ? mSpeed : 0);
 
-	// compute blobby fall movement (dt = 1)
-	// ds = a/2 * dt^2 + v * dt
-	mBlobPosition[player] += Vector2(0, 0.5f * currentBlobbyGravity ) + mBlobVelocity[player];
-	// dv = a * dt
-	mBlobVelocity[player].y += currentBlobbyGravity;
+    // compute blobby fall movement (dt = 1)
+    // ds = a/2 * dt^2 + v * dt
+    mBlobPosition[player] += Vector2(0, 0.5f * currentBlobbyGravity) + mBlobVelocity[player];
+    // dv = a * dt
+    mBlobVelocity[player].y += currentBlobbyGravity;
 
-	// Hitting the ground
-	if (mBlobPosition[player].y > GROUND_PLANE_HEIGHT)
-	{
-		if(mBlobVelocity[player].y > 3.5)
-		{
-			blobbyStartAnimation(player);
-		}
+    // Hitting the ground
+    if (mBlobPosition[player].y > GROUND_PLANE_HEIGHT)
+    {
+        if (mBlobVelocity[player].y > 3.5)
+        {
+            blobbyStartAnimation(player);
+        }
 
-		mBlobPosition[player].y = GROUND_PLANE_HEIGHT;
-		mBlobVelocity[player].y = 0.0;
-	}
+        mBlobPosition[player].y = GROUND_PLANE_HEIGHT;
+        mBlobVelocity[player].y = 0.0;
+    }
 
-	blobbyAnimationStep(player);
+    blobbyAnimationStep(player);
 }
 
 bool PhysicWorld::handleBlobbyBallCollision(PlayerSide player)
 {
-	Vector2 collision_center = mBlobPosition[player];
-	// check for impact
-	if(playerBottomBallCollision(player))
-	{
-		collision_center.y += BLOBBY_LOWER_SPHERE;
-	}
-	else if(playerTopBallCollision(player))
-	{
-		collision_center.y -= BLOBBY_UPPER_SPHERE;
-	} else
-	{	// no impact!
-		return false;
-	}
+    Vector2 collision_center = mBlobPosition[player];
+    // check for impact
+    if (playerBottomBallCollision(player))
+    {
+        collision_center.y += BLOBBY_LOWER_SPHERE;
+    }
+    else if (playerTopBallCollision(player))
+    {
+        collision_center.y -= BLOBBY_UPPER_SPHERE;
+    }
+    else
+    { // no impact!
+        return false;
+    }
 
-	// ok, if we get here, there actually was a collision
+    // ok, if we get here, there actually was a collision
 
-	// calculate hit intensity
-	float intensity = std::min(1.f, Vector2(mBallVelocity, mBlobVelocity[player]).length() / 25.f);
+    // calculate hit intensity
+    float intensity = std::min(1.f, Vector2(mBallVelocity, mBlobVelocity[player]).length() / 25.f);
 
-	// set ball velocity
-	mBallVelocity = -Vector2( mBallPosition, collision_center);
-	mBallVelocity = mBallVelocity.normalise();
-	mBallVelocity = mBallVelocity.scale(BALL_COLLISION_VELOCITY);
-	mBallPosition += mBallVelocity;
+    // set ball velocity
+    mBallVelocity = -Vector2(mBallPosition, collision_center);
+    mBallVelocity = mBallVelocity.normalise();
+    mBallVelocity = mBallVelocity.scale(BALL_COLLISION_VELOCITY);
+    mBallPosition += mBallVelocity;
 
-	mCallback( MatchEvent{MatchEvent::BALL_HIT_BLOB, player, intensity} );
+    mCallback(MatchEvent{MatchEvent::BALL_HIT_BLOB, player, intensity});
 
-	return true;
+    return true;
 }
 
-void PhysicWorld::step(const PlayerInput& leftInput, const PlayerInput& rightInput,
-					bool isBallValid, bool isGameRunning)
+void PhysicWorld::step(const PlayerInput& leftInput, const PlayerInput& rightInput, bool isBallValid,
+                       bool isGameRunning)
 {
-	// Deterministic IEEE 754 floating point computations
-	short fpf = set_fpu_single_precision();
+    // Deterministic IEEE 754 floating point computations
+    short fpf = set_fpu_single_precision();
 
-	// Compute independent actions
-	handleBlob(LEFT_PLAYER, leftInput);
-	handleBlob(RIGHT_PLAYER, rightInput);
+    // Compute independent actions
+    handleBlob(LEFT_PLAYER, leftInput);
+    handleBlob(RIGHT_PLAYER, rightInput);
 
-	// Move ball when game is running
-	if (isGameRunning)
-	{
-		// dt = 1 !!
-		// move ball ds = a/2 * dt^2 + v * dt
-		mBallPosition += Vector2(0, 0.5f * BALL_GRAVITATION) + mBallVelocity;
-		// dv = a*dt
-		mBallVelocity.y += BALL_GRAVITATION;
-	}
+    // Move ball when game is running
+    if (isGameRunning)
+    {
+        // dt = 1 !!
+        // move ball ds = a/2 * dt^2 + v * dt
+        mBallPosition += Vector2(0, 0.5f * BALL_GRAVITATION) + mBallVelocity;
+        // dv = a*dt
+        mBallVelocity.y += BALL_GRAVITATION;
+    }
 
-	// Collision detection
-	if(isBallValid)
-	{
-		handleBlobbyBallCollision(LEFT_PLAYER);
-		handleBlobbyBallCollision(RIGHT_PLAYER);
-	}
+    // Collision detection
+    if (isBallValid)
+    {
+        handleBlobbyBallCollision(LEFT_PLAYER);
+        handleBlobbyBallCollision(RIGHT_PLAYER);
+    }
 
-	handleBallWorldCollisions();
+    handleBallWorldCollisions();
 
-	// Collision between blobby and the net
-	if (mBlobPosition[LEFT_PLAYER].x+BLOBBY_LOWER_RADIUS>(mWidth/2)-NET_RADIUS) // Collision with the net
-		mBlobPosition[LEFT_PLAYER].x=(mWidth/2)-NET_RADIUS-BLOBBY_LOWER_RADIUS;
+    // Collision between blobby and the net
+    if (mBlobPosition[LEFT_PLAYER].x + BLOBBY_LOWER_RADIUS >
+        (mWidth / 2) - NET_RADIUS) // Collision with the net
+    {
+        mBlobPosition[LEFT_PLAYER].x = (mWidth / 2) - NET_RADIUS - BLOBBY_LOWER_RADIUS;
+    }
 
-	if (mBlobPosition[RIGHT_PLAYER].x-BLOBBY_LOWER_RADIUS<(mWidth/2)+NET_RADIUS)
-		mBlobPosition[RIGHT_PLAYER].x=(mWidth/2)+NET_RADIUS+BLOBBY_LOWER_RADIUS;
+    if (mBlobPosition[RIGHT_PLAYER].x - BLOBBY_LOWER_RADIUS < (mWidth / 2) + NET_RADIUS)
+    {
+        mBlobPosition[RIGHT_PLAYER].x = (mWidth / 2) + NET_RADIUS + BLOBBY_LOWER_RADIUS;
+    }
 
-	// Collision between blobby and the border
-	if (mBlobPosition[LEFT_PLAYER].x < LEFT_PLANE)
-		mBlobPosition[LEFT_PLAYER].x=LEFT_PLANE;
+    // Collision between blobby and the border
+    if (mBlobPosition[LEFT_PLAYER].x < LEFT_PLANE)
+    {
+        mBlobPosition[LEFT_PLAYER].x = LEFT_PLANE;
+    }
 
-	if (mBlobPosition[RIGHT_PLAYER].x > mWidth)
-		mBlobPosition[RIGHT_PLAYER].x=mWidth;
+    if (mBlobPosition[RIGHT_PLAYER].x > mWidth)
+    {
+        mBlobPosition[RIGHT_PLAYER].x = mWidth;
+    }
 
-	// Velocity Integration
-	if( !isGameRunning )
-		mBallRotation -= mBallAngularVelocity;
-	else if (mBallVelocity.x > 0.0)
-		mBallRotation += mBallAngularVelocity * (mBallVelocity.length() / 6);
-	else
-		mBallRotation -= mBallAngularVelocity * (mBallVelocity.length()/ 6);
+    // Velocity Integration
+    if (!isGameRunning)
+    {
+        mBallRotation -= mBallAngularVelocity;
+    }
+    else if (mBallVelocity.x > 0.0)
+    {
+        mBallRotation += mBallAngularVelocity * (mBallVelocity.length() / 6);
+    }
+    else
+    {
+        mBallRotation -= mBallAngularVelocity * (mBallVelocity.length() / 6);
+    }
 
-	// Overflow-Protection
-	if (mBallRotation <= 0)
-		mBallRotation = 6.25f + mBallRotation;
-	else if (mBallRotation >= 6.25f)
-		mBallRotation = mBallRotation - 6.25f;
+    // Overflow-Protection
+    if (mBallRotation <= 0)
+    {
+        mBallRotation = 6.25f + mBallRotation;
+    }
+    else if (mBallRotation >= 6.25f)
+    {
+        mBallRotation = mBallRotation - 6.25f;
+    }
 
-
-	reset_fpu_flags(fpf);
+    reset_fpu_flags(fpf);
 }
 
 void PhysicWorld::handleBallWorldCollisions()
 {
-	// Ball to ground Collision
-	if (mBallPosition.y + BALL_RADIUS > GROUND_PLANE_HEIGHT_MAX)
-	{
-		mBallVelocity = mBallVelocity.reflectY();
-		mBallVelocity = mBallVelocity.scale(0.95);
-		mBallPosition.y = GROUND_PLANE_HEIGHT_MAX - BALL_RADIUS;
-		mCallback( MatchEvent{MatchEvent::BALL_HIT_GROUND, mBallPosition.x > (mWidth/2) ? RIGHT_PLAYER : LEFT_PLAYER, 0} );
-	}
+    // Ball to ground Collision
+    if (mBallPosition.y + BALL_RADIUS > GROUND_PLANE_HEIGHT_MAX)
+    {
+        mBallVelocity = mBallVelocity.reflectY();
+        mBallVelocity = mBallVelocity.scale(0.95);
+        mBallPosition.y = GROUND_PLANE_HEIGHT_MAX - BALL_RADIUS;
+        mCallback(MatchEvent{MatchEvent::BALL_HIT_GROUND,
+                             mBallPosition.x > (mWidth / 2) ? RIGHT_PLAYER : LEFT_PLAYER, 0});
+    }
 
-	// Border Collision
-	if (mBallPosition.x - BALL_RADIUS <= LEFT_PLANE && mBallVelocity.x < 0.0)
-	{
-		mBallVelocity = mBallVelocity.reflectX();
-		// set the ball's position
-		mBallPosition.x = LEFT_PLANE + BALL_RADIUS;
-		mCallback( MatchEvent{MatchEvent::BALL_HIT_WALL, LEFT_PLAYER, 0} );
-	}
-	else if (mBallPosition.x + BALL_RADIUS >= mWidth && mBallVelocity.x > 0.0)
-	{
-		mBallVelocity = mBallVelocity.reflectX();
-		// set the ball's position
-		mBallPosition.x = mWidth - BALL_RADIUS;
-		mCallback( MatchEvent{MatchEvent::BALL_HIT_WALL, RIGHT_PLAYER, 0} );
-	}
-	else if (mBallPosition.y > NET_SPHERE_POSITION &&
-			fabs(mBallPosition.x - (mWidth/2)) < BALL_RADIUS + NET_RADIUS)
-	{
-		bool right = mBallPosition.x - (mWidth/2) > 0;
-		mBallVelocity = mBallVelocity.reflectX();
-		// set the ball's position so that it touches the net
-		mBallPosition.x = (mWidth/2) + (right ? (BALL_RADIUS + NET_RADIUS) : (-BALL_RADIUS - NET_RADIUS));
+    // Border Collision
+    if (mBallPosition.x - BALL_RADIUS <= LEFT_PLANE && mBallVelocity.x < 0.0)
+    {
+        mBallVelocity = mBallVelocity.reflectX();
+        // set the ball's position
+        mBallPosition.x = LEFT_PLANE + BALL_RADIUS;
+        mCallback(MatchEvent{MatchEvent::BALL_HIT_WALL, LEFT_PLAYER, 0});
+    }
+    else if (mBallPosition.x + BALL_RADIUS >= mWidth && mBallVelocity.x > 0.0)
+    {
+        mBallVelocity = mBallVelocity.reflectX();
+        // set the ball's position
+        mBallPosition.x = mWidth - BALL_RADIUS;
+        mCallback(MatchEvent{MatchEvent::BALL_HIT_WALL, RIGHT_PLAYER, 0});
+    }
+    else if (mBallPosition.y > NET_SPHERE_POSITION &&
+             fabs(mBallPosition.x - (mWidth / 2)) < BALL_RADIUS + NET_RADIUS)
+    {
+        bool right = mBallPosition.x - (mWidth / 2) > 0;
+        mBallVelocity = mBallVelocity.reflectX();
+        // set the ball's position so that it touches the net
+        mBallPosition.x = (mWidth / 2) + (right ? (BALL_RADIUS + NET_RADIUS) : (-BALL_RADIUS - NET_RADIUS));
 
-		mCallback( MatchEvent{MatchEvent::BALL_HIT_NET, right ? RIGHT_PLAYER : LEFT_PLAYER, 0} );
-	}
-	else
-	{
-		// Net Collisions
+        mCallback(MatchEvent{MatchEvent::BALL_HIT_NET, right ? RIGHT_PLAYER : LEFT_PLAYER, 0});
+    }
+    else
+    {
+        // Net Collisions
 
-		float ballNetDistance = Vector2(mBallPosition, Vector2((mWidth/2), NET_SPHERE_POSITION)).length();
+        float ballNetDistance = Vector2(mBallPosition, Vector2((mWidth / 2), NET_SPHERE_POSITION)).length();
 
-		if (ballNetDistance < NET_RADIUS + BALL_RADIUS)
-		{
-			// calculate
-			Vector2 normal = Vector2(mBallPosition,	Vector2((mWidth/2), NET_SPHERE_POSITION)).normalise();
+        if (ballNetDistance < NET_RADIUS + BALL_RADIUS)
+        {
+            // calculate
+            Vector2 normal = Vector2(mBallPosition, Vector2((mWidth / 2), NET_SPHERE_POSITION)).normalise();
 
-			// normal component of kinetic energy
-			float perp_ekin = normal.dotProduct(mBallVelocity);
-			perp_ekin *= perp_ekin;
-			// parallel component of kinetic energy
-			float para_ekin = mBallVelocity.lengthSQ() - perp_ekin;
+            // normal component of kinetic energy
+            float perp_ekin = normal.dotProduct(mBallVelocity);
+            perp_ekin *= perp_ekin;
+            // parallel component of kinetic energy
+            float para_ekin = mBallVelocity.lengthSQ() - perp_ekin;
 
-			// the normal component is damped stronger than the parallel component
-			// the values are ~ 0.85 and ca. 0.95, because speed is sqrt(ekin)
-			perp_ekin *= 0.7;
-			para_ekin *= 0.9;
+            // the normal component is damped stronger than the parallel component
+            // the values are ~ 0.85 and ca. 0.95, because speed is sqrt(ekin)
+            perp_ekin *= 0.7;
+            para_ekin *= 0.9;
 
-			float new_speed = sqrt( perp_ekin + para_ekin );
+            float new_speed = sqrt(perp_ekin + para_ekin);
 
-			mBallVelocity = Vector2(mBallVelocity.reflect(normal).normalise().scale(new_speed));
+            mBallVelocity = Vector2(mBallVelocity.reflect(normal).normalise().scale(new_speed));
 
-			// pushes the ball out of the net
-			mBallPosition = (Vector2((mWidth/2), NET_SPHERE_POSITION) - normal * (NET_RADIUS + BALL_RADIUS));
+            // pushes the ball out of the net
+            mBallPosition =
+                (Vector2((mWidth / 2), NET_SPHERE_POSITION) - normal * (NET_RADIUS + BALL_RADIUS));
 
-			mCallback( MatchEvent{MatchEvent::BALL_HIT_NET_TOP, NO_PLAYER, 0} );
-		}
-		// mBallVelocity = mBallVelocity.reflect( Vector2( mBallPosition, Vector2 ((mWidth/2), temp) ).normalise()).scale(0.75);
-	}
+            mCallback(MatchEvent{MatchEvent::BALL_HIT_NET_TOP, NO_PLAYER, 0});
+        }
+        // mBallVelocity = mBallVelocity.reflect( Vector2( mBallPosition, Vector2 ((mWidth/2), temp)
+        // ).normalise()).scale(0.75);
+    }
 }
 Vector2 PhysicWorld::getBallPosition() const
 {
-	return mBallPosition;
+    return mBallPosition;
 }
 
-void PhysicWorld::setBallPosition( Vector2 newPosition )
+void PhysicWorld::setBallPosition(Vector2 newPosition)
 {
-	/// \todo should we check here if this new position is valid, i.e. not inside walls etc.
-	mBallPosition = newPosition;
+    /// \todo should we check here if this new position is valid, i.e. not inside walls etc.
+    mBallPosition = newPosition;
 }
-
 
 Vector2 PhysicWorld::getBallVelocity() const
 {
-	return mBallVelocity;
+    return mBallVelocity;
 }
 
-void PhysicWorld::setBallVelocity( Vector2 newVelocity )
+void PhysicWorld::setBallVelocity(Vector2 newVelocity)
 {
-	mBallVelocity = newVelocity;
+    mBallVelocity = newVelocity;
 }
 
-void PhysicWorld::setBallAngularVelocity( float angular_velocity )
+void PhysicWorld::setBallAngularVelocity(float angular_velocity)
 {
-	mBallAngularVelocity = angular_velocity;
+    mBallAngularVelocity = angular_velocity;
 }
 
 PhysicState PhysicWorld::getState() const
 {
-	PhysicState st;
-	st.blobPosition[LEFT_PLAYER] = mBlobPosition[LEFT_PLAYER];
-	st.blobPosition[RIGHT_PLAYER] = mBlobPosition[RIGHT_PLAYER];
-	st.blobVelocity[LEFT_PLAYER] = mBlobVelocity[LEFT_PLAYER];
-	st.blobVelocity[RIGHT_PLAYER] = mBlobVelocity[RIGHT_PLAYER];
-	st.blobState[LEFT_PLAYER] = mBlobState[LEFT_PLAYER];
-	st.blobState[RIGHT_PLAYER] = mBlobState[RIGHT_PLAYER];
+    PhysicState st;
+    st.blobPosition[LEFT_PLAYER] = mBlobPosition[LEFT_PLAYER];
+    st.blobPosition[RIGHT_PLAYER] = mBlobPosition[RIGHT_PLAYER];
+    st.blobVelocity[LEFT_PLAYER] = mBlobVelocity[LEFT_PLAYER];
+    st.blobVelocity[RIGHT_PLAYER] = mBlobVelocity[RIGHT_PLAYER];
+    st.blobState[LEFT_PLAYER] = mBlobState[LEFT_PLAYER];
+    st.blobState[RIGHT_PLAYER] = mBlobState[RIGHT_PLAYER];
 
-	st.ballPosition = mBallPosition;
-	st.ballVelocity = mBallVelocity;
-	st.ballRotation = mBallRotation;
-	st.ballAngularVelocity = mBallAngularVelocity;
-	return st;
+    st.ballPosition = mBallPosition;
+    st.ballVelocity = mBallVelocity;
+    st.ballRotation = mBallRotation;
+    st.ballAngularVelocity = mBallAngularVelocity;
+    return st;
 }
 
 void PhysicWorld::setState(const PhysicState& ps)
 {
-	mBlobPosition[LEFT_PLAYER] 	= ps.blobPosition[LEFT_PLAYER];
-	mBlobPosition[RIGHT_PLAYER] = ps.blobPosition[RIGHT_PLAYER];
-	mBlobVelocity[LEFT_PLAYER] 	= ps.blobVelocity[LEFT_PLAYER];
-	mBlobVelocity[RIGHT_PLAYER] = ps.blobVelocity[RIGHT_PLAYER];
-	mBlobState[LEFT_PLAYER] 	= ps.blobState[LEFT_PLAYER];
-	mBlobState[RIGHT_PLAYER] 	= ps.blobState[RIGHT_PLAYER];
+    mBlobPosition[LEFT_PLAYER] = ps.blobPosition[LEFT_PLAYER];
+    mBlobPosition[RIGHT_PLAYER] = ps.blobPosition[RIGHT_PLAYER];
+    mBlobVelocity[LEFT_PLAYER] = ps.blobVelocity[LEFT_PLAYER];
+    mBlobVelocity[RIGHT_PLAYER] = ps.blobVelocity[RIGHT_PLAYER];
+    mBlobState[LEFT_PLAYER] = ps.blobState[LEFT_PLAYER];
+    mBlobState[RIGHT_PLAYER] = ps.blobState[RIGHT_PLAYER];
 
-	mBallPosition = ps.ballPosition;
-	mBallVelocity = ps.ballVelocity;
-	mBallRotation = ps.ballRotation;
-	mBallAngularVelocity = ps.ballAngularVelocity;
+    mBallPosition = ps.ballPosition;
+    mBallVelocity = ps.ballVelocity;
+    mBallRotation = ps.ballRotation;
+    mBallAngularVelocity = ps.ballAngularVelocity;
 }
 
-void PhysicWorld::setEventCallback( event_callback_fn cb )
+void PhysicWorld::setEventCallback(event_callback_fn cb)
 {
-	mCallback = std::move(cb);
+    mCallback = std::move(cb);
 }
 
 inline short set_fpu_single_precision()
 {
-	short fl = 0;
-	#if defined(i386) || defined(__x86_64) // We need to set a precision for diverse x86 hardware
-	#if defined(__GNUC__)
-		volatile short cw;
-		asm volatile ("fstcw %0" : "=m"(cw));
-		fl = cw;
-		cw = cw & 0xfcff;
-		asm volatile ("fldcw %0" :: "m"(cw));
-	#elif defined(_MSC_VER)
-		short cw;
-		asm fstcw cw;
-		fl = cw;
-		cw = cw & 0xfcff;
-		asm fldcw cw;
-	#endif
-	#elif (defined _MSC_VER)
-	#pragma message ( "FPU precision may not conform to IEEE 754" )
-	#else
-	#warning FPU precision may not conform to IEEE 754
-	#endif
-	return fl;
+    short fl = 0;
+#if defined(i386) || defined(__x86_64) // We need to set a precision for diverse x86 hardware
+#if defined(__GNUC__)
+    volatile short cw;
+    asm volatile("fstcw %0" : "=m"(cw));
+    fl = cw;
+    cw = cw & 0xfcff;
+    asm volatile("fldcw %0" ::"m"(cw));
+#elif defined(_MSC_VER)
+    short cw;
+    asm fstcw cw;
+    fl = cw;
+    cw = cw & 0xfcff;
+    asm fldcw cw;
+#endif
+#elif (defined _MSC_VER)
+#pragma message("FPU precision may not conform to IEEE 754")
+#else
+#warning FPU precision may not conform to IEEE 754
+#endif
+    return fl;
 }
 
 void reset_fpu_flags(short flags)
 {
-	#if defined(i386) || defined(__x86_64) // We need to set a precision for diverse x86 hardware
-	#if defined(__GNUC__)
-		asm volatile ("fldcw %0" :: "m"(flags));
-	#elif defined(_MSC_VER)
-		asm fldcw flags;
-	#endif
-	#elif (defined _MSC_VER)
-	#pragma message ( "FPU precision may not conform to IEEE 754" )
-	#else
-	#warning FPU precision may not conform to IEEE 754
-	#endif
+#if defined(i386) || defined(__x86_64) // We need to set a precision for diverse x86 hardware
+#if defined(__GNUC__)
+    asm volatile("fldcw %0" ::"m"(flags));
+#elif defined(_MSC_VER)
+    asm fldcw flags;
+#endif
+#elif (defined _MSC_VER)
+#pragma message("FPU precision may not conform to IEEE 754")
+#else
+#warning FPU precision may not conform to IEEE 754
+#endif
 }

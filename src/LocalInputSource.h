@@ -20,20 +20,19 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 #pragma once
 
-#include "InputSource.h"
 #include "Global.h"
+#include "InputSource.h"
 
 class InputDevice;
 
 class LocalInputSource : public InputSource
 {
-	public:
-		explicit LocalInputSource(std::unique_ptr<InputDevice> device);
-		~LocalInputSource() override;
+  public:
+    explicit LocalInputSource(std::unique_ptr<InputDevice> device);
+    ~LocalInputSource() override;
 
-		PlayerInputAbs getNextInput() override;
+    PlayerInputAbs getNextInput() override;
 
-	private:
-		std::unique_ptr<InputDevice> mInputDevice;
+  private:
+    std::unique_ptr<InputDevice> mInputDevice;
 };
-

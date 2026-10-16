@@ -22,19 +22,16 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #include "LocalInputSource.h"
 
 /* include  */
-#include "InputManager.h"
 #include "InputDevice.h"
+#include "InputManager.h"
 
 /* implementation */
 
-LocalInputSource::LocalInputSource(std::unique_ptr<InputDevice> device) : mInputDevice(std::move(device))
-{
-}
+LocalInputSource::LocalInputSource(std::unique_ptr<InputDevice> device) : mInputDevice(std::move(device)) {}
 
 LocalInputSource::~LocalInputSource() = default;
 
-
 PlayerInputAbs LocalInputSource::getNextInput()
 {
-	return mInputDevice->transferInput( );
+    return mInputDevice->transferInput();
 }

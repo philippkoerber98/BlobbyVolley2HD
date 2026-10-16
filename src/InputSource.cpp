@@ -28,35 +28,32 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 /* InputSource */
 
-InputSource::InputSource() : mInput()
-{
-}
+InputSource::InputSource() : mInput() {}
 
 InputSource::~InputSource() = default;
 
 PlayerInputAbs InputSource::updateInput()
 {
-	mInput = getNextInput();
-	return mInput;
+    mInput = getNextInput();
+    return mInput;
 }
 
 void InputSource::setInput(PlayerInput ip)
 {
-	mInput = PlayerInputAbs(ip.left, ip.right, ip.up);
+    mInput = PlayerInputAbs(ip.left, ip.right, ip.up);
 }
 
 void InputSource::setInput(PlayerInputAbs ip)
 {
-	mInput = ip;
+    mInput = ip;
 }
-
 
 PlayerInputAbs InputSource::getRealInput() const
 {
-	return mInput;
+    return mInput;
 }
 
 PlayerInputAbs InputSource::getNextInput()
 {
-	return mInput;
+    return mInput;
 }

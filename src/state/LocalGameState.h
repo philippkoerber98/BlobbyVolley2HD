@@ -27,24 +27,24 @@ class InputSource;
 class IUserConfigReader;
 
 /*! \class LocalGameState
-	\brief state for singleplayer game
+    \brief state for singleplayer game
 */
 class LocalGameState : public GameState
 {
-	public:
-		LocalGameState();
-		~LocalGameState() override;
+  public:
+    LocalGameState();
+    ~LocalGameState() override;
 
-		// implementation of the State Interface
-		void step_impl() override;
-		void init() override;
-		const char* getStateName() const override;
+    // implementation of the State Interface
+    void step_impl() override;
+    void init() override;
+    const char* getStateName() const override;
 
-	private:
-		std::shared_ptr<InputSource> createInputSource( IUserConfigReader& config, PlayerSide side, const DuelMatch* match );
+  private:
+    std::shared_ptr<InputSource> createInputSource(IUserConfigReader& config, PlayerSide side,
+                                                   const DuelMatch* match);
 
-		bool mWinner;
+    bool mWinner;
 
-		std::unique_ptr<ReplayRecorder> mRecorder;
+    std::unique_ptr<ReplayRecorder> mRecorder;
 };
-
