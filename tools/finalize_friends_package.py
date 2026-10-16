@@ -18,7 +18,7 @@ def preferred_asset_names(kind):
     extensions = {".png", ".webp", ".ttf", ".txt"} if kind == "gfx" else {".png", ".webp"}
     names = {
         path.relative_to(ROOT / "data").as_posix()
-        for path in (ROOT / "data" / kind / "hd").iterdir()
+        for path in (ROOT / "data" / kind).iterdir()
         if path.is_file() and path.suffix.lower() in extensions
     }
     return {name for name in names if not (name.endswith(".png") and name[:-4] + ".webp" in names)}
@@ -34,6 +34,21 @@ def validate_artwork(package, kind):
             if archive.read(name) != (ROOT / "data" / name).read_bytes():
                 raise ValueError(f"Packaged asset differs from source: {name}")
     print(f"{kind}: {len(names)} HD-only files verified")
+
+
+def validate_levels(package):
+    expected = {p.relative_to(ROOT / "data/Levels") for p in (ROOT / "data/Levels").rglob("*") if p.is_file()}
+    actual = {p.relative_to(package / "Levels") for p in (package / "Levels").rglob("*") if p.is_file()}
+    if expected != actual:
+        raise ValueError("Packaged Levels differ from source folders")
+    for path in expected:
+        if (package / "Levels" / path).read_bytes() != (ROOT / "data/Levels" / path).read_bytes():
+            raise ValueError(f"Packaged level differs: {path}")
+    if not (package / "Custom Levels/README.txt").is_file():
+        raise ValueError("Missing Custom Levels instructions")
+    if (package / "data/backgrounds.zip").exists():
+        raise ValueError("Obsolete duplicated backgrounds archive")
+    print(f"Level folders verified: {len(expected)} files")
 
 
 def validate_translations(package):
@@ -88,8 +103,8 @@ def main():
     if not (package / "blobby.exe").is_file():
         raise FileNotFoundError(f"Not a staged game package: {package}")
 
-    for kind in ("gfx", "backgrounds"):
-        validate_artwork(package, kind)
+    validate_artwork(package, "gfx")
+    validate_levels(package)
     validate_translations(package)
     copy_license_notices(package)
     write_manifest(package)

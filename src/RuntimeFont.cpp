@@ -15,7 +15,7 @@ struct Font
     stbtt_fontinfo info{};
     Font()
     {
-        FileRead f("gfx/hd/Nunito.ttf");
+        FileRead f("gfx/Nunito.ttf");
         auto raw = f.readRawBytes(f.length());
         bytes.assign(raw.begin(), raw.end());
         if (bytes.empty() || !stbtt_InitFont(&info, bytes.data(), 0))

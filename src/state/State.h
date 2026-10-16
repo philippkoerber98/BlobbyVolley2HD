@@ -54,6 +54,10 @@ class State
     // this is called just before the step function is invoked for the first time.
     virtual void init() {}
     virtual const char* getStateName() const = 0;
+    virtual bool isMatchState() const
+    {
+        return false;
+    }
 
   protected:
     /// generic state constructor. automatically resets imgui selection

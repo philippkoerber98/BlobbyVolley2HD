@@ -1,52 +1,20 @@
 #pragma once
-#include "FileSystem.h"
-#include "HDImagePaths.h"
-#include <algorithm>
-#include <set>
-#include <stdexcept>
+#include "LevelCatalog.h"
 #include <string>
 #include <vector>
 
 inline std::vector<std::string> availableBackgroundNames()
 {
-    auto& fs = FileSystem::getSingleton();
-    std::set<std::string> names;
-    for (const char* extension : {".webp", ".png"})
+    std::vector<std::string> names;
+    for (const auto& level : availableLevels())
     {
-        for (const auto& name : fs.enumerateFiles("backgrounds/hd", extension, true))
-        {
-            names.insert(name.substr(0, name.find_last_of('.')) + ".bmp");
-        }
+        names.push_back(level.id);
     }
-    return {names.begin(), names.end()};
+    return names;
 }
 
-// Saved preferences can outlive renamed or removed background files.
+// Preserve saved built-in IDs while discovering complete level folders.
 inline std::string resolveBackgroundName(const std::string& requested)
 {
-    auto& fs = FileSystem::getSingleton();
-    auto available = [&](const std::string& name)
-    {
-        if (name.empty())
-        {
-            return false;
-        }
-        return fs.exists(
-            preferredHDImage("backgrounds/hd/" + name.substr(0, name.find_last_of('.')) + ".png"));
-    };
-    if (available(requested))
-    {
-        return requested.substr(0, requested.find_last_of('.')) + ".bmp";
-    }
-    if (available("strand1.bmp"))
-    {
-        return "strand1.bmp";
-    }
-    auto names = availableBackgroundNames();
-    std::sort(names.begin(), names.end());
-    if (names.empty())
-    {
-        throw std::runtime_error("No HD backgrounds found in backgrounds/hd");
-    }
-    return names.front();
+    return resolveLevel(requested).id;
 }

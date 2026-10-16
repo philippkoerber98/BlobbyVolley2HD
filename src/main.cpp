@@ -52,7 +52,7 @@ void setupPHYSFS()
     // relevant platforms.
 
     // List all the subdirectories / zip archives that we want to read from
-    std::vector<std::string> subdirs = {"gfx", "sounds", "scripts", "backgrounds", "rules"};
+    std::vector<std::string> subdirs = {"gfx", "sounds", "scripts", "rules"};
 
     // set write dir
     std::string writeDir = fs.getPrefDir();
@@ -74,6 +74,14 @@ void setupPHYSFS()
     }
 
     // set read dir (files next to application)
+    {
+        const auto installedData = fs.join(fs.getBaseDir(), "data");
+        fs.addToSearchPath(installedData);
+        for (const auto& archive : subdirs)
+        {
+            fs.addToSearchPath(fs.join(installedData, archive + ".zip"));
+        }
+    }
     {
         std::string dataDir = fs.getBaseDir();
         fs.addToSearchPath(dataDir);

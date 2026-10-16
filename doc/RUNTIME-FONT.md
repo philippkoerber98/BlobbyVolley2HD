@@ -1,7 +1,7 @@
 # Runtime Nunito font
 
 All interface text, including the legacy network/lobby/replay/credits screens,
-is drawn from `gfx/hd/Nunito.ttf` (Nunito SemiBold, OFL).
+is drawn from `gfx/Nunito.ttf` (Nunito SemiBold, OFL).
 There are no runtime `fontNN.bmp`, `fontNN.png`, or menu glyph PNG dependencies.
 The logo/title remains artwork.
 
@@ -16,8 +16,8 @@ and password masking are supported. Unsupported characters use a question mark.
 
 New menu layouts use proportional advances from the TTF. Legacy widgets retain
 their fixed character cells to preserve their alignment and interaction areas.
-The checked-in `data/gfx/hd/Nunito.ttf` is the ready-to-use SemiBold font.
-Its OFL notice is `data/gfx/hd/menu-font-license.txt`. No font generation
+The checked-in `data/gfx/Nunito.ttf` is the ready-to-use SemiBold font.
+Its OFL notice is `data/gfx/menu-font-license.txt`. No font generation
 script or fontTools installation is needed for builds or gameplay.
 
 Tests rasterize accented glyphs at 24/64/144 physical pixels and check bounds

@@ -1,6 +1,6 @@
 # HD asset layout
 
-Runtime artwork lives under `data/gfx/hd` and `data/backgrounds/hd`.
+Runtime artwork lives under `data/gfx` and `data/Levels/<level>/background.webp`.
 WebP carries the image and alpha channel. PNG remains a supported input format
 when there is no corresponding WebP. The build includes only the preferred file.
 
@@ -10,7 +10,7 @@ provides the continuously rotating ball panels; lighting is applied separately.
 center pole is composited above moving ground shadows.
 
 Historical `.bmp` strings in code and preferences are logical names. They map
-to the HD image and dimensions from `gfx/hd/metrics.txt`; they do not refer to
+to the HD image and dimensions from `gfx/metrics.txt`; they do not refer to
 packaged legacy artwork. Backgrounds retain native resolution, and the renderer
 crops the sides for the classic 4:3 view instead of squeezing them.
 

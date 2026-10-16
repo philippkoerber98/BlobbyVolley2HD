@@ -23,7 +23,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #include "AssetTransforms.h"
 #include "DisplayViewport.h"
 #include "FileSystem.h"
-#include "HDImagePaths.h"
+#include "ImagePaths.h"
 #include "NetRodOcclusion.h"
 
 /* includes */
@@ -167,9 +167,9 @@ void RenderManagerSDL::init(int xResolution, int yResolution, bool fullscreen)
     mImageMap["background"] = bgImage;
 
     // Prepare the HD ball once; only the panel texture rotates when drawing.
-    if (FileSystem::getSingleton().exists(preferredHDImage("gfx/hd/volleyball.png")))
+    if (FileSystem::getSingleton().exists(preferredImage("gfx/volleyball.png")))
     {
-        auto* source = loadSurface("gfx/hd/volleyball.png");
+        auto* source = loadSurface("gfx/volleyball.png");
         auto* panels = rotateVolleyball(source, 1, VolleyballLayer::Panels);
         auto* lighting = rotateVolleyball(source, 1, VolleyballLayer::Lighting);
         mBallPanels = SDL_CreateTextureFromSurface(mRenderer, panels);

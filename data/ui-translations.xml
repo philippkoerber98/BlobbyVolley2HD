@@ -186,4 +186,11 @@
   <string english="Volleyball court" en="Volleyball court" de="Volleyballfeld" cs="Volejbalové hřiště" es="Pista de voleibol" fr="Terrain de volley" it="Campo da pallavolo" />
   <string english="Wheat field" en="Wheat field" de="Weizenfeld" cs="Pšeničné pole" es="Campo de trigo" fr="Champ de blé" it="Campo di grano" />
   <string english="Clouds" en="Clouds" de="Wolken" cs="Oblaka" es="Nubes" fr="Nuages" it="Nuvole" />
+  <string english="Custom" en="Custom" de="Benutzerdefiniert" cs="Vlastní" es="Personalizado" fr="Personnalisé" it="Personalizzato" />
+  <string english="Level" en="Level" de="Level" cs="Úroveň" es="Nivel" fr="Niveau" it="Livello" />
+  <string english="Select a level with its background and sounds." en="Select a level with its background and sounds." de="Wähle ein Level mit Hintergrund und Sounds." cs="Vyberte úroveň s pozadím a zvuky." es="Elige un nivel con su fondo y sonidos." fr="Choisissez un niveau avec son décor et ses sons." it="Scegli un livello con sfondo e suoni." />
+  <string english="Effects volume" en="Effects volume" de="Effektlautstärke" cs="Hlasitost efektů" es="Volumen de efectos" fr="Volume des effets" it="Volume effetti" />
+  <string english="Music / background" en="Music / background" de="Musik / Hintergrund" cs="Hudba / pozadí" es="Música / ambiente" fr="Musique / ambiance" it="Musica / ambiente" />
+  <string english="Volume of impacts, whistles, chat and victory sounds." en="Volume of impacts, whistles, chat and victory sounds." de="Lautstärke von Ballkontakten, Pfiffen, Chat und Siegestönen." cs="Hlasitost úderů, pískání, chatu a vítězných zvuků." es="Volumen de golpes, silbatos, chat y sonidos de victoria." fr="Volume des frappes, sifflets, messages et sons de victoire." it="Volume di colpi, fischi, chat e suoni di vittoria." />
+  <string english="Volume of menu and level music or background noise." en="Volume of menu and level music or background noise." de="Lautstärke von Menü- und Levelmusik oder Hintergrundgeräuschen." cs="Hlasitost hudby nabídky a úrovně nebo zvuků na pozadí." es="Volumen de la música del menú y nivel o del sonido ambiental." fr="Volume de la musique des menus et niveaux ou des sons ambiants." it="Volume della musica dei menu e livelli o dei rumori di fondo." />
 </translations>

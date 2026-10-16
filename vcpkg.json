@@ -13,7 +13,11 @@
     "boost-smart-ptr",
     "boost-exception",
     "boost-crc",
-    "boost-algorithm"
+    "boost-algorithm",
+    {
+      "name": "sdl2-mixer",
+      "default-features": false
+    }
   ],
   "builtin-baseline": "3cd21e48a75f67acfef289da52893ce79144aaa1"
 }

@@ -21,6 +21,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #include "RenderManager.h"
 #include "AssetTransforms.h"
 #include "BackgroundSettings.h"
+#include "ImagePaths.h"
 #include "FileRead.h"
 #include "FileSystem.h"
 #include <SDL_image.h>
@@ -36,7 +37,7 @@ SDL_Point logicalSpriteSize(const std::string& filename)
     // Read this immutable catalog once rather than reopening it for every sprite.
     static const auto sizes = []()
     {
-        FileRead metrics("gfx/hd/metrics.txt");
+        FileRead metrics("gfx/metrics.txt");
         const auto bytes = metrics.readRawBytes(metrics.length());
         std::istringstream rows(std::string(bytes.begin(), bytes.end()));
         std::map<std::string, SDL_Point> result;
@@ -61,7 +62,7 @@ void RenderManager::drawChampion(const Vector2& center, const Color& color, floa
     }
     if (!mChampionSource)
     {
-        mChampionSource.reset(loadSurface("gfx/hd/champion.webp"));
+        mChampionSource.reset(loadSurface("gfx/champion.webp"));
     }
     const std::string texture = "__champion";
     if (!mChampionTextureReady || color != mChampionColor)
@@ -99,7 +100,7 @@ SDL_Surface* RenderManager::loadSurface(const std::string& filename)
     }
     auto readImage = [](const std::string& path) -> SDL_Surface*
     {
-        FileRead file(preferredHDImage(path));
+        FileRead file(preferredImage(path));
         int fileLength = file.length();
         auto content = file.readRawBytes(fileLength);
         auto* image = IMG_Load_RW(SDL_RWFromMem(content.data(), fileLength), 1);
@@ -110,12 +111,30 @@ SDL_Surface* RenderManager::loadSurface(const std::string& filename)
         return image;
     };
 
+    if (filename.compare(0, 12, "backgrounds/") == 0)
+    {
+        const auto level = resolveLevel(filename.substr(12));
+        try
+        {
+            return readImage(level.background);
+        }
+        catch (const std::exception&)
+        {
+            const auto fallback = resolveLevel("strand1.bmp");
+            if (fallback.id == level.id)
+            {
+                throw;
+            }
+            return readImage(fallback.background);
+        }
+    }
+
     if (filename.size() == 14 && filename.compare(0, 8, "gfx/ball") == 0)
     {
         int frame = std::atoi(filename.substr(8, 2).c_str());
-        if (FileSystem::getSingleton().exists(preferredHDImage("gfx/hd/volleyball.png")))
+        if (FileSystem::getSingleton().exists(preferredImage("gfx/volleyball.png")))
         {
-            auto* source = readImage("gfx/hd/volleyball.png");
+            auto* source = readImage("gfx/volleyball.png");
             auto* result = rotateVolleyball(source, frame);
             SDL_FreeSurface(source);
             if (result)
@@ -131,17 +150,10 @@ SDL_Surface* RenderManager::loadSurface(const std::string& filename)
         auto slash = filename.find_last_of('/');
         std::string directory = slash == std::string::npos ? "gfx/" : filename.substr(0, slash + 1);
         std::string base = slash == std::string::npos ? filename : filename.substr(slash + 1);
-        std::string path = preferredHDImage(directory + "hd/" + base.substr(0, base.size() - 4) + ".png");
+        std::string path = preferredImage(directory + base.substr(0, base.size() - 4) + ".png");
         if (FileSystem::getSingleton().exists(path))
         {
             auto* image = readImage(path);
-            // Backgrounds retain their native widescreen dimensions. Both renderers
-            // choose a centered camera crop when drawing, including after mode changes.
-            if (filename.compare(0, 12, "backgrounds/") == 0)
-            {
-                mAssetScales[filename] = 1;
-                return image;
-            }
             const auto logicalSize = logicalSpriteSize(filename);
             if (logicalSize.x <= 0 || logicalSize.y <= 0)
             {

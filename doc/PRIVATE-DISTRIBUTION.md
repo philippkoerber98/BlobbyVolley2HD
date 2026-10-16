@@ -7,9 +7,10 @@ Build Release first, then run from the project root:
 python tools/finalize_friends_package.py
 ```
 
-The scripts collect the game/server, five runtime archives, default settings,
+The scripts collect the game/server, four runtime archives and editable level folders, default settings,
 required DLLs, font/library notices, and a file hash manifest. The ZIP is written
-to `out/releases/`. Only HD graphics and the runtime TTF are packaged.
+to `out/releases/`. Only current graphics and the runtime TTF are packaged. `Custom Levels/README.txt`
+explains optional user content. The runtime includes SDL2_mixer, Vorbis and Ogg DLLs.
 
 Give friends the complete ZIP and have them extract it before starting
 `Start-Blobby.cmd`. No installer is needed. Windows target: Windows 10/11 x64.

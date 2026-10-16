@@ -429,6 +429,13 @@ bool GameState::displayErrorMessageBox()
     return false;
 }
 
+void GameState::resetCelebration()
+{
+    mCelebrating = false;
+    mDialogKey.clear();
+    getApp().getSoundManager().setScene(SoundManager::Scene::Match, true);
+}
+
 bool GameState::displayWinningPlayerScreen(PlayerSide winner)
 {
     using namespace WarmUI;
@@ -437,6 +444,7 @@ bool GameState::displayWinningPlayerScreen(PlayerSide winner)
     {
         mCelebrating = true;
         mVictoryStarted = SDL_GetTicks();
+        getApp().getSoundManager().playVictory();
     }
     shade(g, "victory");
     g.doConfetti(GEN_ID, mVictoryStarted);

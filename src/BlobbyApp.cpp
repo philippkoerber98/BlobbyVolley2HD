@@ -1,4 +1,4 @@
-#include "HDImagePaths.h"
+#include "ImagePaths.h"
 /*=============================================================================
 Blobby Volley 2
 Copyright (C) 2022 Daniel Knobe (daniel-knobe@web.de)
@@ -55,6 +55,7 @@ const char* BlobbyApp::getCurrenStateName() const
 
 void BlobbyApp::step()
 {
+    mSoundManager->update();
     // perform a state step
     mCurrentState->step_impl();
 
@@ -67,6 +68,9 @@ void BlobbyApp::step()
         // if yes, set that new state
         // use swap so the states do not get destroyed here
         mCurrentState = std::move(mStateToSwitchTo);
+        mSoundManager->setScene(mCurrentState->isMatchState() ? SoundManager::Scene::Match
+                                                              : SoundManager::Scene::Menu,
+                                mCurrentState->isMatchState());
         mIMGUI->resetSelection();
         mIMGUI->begin(); // Do not present commands belonging to the old state.
         mCurrentState->init();
@@ -114,10 +118,13 @@ BlobbyApp::BlobbyApp(std::unique_ptr<State> initState, const IUserConfigReader& 
     mCurrentState->setApp(this);
 
     mSoundManager->setVolume(config.getFloat("global_volume"));
+    mSoundManager->setEffectsVolume(config.getFloat("effects_volume", 1));
+    mSoundManager->setMusicVolume(config.getFloat("music_volume", 1));
     mSoundManager->setMute(config.getBool("mute"));
-    /// \todo play sound is misleading. what we actually want to do is load the sound
-    mSoundManager->playSound(SoundManager::IMPACT, 0.0);
-    mSoundManager->playSound(SoundManager::WHISTLE, 0.0);
+    mSoundManager->selectLevel(config.getString("background", "strand1.bmp"));
+    mSoundManager->setScene(mCurrentState->isMatchState() ? SoundManager::Scene::Match
+                                                          : SoundManager::Scene::Menu,
+                            mCurrentState->isMatchState());
 
     mIMGUI.reset(new IMGUI(mInputMgr.get()));
     mIMGUI->setTextMgr(config.getString("language"));
@@ -250,13 +257,5 @@ void BlobbyApp::setupRenderManager(const IUserConfigReader& config)
     mFrameLimit = (std::max)(0, config.getInteger("render_fps", 0));
     updateDisplaySettings(true);
 
-    std::string bg = std::string("backgrounds/") + config.getString("background");
-    const auto backgroundName = config.getString("background");
-    const auto hdBackground =
-        "backgrounds/hd/" + backgroundName.substr(0, backgroundName.find_last_of('.')) + ".png";
-    if (FileSystem::getSingleton().exists(bg) ||
-        FileSystem::getSingleton().exists(preferredHDImage(hdBackground)))
-    {
-        mRenderMgr->setBackground(bg);
-    }
+    mRenderMgr->setBackground("backgrounds/" + config.getString("background", "strand1.bmp"));
 }

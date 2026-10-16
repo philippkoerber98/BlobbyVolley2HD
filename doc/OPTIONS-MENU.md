@@ -23,7 +23,7 @@ All interface text, including the Options heading, now uses runtime Nunito TTF
 atlases. See `doc/RUNTIME-FONT.md`; no pre-rendered glyph PNGs are needed.
 The menu backdrop is generated from the selected court at runtime, with a cached
 menu-only blur and a translucent dark overlay. Gameplay keeps the sharp court.
-The font license is included in `gfx.zip` as `gfx/hd/menu-font-license.txt`.
+The font license is included in `gfx.zip` as `gfx/menu-font-license.txt`.
 
 Validation: `assets-smoke-test <installed-data> <output-directory> --hardware`
 captures all five pages in SDL and OpenGL and checks input navigation, immediate
