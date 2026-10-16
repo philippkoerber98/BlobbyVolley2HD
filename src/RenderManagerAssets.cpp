@@ -53,6 +53,35 @@ SDL_Point logicalSpriteSize(const std::string& filename)
 }
 } // namespace
 
+void RenderManager::drawChampion(const Vector2& center, const Color& color, float height)
+{
+    if (height <= 0)
+    {
+        return;
+    }
+    if (!mChampionSource)
+    {
+        mChampionSource.reset(loadSurface("gfx/hd/champion.webp"));
+    }
+    const std::string texture = "__champion";
+    if (!mChampionTextureReady || color != mChampionColor)
+    {
+        auto* tinted = colorizeChampion(mChampionSource.get(), {color.r, color.g, color.b, 255});
+        if (!tinted)
+        {
+            throw std::runtime_error(SDL_GetError());
+        }
+        releaseTexture(texture);
+        mChampionTextureReady = false;
+        uploadTexture(texture, tinted);
+        mChampionColor = color;
+        mChampionTextureReady = true;
+    }
+    const Vector2 size(height * mChampionSource->w / mChampionSource->h, height);
+    const SDL_Rect source{0, 0, mChampionSource->w, mChampionSource->h};
+    drawTextureRegion(texture, source, center - size * .5f, size, Color(255, 255, 255));
+}
+
 SDL_Surface* RenderManager::loadSurface(const std::string& filename)
 {
     const std::string menuPrefix = "menu-backgrounds/";

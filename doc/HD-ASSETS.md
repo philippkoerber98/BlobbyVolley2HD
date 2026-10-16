@@ -19,3 +19,11 @@ No bitmap glyph files are required. `win/icon-hd.ico` is the checked-in Windows
 resource icon used by `win/res.rc`; it is not regenerated during a normal build.
 
 See `RUNTIME-FONT.md`, `DISPLAY.md`, and `ARCHITECTURE.md` for implementation details.
+
+`champion.webp` is a separate native-resolution victory pose, with a soft blob
+arm gripping the trophy. Its magenta body/hand material is recolored at runtime
+using the winner's RGB color, including color cycling; neutral highlights and
+the gold/silver trophy remain unchanged. Keep this source lossless and preserve
+its alpha channel and material key when replacing it. The shared RGBA texture
+path caches the colored sprite until the selected color changes and draws it
+with linear filtering in both renderers. It does not affect gameplay sprites.

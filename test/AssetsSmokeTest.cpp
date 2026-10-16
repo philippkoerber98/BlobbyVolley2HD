@@ -119,6 +119,31 @@ int main(int argc, char** argv)
         testWidescreen(argv[2]);
         testBotModes(argv[2]);
         AssetProbe probe;
+        // Recolor both gel materials, preserve metal/highlights and alpha.
+        auto* material = SDL_CreateRGBSurfaceWithFormat(0, 5, 1, 32, SDL_PIXELFORMAT_RGBA32);
+        auto* materialPixels = static_cast<Uint8*>(material->pixels);
+        const Uint8 samples[] = {200, 40,  200, 255, 120, 20,  120, 128, 230, 180,
+                                 20,  255, 180, 180, 180, 255, 255, 0,   255, 0};
+        std::copy_n(samples, sizeof(samples), materialPixels);
+        auto* tinted = colorizeChampion(material, {0, 255, 255, 255});
+        if (!tinted)
+        {
+            throw std::runtime_error("Cannot recolor champion materials");
+        }
+        const Uint8 expected[] = {40, 200, 200, 255, 20,  120, 120, 128, 230, 180,
+                                  20, 255, 180, 180, 180, 255, 255, 0,   255, 0};
+        if (!std::equal(expected, expected + sizeof(expected), static_cast<Uint8*>(tinted->pixels)))
+        {
+            throw std::runtime_error("Champion body/hand tint changed trophy colors or alpha");
+        }
+        SDL_FreeSurface(material);
+        SDL_FreeSurface(tinted);
+        auto* champion = probe.loadSurface("gfx/hd/champion.webp");
+        if (champion->w < 1024 || champion->h < 1024 || !champion->format->Amask)
+        {
+            throw std::runtime_error("Champion must retain native HD resolution and transparency");
+        }
+        SDL_FreeSurface(champion);
         // Regression: remove detached debris while preserving a soft alpha edge.
         auto* sample = SDL_CreateRGBSurfaceWithFormat(0, 32, 32, 32, SDL_PIXELFORMAT_RGBA32);
         SDL_FillRect(sample, nullptr, 0);

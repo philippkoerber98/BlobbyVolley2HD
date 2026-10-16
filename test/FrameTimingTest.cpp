@@ -724,6 +724,11 @@ class DialogGame : public GameState
 {
   public:
     int mode = 0, action = 0;
+    void setWinnerAppearance(Color color, bool cycling)
+    {
+        mMatch->setPlayers(PlayerIdentity("Spieler 1", color, cycling, LEFT_PLAYER),
+                           mMatch->getPlayer(RIGHT_PLAYER));
+    }
     explicit DialogGame(const std::string& rules) : GameState(new DuelMatch(false, rules, 15)) {}
     void init() override
     {
@@ -896,6 +901,15 @@ void testGameMenus(const std::string& outputDirectory)
             auto victoryLater =
                 captureApp(app, .5f, outputDirectory + "/new-" + backend + "-victory-confetti.png");
             require(victoryFirst != victoryLater, "Confetti does not animate between presentation frames");
+            fixture->setWinnerAppearance(Color(30, 150, 240), false);
+            stepApp(app);
+            captureApp(app, .5f, outputDirectory + "/new-" + backend + "-victory-blue.png");
+            fixture->setWinnerAppearance(Color(0, 0, 0), false);
+            stepApp(app);
+            captureApp(app, .5f, outputDirectory + "/new-" + backend + "-victory-black.png");
+            fixture->setWinnerAppearance(Color(0, 0, 0), true);
+            stepApp(app);
+            captureApp(app, .5f, outputDirectory + "/new-" + backend + "-victory-cycling.png");
             SDL_Event e{};
             e.type = SDL_CONTROLLERBUTTONDOWN;
             e.cbutton.button = SDL_CONTROLLER_BUTTON_A;
@@ -958,7 +972,7 @@ void testSceneBlurAspect(const std::string& outputDirectory)
                 std::memcpy(&value, pixel, image->format->BytesPerPixel);
                 Uint8 r, g, b;
                 SDL_GetRGB(value, image->format, &r, &g, &b);
-                preserved &= sample == 0 ? r > 220 && g < 30 && b < 30
+                preserved &= sample == 0   ? r > 220 && g < 30 && b < 30
                              : sample == 1 ? g > 220 && r < 30 && b < 30
                                            : b > 220 && r < 30 && g < 30;
             }

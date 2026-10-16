@@ -71,12 +71,12 @@ void RenderManager::drawRuntimeText(const std::string& text, Vector2 position, f
         if (mRuntimeFonts.size() >= 16)
         {
             auto oldest = mRuntimeFonts.begin();
-            releaseFontAtlas("__nunito_" + std::to_string(oldest->first));
+            releaseTexture("__nunito_" + std::to_string(oldest->first));
             mRuntimeFonts.erase(oldest);
         }
         RuntimeFontAtlas atlas;
         auto* surface = createNunitoAtlas(pixels, atlas);
-        uploadFontAtlas(name, surface);
+        uploadTexture(name, surface);
         found = mRuntimeFonts.emplace(pixels, std::move(atlas)).first;
     }
     const float scale = height / pixels;
@@ -98,8 +98,8 @@ void RenderManager::drawRuntimeText(const std::string& text, Vector2 position, f
         float offset = fixedAdvance ? (fixedAdvance - g.advance * scale) / 2 : 0;
         if (g.source.w && g.source.h)
         {
-            drawFontGlyph(name, g.source, position + Vector2(offset + g.x * scale, g.y * scale),
-                          Vector2(g.source.w * scale, g.source.h * scale), color);
+            drawTextureRegion(name, g.source, position + Vector2(offset + g.x * scale, g.y * scale),
+                              Vector2(g.source.w * scale, g.source.h * scale), color);
         }
         position.x += fixedAdvance ? fixedAdvance : g.advance * scale;
     }

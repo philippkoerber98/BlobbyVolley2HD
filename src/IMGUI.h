@@ -96,6 +96,7 @@ class IMGUI : public ObjectCounter<IMGUI>
     void doChatbox(int id, const Vector2& pos1, const Vector2& pos2, const std::vector<std::string>& entries,
                    unsigned& selected, const std::vector<bool>& local, unsigned int flags = TF_NORMAL);
     bool doBlob(int id, const Vector2& position, const Color& col, float scale = 1);
+    void doChampion(int id, const Vector2& center, const Color& color, float height);
 
     bool usingCursor() const;
     void doInactiveMode(bool inactive)

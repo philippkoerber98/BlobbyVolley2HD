@@ -46,6 +46,7 @@ enum ObjectType
     SELECTBOX,
     ACTIVESELECTBOX,
     BLOB,
+    CHAMPION,
     CHAT,
     ACTIVECHAT
 };
@@ -167,6 +168,9 @@ void IMGUI::end(RenderManager& renderer)
         {
         case CONFETTI:
             renderer.drawConfetti(obj.flags);
+            break;
+        case CHAMPION:
+            renderer.drawChampion(obj.pos1, obj.col, obj.alpha);
             break;
         case SCENE_BLUR:
             renderer.drawSceneBlur(obj.text);
@@ -1247,6 +1251,17 @@ void IMGUI::doChatbox(int id, const Vector2& pos1, const Vector2& pos2,
     obj.selected = selected - first;
 
     mLastWidget = id;
+    mQueue->push(obj);
+}
+
+void IMGUI::doChampion(int id, const Vector2& center, const Color& color, float height)
+{
+    QueueObject obj{};
+    obj.type = CHAMPION;
+    obj.id = id;
+    obj.pos1 = center;
+    obj.col = color;
+    obj.alpha = height;
     mQueue->push(obj);
 }
 

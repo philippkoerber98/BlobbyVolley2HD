@@ -418,7 +418,7 @@ void RenderManagerGL2D::showShadow(bool shadow)
     mShowShadow = shadow;
 }
 
-void RenderManagerGL2D::uploadFontAtlas(const std::string& name, SDL_Surface* surface)
+void RenderManagerGL2D::uploadTexture(const std::string& name, SDL_Surface* surface)
 {
     auto* image = new BufferedImage;
     image->sourceWidth = surface->w;
@@ -430,7 +430,7 @@ void RenderManagerGL2D::uploadFontAtlas(const std::string& name, SDL_Surface* su
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     mImageMap[name] = image;
 }
-void RenderManagerGL2D::releaseFontAtlas(const std::string& name)
+void RenderManagerGL2D::releaseTexture(const std::string& name)
 {
     auto found = mImageMap.find(name);
     if (found == mImageMap.end())
@@ -441,8 +441,8 @@ void RenderManagerGL2D::releaseFontAtlas(const std::string& name)
     delete found->second;
     mImageMap.erase(found);
 }
-void RenderManagerGL2D::drawFontGlyph(const std::string& name, const SDL_Rect& source, Vector2 position,
-                                      Vector2 size, Color color)
+void RenderManagerGL2D::drawTextureRegion(const std::string& name, const SDL_Rect& source, Vector2 position,
+                                          Vector2 size, Color color)
 {
     const auto* image = mImageMap.at(name);
     Texture region(image->glHandle, (image->w - image->sourceWidth) / 2 + source.x,

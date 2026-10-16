@@ -488,7 +488,7 @@ void RenderManagerSDL::showShadow(bool shadow)
     mShowShadow = shadow;
 }
 
-void RenderManagerSDL::uploadFontAtlas(const std::string& name, SDL_Surface* surface)
+void RenderManagerSDL::uploadTexture(const std::string& name, SDL_Surface* surface)
 {
     auto* image = new BufferedImage;
     image->w = surface->w;
@@ -504,7 +504,7 @@ void RenderManagerSDL::uploadFontAtlas(const std::string& name, SDL_Surface* sur
     SDL_SetTextureScaleMode(image->sdlImage, SDL_ScaleModeLinear);
     mImageMap[name] = image;
 }
-void RenderManagerSDL::releaseFontAtlas(const std::string& name)
+void RenderManagerSDL::releaseTexture(const std::string& name)
 {
     auto found = mImageMap.find(name);
     if (found == mImageMap.end())
@@ -515,8 +515,8 @@ void RenderManagerSDL::releaseFontAtlas(const std::string& name)
     delete found->second;
     mImageMap.erase(found);
 }
-void RenderManagerSDL::drawFontGlyph(const std::string& name, const SDL_Rect& source, Vector2 position,
-                                     Vector2 size, Color color)
+void RenderManagerSDL::drawTextureRegion(const std::string& name, const SDL_Rect& source, Vector2 position,
+                                         Vector2 size, Color color)
 {
     auto* texture = mImageMap.at(name)->sdlImage;
     SDL_SetTextureColorMod(texture, color.r, color.g, color.b);

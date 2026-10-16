@@ -56,10 +56,10 @@ class RenderManagerSDL : public RenderManager
     void drawGame(const DuelMatchState& gameState) override;
 
   private:
-    void uploadFontAtlas(const std::string& name, SDL_Surface* surface) override;
-    void releaseFontAtlas(const std::string& name) override;
-    void drawFontGlyph(const std::string& name, const SDL_Rect& source, Vector2 position, Vector2 size,
-                       Color color) override;
+    void uploadTexture(const std::string& name, SDL_Surface* surface) override;
+    void releaseTexture(const std::string& name) override;
+    void drawTextureRegion(const std::string& name, const SDL_Rect& source, Vector2 position, Vector2 size,
+                           Color color) override;
     struct DynamicColoredTexture
     {
         // constructors

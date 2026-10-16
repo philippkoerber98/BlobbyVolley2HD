@@ -4,6 +4,34 @@
 #include <cmath>
 #include <vector>
 
+// The champion's body and hand use a magenta material key. Neutral highlights
+// stay white; gold and silver have no magenta component and retain their color.
+inline SDL_Surface* colorizeChampion(SDL_Surface* source, SDL_Color color)
+{
+    auto* result = SDL_ConvertSurfaceFormat(source, SDL_PIXELFORMAT_RGBA32, 0);
+    if (!result)
+    {
+        return nullptr;
+    }
+    for (int y = 0; y < result->h; ++y)
+    {
+        auto* row = static_cast<Uint8*>(result->pixels) + y * result->pitch;
+        for (int x = 0; x < result->w; ++x)
+        {
+            auto* pixel = row + x * 4;
+            const int neutral = pixel[1];
+            const int magenta = (std::min)(pixel[0], pixel[2]) - neutral;
+            if (pixel[3] && magenta > 0)
+            {
+                pixel[0] = Uint8(neutral + (magenta * color.r + 127) / 255);
+                pixel[1] = Uint8(neutral + (magenta * color.g + 127) / 255);
+                pixel[2] = Uint8(neutral + (magenta * color.b + 127) / 255);
+            }
+        }
+    }
+    return result;
+}
+
 // Fill the camera without stretching: a 4:3 camera sees the central part of
 // the same widescreen artwork, retaining the full vertical field of view.
 inline SDL_Rect backgroundSourceRect(int width, int height, float cameraWidth = 800.f)

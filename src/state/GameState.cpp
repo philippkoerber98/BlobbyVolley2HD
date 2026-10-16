@@ -452,8 +452,7 @@ bool GameState::displayWinningPlayerScreen(PlayerSide winner)
     const Color color =
         player.getOscillating() ? getApp().getRenderManager().getOscillationColor() : player.getStaticColor();
     // The champion stands freely: no podium box or gold line behind the blob.
-    g.doBlob(GEN_ID, Vector2(376, 330), color, 1.5f);
-    g.doImage(GEN_ID, Vector2(498, 315), "gfx/pokal.bmp", Vector2(43, 119));
+    g.doChampion(GEN_ID, Vector2(400, 290), color, 220);
     panel(g, 271, 414, 258, 40, Color(48, 32, 22), .94f);
     for (int i = 0; i < 2; ++i)
     {

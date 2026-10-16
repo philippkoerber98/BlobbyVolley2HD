@@ -23,6 +23,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #include "RuntimeFont.h"
 #include <SDL.h>
 #include <map>
+#include <memory>
 
 #include "BlobbyDebug.h"
 #include "Color.h"
@@ -157,6 +158,9 @@ class RenderManager : public ObjectCounter<RenderManager>
     // Draws a blob
     virtual void drawBlob(const Vector2& pos, const Color& col, float scale = 1) {};
 
+    // Full-resolution winner sprite: tint the body and hand, preserve the trophy.
+    void drawChampion(const Vector2& center, const Color& color, float height);
+
     // Draws the game
     virtual void drawGame(const DuelMatchState& gameState) = 0;
 
@@ -177,18 +181,21 @@ class RenderManager : public ObjectCounter<RenderManager>
     RenderManager();
     SDL_Surface* highlightSurface(SDL_Surface* surface, int luminance);
     SDL_Surface* loadSurface(const std::string& filename);
-    virtual void uploadFontAtlas(const std::string& name, SDL_Surface* surface)
+    virtual void uploadTexture(const std::string& name, SDL_Surface* surface)
     {
         SDL_FreeSurface(surface);
     }
-    virtual void releaseFontAtlas(const std::string& name) {}
-    virtual void drawFontGlyph(const std::string& name, const SDL_Rect& source, Vector2 position,
-                               Vector2 size, Color color)
+    virtual void releaseTexture(const std::string& name) {}
+    virtual void drawTextureRegion(const std::string& name, const SDL_Rect& source, Vector2 position,
+                                   Vector2 size, Color color)
     {
     }
     void drawRuntimeText(const std::string& text, Vector2 position, float height, int style,
                          float fixedAdvance = 0, bool obfuscate = false);
     std::map<int, RuntimeFontAtlas> mRuntimeFonts;
+    std::unique_ptr<SDL_Surface, decltype(&SDL_FreeSurface)> mChampionSource{nullptr, SDL_FreeSurface};
+    Color mChampionColor;
+    bool mChampionTextureReady = false;
     int assetScale(const std::string& filename) const
     {
         auto it = mAssetScales.find(filename);
