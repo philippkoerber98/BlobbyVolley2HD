@@ -448,7 +448,11 @@ bool GameState::displayWinningPlayerScreen(PlayerSide winner)
         --h;
     }
     text(g, 400, 98, player.getName(), h, 0, 1);
-    text(g, 400, 146, tr("Der Strand geh\xC3\xB6rt dir!", "The beach is yours!"), 22, 2, 1);
+    text(g, 400, 146,
+         tr("Herzlichen Gl\xC3\xBC"
+            "ckwunsch!",
+            "Congratulations!"),
+         22, 2, 1);
     const Color color =
         player.getOscillating() ? getApp().getRenderManager().getOscillationColor() : player.getStaticColor();
     // The champion stands freely: no podium box or gold line behind the blob.
