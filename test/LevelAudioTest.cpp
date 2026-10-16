@@ -7,6 +7,9 @@
 #include "SoundManager.h"
 #include <SDL_image.h>
 #include <algorithm>
+#include <atomic>
+#include <cmath>
+#include <cstring>
 #include <fstream>
 #include <iostream>
 #include <iterator>
@@ -28,12 +31,68 @@ void requireAudio(bool value, const char* message)
         throw std::runtime_error(message);
     }
 }
+// Capture the mixer output, including resampling, across the actual track boundary.
+// The callback writes only into preallocated storage and never touches game state.
+struct LoopCapture
+{
+    std::vector<float> samples = std::vector<float>(48000 * 2);
+    std::atomic<size_t> count{0};
+
+    static void SDLCALL record(void* context, Uint8* stream, int bytes)
+    {
+        auto& capture = *static_cast<LoopCapture*>(context);
+        const auto offset = capture.count.load();
+        const auto amount = (std::min)(size_t(bytes) / sizeof(float), capture.samples.size() - offset);
+        std::memcpy(capture.samples.data() + offset, stream, amount * sizeof(float));
+        capture.count.store(offset + amount);
+    }
+};
+
+void checkTrackBoundary(SoundManager& audio)
+{
+    const auto duration = Mix_MusicDuration(nullptr);
+    requireAudio(duration > .5, "Default soundtrack is missing or too short");
+    SDL_Delay(230); // Let the initial scene fade finish before measuring the loop.
+    requireAudio(Mix_SetMusicPosition(duration - .25) == 0, "Cannot seek to soundtrack loop boundary");
+    const auto starts = audio.musicStartCount();
+    LoopCapture capture;
+    Mix_SetPostMix(LoopCapture::record, &capture);
+    SDL_Delay(700);
+    Mix_SetPostMix(nullptr, nullptr); // Waits for any in-flight mixer callback.
+    const auto count = capture.count.load();
+    requireAudio(count > 48000, "Insufficient audio captured across loop boundary");
+    requireAudio(audio.musicPlaying() && audio.musicStartCount() == starts,
+                 "Loop restarted through the application instead of the decoder");
+    requireAudio(Mix_FadingMusic() == MIX_NO_FADING, "Loop unexpectedly faded music");
+    requireAudio(Mix_GetMusicPosition(nullptr) < 1., "Soundtrack did not wrap to its beginning");
+    size_t silentFrames = 0;
+    for (size_t i = 0; i + 1 < count; i += 2)
+    {
+        silentFrames = std::abs(capture.samples[i]) < 1.e-7f && std::abs(capture.samples[i + 1]) < 1.e-7f
+                           ? silentFrames + 1
+                           : 0;
+        requireAudio(silentFrames < 48, "Mixer inserted at least 1 ms of silence around the loop");
+    }
+    std::cout << "Soundtrack boundary: " << audio.musicPath()
+              << " passed without restart, fade or inserted silence\n";
+}
 } // namespace
 
 void testLevelAudio(const std::string& outputDirectory)
 {
     auto& fs = FileSystem::getSingleton();
     const auto originalCount = availableLevels().size();
+    {
+        SoundManager audio;
+        requireAudio(audio.ready(), "Dummy audio device or Vorbis support unavailable");
+        audio.setScene(SoundManager::Scene::Menu);
+        checkTrackBoundary(audio);
+        audio.selectLevel("strand1.bmp");
+        audio.setScene(SoundManager::Scene::Match, true);
+        SDL_Delay(230);
+        audio.update();
+        checkTrackBoundary(audio);
+    }
     fs.setWriteDir(outputDirectory);
     const std::string good = "Custom Levels/Audio Test";
     const std::string bad = "Custom Levels/Broken Audio Test";

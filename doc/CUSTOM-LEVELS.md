@@ -56,3 +56,11 @@ Regression tests use a tiny generated Vorbis tone with SDL's dummy audio device.
 They cover discovery, old IDs, case-insensitive names, invalid optional content,
 OGG overrides, WAV fallback, looping, once-only victory, music continuity, live
 bus volumes and mute. This test tone is not a runtime asset.
+
+Music loops inside the decoder, without application restarts or per-loop fades.
+Author tracks with matching endpoint waveforms: removing trailing silence alone
+cannot prevent a click when the last and first samples differ. The bundled
+48-second level track has a four-millisecond endpoint correction (no trimming
+or silence); the menu track is used as supplied. Tests capture the actual mixer
+output across both bundled track boundaries and reject inserted silence,
+restarts and fades, including the 44.1 kHz to 48 kHz resampling path.
