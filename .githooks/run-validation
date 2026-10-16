@@ -1,0 +1,11 @@
+#!/bin/sh
+set -eu
+root=$(git rev-parse --show-toplevel)
+for interpreter in python3 python; do
+    if command -v "$interpreter" >/dev/null 2>&1 &&
+        "$interpreter" -c 'import sys; sys.exit(sys.version_info < (3, 9))' >/dev/null 2>&1; then
+        exec "$interpreter" "$root/tools/git_conventions.py" "$@"
+    fi
+done
+echo 'Git conventions: install Python 3.9 or newer and make it available in PATH.' >&2
+exit 1

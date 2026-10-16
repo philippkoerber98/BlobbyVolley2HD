@@ -1,0 +1,22 @@
+name: Git conventions
+
+on:
+  pull_request_target:
+    types: [opened, synchronize, reopened, edited, ready_for_review]
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: Git conventions validation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out trusted base revision
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          fetch-depth: 0
+          persist-credentials: true
+      - name: Validate source branch, PR title and commit subjects
+        run: python3 tools/git_conventions.py pull-request --event "$GITHUB_EVENT_PATH"
