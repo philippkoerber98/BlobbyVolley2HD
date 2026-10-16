@@ -1,4 +1,4 @@
-find_package(SDL2 REQUIRED)
+find_package(SDL2 2.0.18 REQUIRED)
 
 if(NOT TARGET SDL2::SDL2)
     message(STATUS "Could not find SDL2 imported library, defining our own")

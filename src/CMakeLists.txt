@@ -1,7 +1,6 @@
-set(APP_NAME "Blobby Volley 2")
-set(APP_AUTHOR "")
-
 set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
 
 if (MSVC)
 	add_compile_options(/utf-8)
@@ -13,7 +12,7 @@ endif()
 
 include_directories(.)
 
-set(common_SRC
+set(BLOBBY_COMMON_SOURCES
 	base64.cpp base64.h
 	BlobbyDebug.cpp BlobbyDebug.h
 	Clock.cpp Clock.h
@@ -45,7 +44,7 @@ set(common_SRC
 	replays/ReplaySavePoint.cpp replays/ReplaySavePoint.h
 	)
 
-set (blobby_SRC ${common_SRC} ${inputdevice_SRC}
+set (BLOBBY_CLIENT_SOURCES ${BLOBBY_COMMON_SOURCES}
 	ApplicationLoop.cpp ApplicationLoop.h
 	Blood.cpp Blood.h
 	TextManager.cpp TextManager.h
@@ -71,9 +70,9 @@ set (blobby_SRC ${common_SRC} ${inputdevice_SRC}
 	state/LocalGameState.cpp state/LocalGameState.h
 	state/NetworkState.cpp state/NetworkState.h
 	state/OptionsState.h
-	state/OptionsMenu.cpp state/OptionsMenu.h
-	state/OptionsTabs.cpp state/OptionsWidgets.cpp
 	state/TabbedOptionsState.cpp
+	state/OptionsMenu.cpp state/OptionsMenu.h state/OptionsTabs.cpp
+	state/OptionsWidgets.cpp
 	state/NetworkSearchState.cpp state/NetworkSearchState.h
 	state/ReplayState.cpp state/ReplayState.h
 	state/ReplaySelectionState.cpp state/ReplaySelectionState.h
@@ -86,7 +85,7 @@ set (blobby_SRC ${common_SRC} ${inputdevice_SRC}
 	BlobbyApp.h BlobbyApp.cpp
 	)
 
-set (blobby-server_SRC ${common_SRC}
+set (BLOBBY_SERVER_SOURCES ${BLOBBY_COMMON_SOURCES}
 	server/servermain.cpp
 	)
 
@@ -114,28 +113,28 @@ if (NOT WIN32)
 endif ()
 
 if (ANDROID)
-    add_library(blobby SHARED main.cpp ${blobby_SRC})
+    add_library(blobby SHARED main.cpp ${BLOBBY_CLIENT_SOURCES})
 elseif (WIN32)
-    add_executable(blobby WIN32 main.cpp ${blobby_SRC})
+    add_executable(blobby WIN32 main.cpp ${BLOBBY_CLIENT_SOURCES})
 else ()
-    add_executable(blobby main.cpp ${blobby_SRC})
+    add_executable(blobby main.cpp ${BLOBBY_CLIENT_SOURCES})
 endif ()
 
 target_link_libraries(blobby ${BLOBBY_COMMON_LIBS} ${OPENGL_LIBRARIES})
 
-add_executable(assets-smoke-test EXCLUDE_FROM_ALL ../test/AssetsSmokeTest.cpp ../test/FrameTimingTest.cpp ${blobby_SRC})
+add_executable(assets-smoke-test EXCLUDE_FROM_ALL ../test/AssetsSmokeTest.cpp ../test/FrameTimingTest.cpp ${BLOBBY_CLIENT_SOURCES})
 target_link_libraries(assets-smoke-test PRIVATE ${BLOBBY_COMMON_LIBS} ${OPENGL_LIBRARIES})
 
 
 if (UNIX AND (NOT ANDROID) OR WIN32)
-	add_executable(blobby-server ${blobby-server_SRC})
+	add_executable(blobby-server ${BLOBBY_SERVER_SOURCES})
 	target_link_libraries(blobby-server ${BLOBBY_COMMON_LIBS})
 endif ()
 if (UNIX AND (NOT ANDROID))
-	add_executable(blobby-runtest EXCLUDE_FROM_ALL runtest.cpp ${blobby_SRC})
+	add_executable(blobby-runtest EXCLUDE_FROM_ALL runtest.cpp ${BLOBBY_CLIENT_SOURCES})
 	target_link_libraries(blobby-runtest ${BLOBBY_COMMON_LIBS} ${OPENGL_LIBRARIES})
 
-	add_executable(botbench EXCLUDE_FROM_ALL botbench.cpp ${blobby_SRC})
+	add_executable(botbench EXCLUDE_FROM_ALL botbench.cpp ${BLOBBY_CLIENT_SOURCES})
 	target_link_libraries(botbench ${BLOBBY_COMMON_LIBS} ${OPENGL_LIBRARIES})
 endif ()
 
@@ -183,7 +182,10 @@ target_link_libraries(test-compile-headers PRIVATE ${BLOBBY_COMMON_LIBS})
 
 add_executable(display-viewport-test EXCLUDE_FROM_ALL ../test/DisplayViewportTest.cpp)
 target_link_libraries(display-viewport-test PRIVATE SDL2::SDL2main SDL2::SDL2)
+
+
 if(SDL2_VERSION VERSION_GREATER_EQUAL "2.0.14")
-    add_executable(controller-test EXCLUDE_FROM_ALL ../test/ControllerTest.cpp input_device/JoystickPool.cpp BlobbyDebug.cpp)
-    target_link_libraries(controller-test PRIVATE SDL2::SDL2main SDL2::SDL2)
+	add_executable(controller-test EXCLUDE_FROM_ALL ../test/ControllerTest.cpp
+		input_device/JoystickPool.cpp BlobbyDebug.cpp)
+	target_link_libraries(controller-test PRIVATE SDL2::SDL2main SDL2::SDL2)
 endif()

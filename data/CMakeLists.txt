@@ -1,43 +1,42 @@
-macro(add_zip_archive _dir _filetype)
-	# Includes optional high-resolution images below gfx/hd.
-	file(GLOB_RECURSE archive_src RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ${_dir}/*.${_filetype})
-	if("${_dir}" STREQUAL "gfx" OR "${_dir}" STREQUAL "backgrounds")
-		file(GLOB_RECURSE png_src RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ${_dir}/*.png)
-		list(APPEND archive_src ${png_src})
-	endif()
-	if("${_dir}" STREQUAL "gfx")
-		file(GLOB archive_src CONFIGURE_DEPENDS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} gfx/hd/*.png gfx/hd/*.webp gfx/hd/*.txt gfx/hd/*.ttf)
-	elseif("${_dir}" STREQUAL "backgrounds")
-		file(GLOB archive_src CONFIGURE_DEPENDS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} backgrounds/hd/*.png backgrounds/hd/*.webp)
-	endif()
-    # Package only the preferred format of each HD image, never both copies.
-    if("${_dir}" STREQUAL "gfx" OR "${_dir}" STREQUAL "backgrounds")
-        foreach(asset ${archive_src})
-            if(asset MATCHES "\\.png$")
-                string(REGEX REPLACE "\\.png$" ".webp" webp_asset "${asset}")
-                if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${webp_asset}")
-                    list(REMOVE_ITEM archive_src "${asset}")
-                endif()
-            endif()
-        endforeach()
+# Runtime graphics come exclusively from the HD directories. Other categories
+# retain their source hierarchy (for example scripts/wide).
+function(add_runtime_archive directory extension)
+    if(directory STREQUAL "gfx")
+        file(GLOB archive_sources CONFIGURE_DEPENDS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
+            gfx/hd/*.png gfx/hd/*.webp gfx/hd/*.ttf gfx/hd/*.txt)
+    elseif(directory STREQUAL "backgrounds")
+        file(GLOB archive_sources CONFIGURE_DEPENDS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
+            backgrounds/hd/*.png backgrounds/hd/*.webp)
+    else()
+        file(GLOB_RECURSE archive_sources CONFIGURE_DEPENDS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
+            ${directory}/*.${extension})
     endif()
-	add_custom_command(
-		OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${_dir}.zip
-		COMMAND ${CMAKE_COMMAND} -E tar cf ${CMAKE_CURRENT_BINARY_DIR}/${_dir}.zip --format=zip ${archive_src}
-		DEPENDS ${archive_src}
-		WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-		VERBATIM
-		)
-	add_custom_target(${_dir}_zip ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/${_dir}.zip)
-#	install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${_dir].zip DESTINATION /usr)
-endmacro(add_zip_archive _dir _filetype)
 
+    # Include exactly one version of each image, preferring WebP over PNG.
+    foreach(asset IN LISTS archive_sources)
+        if(asset MATCHES "\\.png$")
+            string(REGEX REPLACE "\\.png$" ".webp" compressed_asset "${asset}")
+            if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${compressed_asset}")
+                list(REMOVE_ITEM archive_sources "${asset}")
+            endif()
+        endif()
+    endforeach()
 
-add_zip_archive(gfx bmp)
-add_zip_archive(sounds wav)
-add_zip_archive(scripts lua)
-add_zip_archive(backgrounds bmp)
-add_zip_archive(rules lua)
+    set(archive "${CMAKE_CURRENT_BINARY_DIR}/${directory}.zip")
+    add_custom_command(
+        OUTPUT "${archive}"
+        COMMAND ${CMAKE_COMMAND} -E tar cf "${archive}" --format=zip ${archive_sources}
+        DEPENDS ${archive_sources}
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+        VERBATIM)
+    add_custom_target(${directory}_zip ALL DEPENDS "${archive}")
+endfunction()
+
+add_runtime_archive(gfx webp)
+add_runtime_archive(backgrounds webp)
+add_runtime_archive(sounds wav)
+add_runtime_archive(scripts lua)
+add_runtime_archive(rules lua)
 
 set(install_files
 	${CMAKE_CURRENT_SOURCE_DIR}/ui-translations.xml

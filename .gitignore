@@ -30,13 +30,18 @@ src/blobby-server
 /Blobby Volley.layout
 /CMakeSettings.json
 
-#project nintendo switch
-src/blobby.elf
-src/blobby.nro
-src/blobby.nacp
-/blobby
-
 #project platform independent
 *.zip
 config.h
 test_compile
+
+# Local build, draft artwork, and credentials
+/output/
+/tmp/
+/data/artwork/
+.env
+.env.*
+!.env.example
+.venv/
+__pycache__/
+*.pyc
