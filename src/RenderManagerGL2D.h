@@ -24,16 +24,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 #include <SDL.h>
 
-#if __MACOSX__
-#include <OpenGL/gl.h>
-#include <OpenGL/glext.h>
-#elif (defined _MSC_VER)
-#include <windows.h>
-#include <GL/gl.h>
-#else
-#include <GL/gl.h>
-#include <GL/glext.h>
-#endif
+#include <SDL_opengl.h>
 
 #include <vector>
 #include <list>
