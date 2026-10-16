@@ -60,7 +60,7 @@ bus volumes and mute. This test tone is not a runtime asset.
 Music loops inside the decoder, without application restarts or per-loop fades.
 Author tracks with matching endpoint waveforms: removing trailing silence alone
 cannot prevent a click when the last and first samples differ. The bundled
-48-second level track has a four-millisecond endpoint correction (no trimming
-or silence); the menu track is used as supplied. Tests capture the actual mixer
+48-second level and menu tracks have a four-millisecond endpoint correction
+(no trimming or silence). Tests capture the actual mixer
 output across both bundled track boundaries and reject inserted silence,
 restarts and fades, including the 44.1 kHz to 48 kHz resampling path.
