@@ -21,7 +21,7 @@ Optional audio, with `.ogg` preferred over `.wav` for the same base name:
 
 | Base name | Playback | Bus |
 |---|---|---|
-| `music` | Repeating level music OR ambience | Music/background |
+| `level` | Repeating level music OR ambience | Music/background |
 | `victory` | Once on entering the victory celebration | Effects |
 | `bums` | Ball impact | Effects |
 | `chat` | Chat notification | Effects |
@@ -31,11 +31,11 @@ Missing or undecodable audio falls back to the same base name in global
 `data/sounds/` (packaged in `sounds.zip`). A valid WAV can also recover from a
 broken OGG in the same level. If no usable default exists, that role is silent.
 Existing default effects stay as WAV, without unnecessary lossy conversion.
-Add your future default songs as `data/sounds/menu.ogg`, `music.ogg` and
-`victory.ogg`; these are optional, not placeholder tones in the shipped game.
+Default tracks are provided as `data/sounds/menu.ogg`, `level.ogg` and
+`victory.ogg`. Custom levels can override the level and victory tracks.
 Use Ogg Vorbis, not an arbitrary codec in an Ogg container.
 
-`menu.ogg` is global and shared by menus/options. Browsing level backgrounds,
+`menu.ogg` loops continuously and is shared by menus/options. Browsing level backgrounds,
 changing graphics settings or navigating between menus does not restart it.
 At match entry, the selected level soundtrack replaces it with a short fade-out
 and fade-in. Level music continues during pause and victory; the victory sound
@@ -44,7 +44,7 @@ menu track. No audio changes affect physics, replays or network serialization.
 
 Master, effects and music/background volumes multiply together and take effect
 immediately. Muting retains the music timeline, so unmuting does not restart it.
-There is no separate ambience file/bus: place ambience in `music.ogg`.
+There is no separate ambience file/bus: place ambience in `level.ogg`.
 
 SDL2_mixer streams one music decoder and plays predecoded effects on independent
 channels. Compressed music bytes remain alive for the decoder; the entire decoded

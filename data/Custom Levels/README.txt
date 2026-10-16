@@ -7,7 +7,7 @@ the game's level selection. Keep the filenames below exactly as shown.
 
 My Level/
     background.webp  (or background.png; required)
-    music.ogg        (optional; looping music or ambience)
+    level.ogg        (optional; looping music or ambience)
     victory.ogg      (optional; victory sound, played once)
     bums.ogg         (optional; ball impact)
     chat.ogg         (optional; chat notification)
@@ -31,7 +31,7 @@ erscheint in der Levelauswahl des Spiels. Behalte die folgenden Dateinamen bei.
 
 Mein Level/
     background.webp  (oder background.png; erforderlich)
-    music.ogg        (optional; Musik oder Hintergrundgeräusche in Dauerschleife)
+    level.ogg        (optional; Musik oder Hintergrundgeräusche in Dauerschleife)
     victory.ogg      (optional; einmaliger Siegeston)
     bums.ogg         (optional; Ballkontakt)
     chat.ogg         (optional; Chatbenachrichtigung)
@@ -57,7 +57,7 @@ se zobrazí ve výběru úrovní ve hře. Níže uvedené názvy souborů nemě�
 
 Moje úroveň/
     background.webp  (nebo background.png; povinné)
-    music.ogg        (volitelné; hudba nebo zvuky prostředí ve smyčce)
+    level.ogg        (volitelné; hudba nebo zvuky prostředí ve smyčce)
     victory.ogg      (volitelné; zvuk vítězství, přehraje se jednou)
     bums.ogg         (volitelné; náraz míče)
     chat.ogg         (volitelné; upozornění na zprávu v chatu)
@@ -84,7 +84,7 @@ de archivo que se indican a continuación.
 
 Mi nivel/
     background.webp  (o background.png; obligatorio)
-    music.ogg        (opcional; música o sonido ambiental en bucle)
+    level.ogg        (opcional; música o sonido ambiental en bucle)
     victory.ogg      (opcional; sonido de victoria, se reproduce una sola vez)
     bums.ogg         (opcional; impacto del balón)
     chat.ogg         (opcional; notificación del chat)
@@ -111,7 +111,7 @@ ci-dessous.
 
 Mon niveau/
     background.webp  (ou background.png ; obligatoire)
-    music.ogg        (facultatif ; musique ou ambiance sonore en boucle)
+    level.ogg        (facultatif ; musique ou ambiance sonore en boucle)
     victory.ogg      (facultatif ; son de victoire, joué une seule fois)
     bums.ogg         (facultatif ; impact du ballon)
     chat.ogg         (facultatif ; notification du chat)
@@ -138,7 +138,7 @@ nomi dei file riportati qui sotto.
 
 Il mio livello/
     background.webp  (oppure background.png; obbligatorio)
-    music.ogg        (facoltativo; musica o suoni ambientali in ciclo continuo)
+    level.ogg        (facoltativo; musica o suoni ambientali in ciclo continuo)
     victory.ogg      (facoltativo; suono di vittoria, riprodotto una sola volta)
     bums.ogg         (facoltativo; impatto del pallone)
     chat.ogg         (facoltativo; notifica della chat)

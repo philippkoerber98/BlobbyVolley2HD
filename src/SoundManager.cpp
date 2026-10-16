@@ -105,7 +105,7 @@ void SoundManager::selectLevel(const std::string& level)
     mLevel = resolved;
     if (mScene == Scene::Match)
     {
-        requestMusic(levelSoundCandidates(mLevel, "music"));
+        requestMusic(levelSoundCandidates(mLevel, "level"));
     }
 }
 
@@ -121,7 +121,7 @@ void SoundManager::setScene(Scene scene, bool newMatch)
     }
     mScene = scene;
     requestMusic(levelSoundCandidates(mScene == Scene::Match ? mLevel : "",
-                                      mScene == Scene::Match ? "music" : "menu"));
+                                      mScene == Scene::Match ? "level" : "menu"));
 }
 
 bool SoundManager::playCandidates(const std::vector<std::string>& candidates, float volume)

@@ -59,12 +59,12 @@ void testLevelAudio(const std::string& outputDirectory)
         file.write(bytes.data(), bytes.size());
         created.push_back(name);
     };
-    write(good + "/MUSIC.OGG", tone);
+    write(good + "/LEVEL.OGG", tone);
     write(good + "/pfiff.ogg", tone);
     write("sounds/menu.ogg", tone);
-    write("sounds/music.ogg", tone);
+    write("sounds/level.ogg", tone);
     write("sounds/victory.ogg", tone);
-    write(bad + "/music.ogg", {'b', 'a', 'd'});
+    write(bad + "/level.ogg", {'b', 'a', 'd'});
     write(bad + "/bums.ogg", {'b', 'a', 'd'});
     requireAudio(availableLevels().size() == originalCount + 2,
                  "Custom levels need one background, no config");
@@ -90,6 +90,8 @@ void testLevelAudio(const std::string& outputDirectory)
         audio.selectLevel("custom:Audio Test");
         audio.setScene(SoundManager::Scene::Menu);
         requireAudio(audio.musicPath() == "sounds/menu.ogg" && audio.musicPlaying(), "Menu Ogg not playing");
+        SDL_Delay(360); // Longer than the source and fade-in; menu music must loop.
+        requireAudio(audio.musicPlaying(), "Menu music did not loop");
         const auto menuStarts = audio.musicStartCount();
         audio.setScene(SoundManager::Scene::Menu); // Main menu -> options -> main menu.
         audio.selectLevel("strand2.bmp");
@@ -98,7 +100,7 @@ void testLevelAudio(const std::string& outputDirectory)
         audio.setScene(SoundManager::Scene::Match, true);
         SDL_Delay(230);
         audio.update();
-        requireAudio(audio.musicPath() == good + "/MUSIC.OGG",
+        requireAudio(audio.musicPath() == good + "/LEVEL.OGG",
                      "Match did not use the selected level's music");
         SDL_Delay(240); // Longer than the source; looping must keep playing.
         requireAudio(audio.musicPlaying(), "Level music did not loop");
@@ -126,7 +128,7 @@ void testLevelAudio(const std::string& outputDirectory)
         audio.selectLevel("custom:Broken Audio Test");
         SDL_Delay(230);
         audio.update();
-        requireAudio(audio.musicPath() == "sounds/music.ogg",
+        requireAudio(audio.musicPath() == "sounds/level.ogg",
                      "Broken level music did not use standard fallback");
         requireAudio(audio.playSound(SoundManager::IMPACT, 1) && audio.lastEffectPath() == "sounds/bums.wav",
                      "Broken Ogg effect did not fall back to built-in WAV");
