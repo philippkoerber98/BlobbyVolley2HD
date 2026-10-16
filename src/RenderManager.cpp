@@ -32,42 +32,6 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #include <sstream>
 #include "DisplayViewport.h"
 
-float RenderManager::menuTextWidth(const std::string& text,float height)
-{
-    float width=0;for(size_t i=0;i<text.size();)width+=nunitoAdvance(nextFontCode(text,i))*height;return width;
-}
-void RenderManager::drawMenuText(const std::string& text,Vector2 position,float height,int style)
-{ drawRuntimeText(text,position,height,style); }
-void RenderManager::drawRuntimeText(const std::string& text,Vector2 position,float height,int style,float fixedAdvance,bool obfuscate)
-{
-    if(height<=0||text.empty())return;
-    int w=800,h=600;
-    if(mWindow){if(SDL_GetWindowFlags(mWindow)&SDL_WINDOW_OPENGL)SDL_GL_GetDrawableSize(mWindow,&w,&h);
-        else if(auto* renderer=SDL_GetRenderer(mWindow))SDL_GetRendererOutputSize(renderer,&w,&h);
-        else SDL_GetWindowSize(mWindow,&w,&h);}
-    const auto viewport=fitGameViewport(w,h,mCourtWidth);
-    // Bucket physical sizes in four-pixel increments. Atlases are rebuilt from
-    // outlines at the active monitor density, never enlarged from PNG glyphs.
-    const int pixels=(std::max)(12,(std::min)(256,4*int(std::ceil(height*viewport.h/600.f/4))));
-    auto found=mRuntimeFonts.find(pixels);
-    const std::string name="__nunito_"+std::to_string(pixels);
-    if(found==mRuntimeFonts.end()){
-        // Bound GPU memory while freely resizing or moving between monitors.
-        if(mRuntimeFonts.size()>=16){auto oldest=mRuntimeFonts.begin();
-            releaseFontAtlas("__nunito_"+std::to_string(oldest->first));mRuntimeFonts.erase(oldest);}
-        RuntimeFontAtlas atlas;auto* surface=createNunitoAtlas(pixels,atlas);
-        uploadFontAtlas(name,surface);found=mRuntimeFonts.emplace(pixels,std::move(atlas)).first;
-    }
-    const float scale=height/pixels;
-    const Color color=style==1?Color(53,36,20):style==2?Color(255,207,91):Color(255,245,220);
-    for(size_t i=0;i<text.size();){unsigned c=nextFontCode(text,i);if(obfuscate)c='*';if(c<32||c>=384)c='?';
-        const auto& g=found->second.glyphs[c];
-        float offset=fixedAdvance?(fixedAdvance-g.advance*scale)/2:0;
-        if(g.source.w&&g.source.h)drawFontGlyph(name,g.source,position+Vector2(offset+g.x*scale,g.y*scale),
-            Vector2(g.source.w*scale,g.source.h*scale),color);
-        position.x+=fixedAdvance?fixedAdvance:g.advance*scale;
-    }
-}
 #include "Blood.h"
 #include "IUserConfigReader.h"
 
@@ -102,79 +66,6 @@ SDL_Surface* RenderManager::highlightSurface(SDL_Surface* surface, int luminance
     SDL_SetSurfaceBlendMode(result,SDL_BLENDMODE_BLEND);
     return result;
 }
-
-SDL_Surface* RenderManager::loadSurface(const std::string& filename)
-{
-	const std::string menuPrefix="menu-backgrounds/";
-	if(filename.compare(0,menuPrefix.size(),menuPrefix)==0)
-	{
-		auto* source=loadSurface("backgrounds/"+resolveBackgroundName(filename.substr(menuPrefix.size())));
-		auto* blurred=createMenuBackdrop(source,true); SDL_FreeSurface(source);
-		if(!blurred) BOOST_THROW_EXCEPTION(FileLoadException(filename));
-		return blurred;
-	}
-	auto readBitmap = [](const std::string& path) -> SDL_Surface*
-	{
-		FileRead file(preferredHDImage(path));
-		int fileLength = file.length();
-		auto content = file.readRawBytes(fileLength);
-		return IMG_Load_RW(SDL_RWFromMem(content.data(), fileLength), 1);
-	};
-
-	if (filename.size() == 14 && filename.compare(0, 8, "gfx/ball") == 0)
-	{
-		int frame = std::atoi(filename.substr(8,2).c_str());
-		if (FileSystem::getSingleton().exists(preferredHDImage("gfx/hd/volleyball.png")))
-		{
-			auto* source = readBitmap("gfx/hd/volleyball.png");
-			auto* result = rotateVolleyball(source, frame);
-			SDL_FreeSurface(source);
-			if (result) { mAssetScales[filename] = 4; return result; }
-		}
-	}
-	// Fonts are deliberately excluded. Original BMPs remain the fallback.
-	if (filename.size() > 4 && filename.substr(filename.size()-4) == ".bmp" &&
-		filename.find("/font") == std::string::npos)
-	{
-		auto slash = filename.find_last_of('/');
-		std::string directory = slash == std::string::npos ? "gfx/" : filename.substr(0, slash+1);
-		std::string base = slash == std::string::npos ? filename : filename.substr(slash+1);
-		std::string path = preferredHDImage(directory + "hd/" + base.substr(0, base.size()-4) + ".png");
-		if (FileSystem::getSingleton().exists(path))
-		{
-			int logicalWidth=0,logicalHeight=0;
-			if(filename.compare(0,12,"backgrounds/")==0){logicalWidth=800;logicalHeight=600;}
-			if(FileSystem::getSingleton().exists("gfx/hd/metrics.txt"))
-			{
-				FileRead metrics("gfx/hd/metrics.txt");auto bytes=metrics.readRawBytes(metrics.length());
-				std::istringstream rows(std::string(bytes.begin(),bytes.end()));
-				std::string name;int w,h;
-				while(rows>>name>>w>>h)if(name==filename){logicalWidth=w;logicalHeight=h;break;}
-			}
-			auto* original = logicalWidth==0 && FileSystem::getSingleton().exists(filename) ? readBitmap(filename) : nullptr;
-			if(original){logicalWidth=original->w;logicalHeight=original->h;}
-			auto* png = readBitmap(path);
-			// Backgrounds retain their native widescreen dimensions. Both renderers
-			// choose a centered camera crop when drawing, including after mode changes.
-			if(filename.compare(0,12,"backgrounds/")==0){SDL_FreeSurface(original);mAssetScales[filename]=1;return png;}
-			if(filename.find("blobbym")!=std::string::npos || base=="titel.bmp" || base=="Icon.bmp" || base=="cursor.bmp" || base=="pokal.bmp")
-				cleanSpriteEdges(png);
-			auto* result = logicalWidth>0 ? scaleAsset(png, logicalWidth*4, logicalHeight*4) : nullptr;
-			SDL_FreeSurface(original); SDL_FreeSurface(png);
-			if (result) { mAssetScales[filename] = 4; return result; }
-		}
-	}
-
-	SDL_Surface* newSurface = readBitmap(filename);
-
-	if (!newSurface)
-		BOOST_THROW_EXCEPTION ( FileLoadException(filename) );
-	if (filename.compare(0, 11, "gfx/blobbym") == 0 || filename.compare(0, 8, "gfx/sch1") == 0)
-		SDL_SetColorKey(newSurface, SDL_TRUE, SDL_MapRGB(newSurface->format, 0, 0, 0));
-
-	return newSurface;
-}
-
 
 SDL_Surface* RenderManager::createEmptySurface(unsigned int width, unsigned int height)
 {

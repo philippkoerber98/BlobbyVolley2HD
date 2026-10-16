@@ -46,6 +46,7 @@ set(common_SRC
 	)
 
 set (blobby_SRC ${common_SRC} ${inputdevice_SRC}
+	ApplicationLoop.cpp ApplicationLoop.h
 	Blood.cpp Blood.h
 	TextManager.cpp TextManager.h
 	IMGUI.cpp IMGUI.h
@@ -53,6 +54,8 @@ set (blobby_SRC ${common_SRC} ${inputdevice_SRC}
 	InputManager.cpp InputManager.h
 	LocalInputSource.cpp LocalInputSource.h
 	RenderManager.cpp RenderManager.h
+	RenderManagerText.cpp
+	RenderManagerAssets.cpp
 	RuntimeFont.cpp RuntimeFont.h
 	UITranslations.cpp UITranslations.h
 	RenderManagerGL2D.cpp RenderManagerGL2D.h
