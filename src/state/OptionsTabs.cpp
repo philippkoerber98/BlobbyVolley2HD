@@ -101,7 +101,7 @@ void OptionState::Menu::players()
         float strength = 1 - std::max(0, std::min(25, delay)) / 25.f;
         if (slider(x, 228, 350, tr("Bot strength"), strength,
                    std::to_string(int(std::lround(strength * 100))) + " %",
-                   tr("Reaction strength of the selected bot."), accent, .01f, 42))
+                   tr("Reaction strength of the selected bot."), accent, 1.f / 25, 42))
         {
             config.setInteger(pre + "script_strength", int(std::lround((1 - strength) * 25)));
         }

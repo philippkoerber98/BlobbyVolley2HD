@@ -19,6 +19,7 @@ void testRoundedPanels(const std::string& outputDirectory);
 void testSceneBlurAspect(const std::string& outputDirectory);
 void testWidescreen(const std::string& outputDirectory);
 void testBotModes(const std::string& outputDirectory);
+void testHeldSliderInput();
 void testLevelAudio(const std::string& outputDirectory);
 
 class AssetProbe : public RenderManager
@@ -118,6 +119,7 @@ int main(int argc, char** argv)
             return 0;
         }
         testFrameTiming();
+        testHeldSliderInput();
         testLevelAudio(argv[2]);
         testSceneBlurAspect(argv[2]);
         testTabbedOptions(argv[2]);

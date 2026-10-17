@@ -180,14 +180,7 @@ bool OptionState::Menu::slider(float x, float y, float w, const std::string& lab
         }
         else if (focus == id)
         {
-            if (in().left())
-            {
-                next -= step;
-            }
-            if (in().right())
-            {
-                next += step;
-            }
+            next += in().sliderDirection() * step;
         }
     }
     next = std::max(0.f, std::min(1.f, next));

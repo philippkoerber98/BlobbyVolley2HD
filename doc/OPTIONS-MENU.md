@@ -60,3 +60,12 @@ point destination rectangles; OpenGL uses filtered texture regions. This keeps
 corners antialiased at native, HD and 4K sizes without blurring panel contents.
 The rounded-panel regression checks coverage and seamless transparency at
 800x600 and 3200x2400 in both renderers.
+
+## Controller sliders and secondary pages
+
+Slider input steps immediately, waits 300 ms, then repeats every 45 ms while
+holding left/right on the D-pad or left stick. Release, opposing directions and
+stick reversal reset the repeat state. Repeat input is buffered separately from
+activation/navigation edges, so it cannot repeatedly activate buttons. Bot
+strength steps by one stored reaction-delay unit (4%), avoiding rounding away
+1% changes. RGB, speed, volume and deadzone retain their own step sizes.

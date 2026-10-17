@@ -131,6 +131,7 @@ std::unique_ptr<InputDevice> InputManager::beginGame(PlayerSide side)
 
 void InputManager::clearTransientInput()
 {
+    mSliderDirection = 0;
     mPreviousTab = mNextTab = false;
     mUp = false;
     mDown = false;
@@ -161,6 +162,25 @@ void InputManager::updateInput(bool clearPrevious)
     SDL_PumpEvents();
     SDL_Event event;
     SDL_JoystickUpdate();
+
+    bool heldLeft = false, heldRight = false;
+    for (int slot = 0; slot < 2; ++slot)
+    {
+        if (auto* controller = mJoystickPool->getController(slot))
+        {
+            const int axis = SDL_GameControllerGetAxis(controller, SDL_CONTROLLER_AXIS_LEFTX);
+            heldLeft |=
+                axis < -15000 || SDL_GameControllerGetButton(controller, SDL_CONTROLLER_BUTTON_DPAD_LEFT);
+            heldRight |=
+                axis > 15000 || SDL_GameControllerGetButton(controller, SDL_CONTROLLER_BUTTON_DPAD_RIGHT);
+        }
+    }
+    const auto repeat =
+        mSliderRepeat.update(mWindowFocus && heldLeft, mWindowFocus && heldRight, SDL_GetTicks());
+    if (repeat)
+    {
+        mSliderDirection = repeat;
+    }
 
     // process all SDL events
     while (SDL_PollEvent(&event))

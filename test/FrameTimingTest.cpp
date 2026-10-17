@@ -491,6 +491,17 @@ void testTabbedOptions(const std::string& outputDirectory)
         require(unchanged.getInteger("gamefps") == 76, "Game-speed change was not saved immediately");
         key(SDLK_PAGEDOWN);
         screenshot("spieler");
+        key(SDLK_DOWN);
+        key(SDLK_DOWN); // Bot strength must advance one stored reaction step per press.
+        UserConfig strengthBefore;
+        strengthBefore.loadFile("config.xml");
+        const int delayBefore = strengthBefore.getInteger("left_script_strength");
+        key(delayBefore ? SDLK_RIGHT : SDLK_LEFT);
+        UserConfig strengthAfter;
+        strengthAfter.loadFile("config.xml");
+        require(strengthAfter.getInteger("left_script_strength") == delayBefore + (delayBefore ? -1 : 1),
+                "Bot strength step was rounded away");
+        key(delayBefore ? SDLK_LEFT : SDLK_RIGHT);
         auto mouseEvent = [&](int x, int y, Uint32 type)
         {
             SDL_WarpMouseInWindow(app.getWindow(), x, y);
@@ -1379,4 +1390,55 @@ void testBotModes(const std::string& outputDirectory)
                   << "\n";
     }
     fs.removeFromSearchPath(outputDirectory);
+}
+
+void testHeldSliderInput()
+{
+    SDL_SetHint(SDL_HINT_JOYSTICK_ALLOW_BACKGROUND_EVENTS, "1");
+    SDL_InitSubSystem(SDL_INIT_GAMECONTROLLER);
+    int mapped = 0;
+    for (int i = 0; i < SDL_NumJoysticks(); ++i)
+    {
+        mapped += SDL_IsGameController(i) != 0;
+    }
+    if (mapped >= 2)
+    {
+        std::cout << "Held-input virtual test skipped: both controller slots are occupied\n";
+        return;
+    }
+    const int index = SDL_JoystickAttachVirtual(SDL_JOYSTICK_TYPE_GAMECONTROLLER, 6, 21, 0);
+    require(index >= 0, "Cannot attach slider test controller");
+    auto* joystick = SDL_JoystickOpen(index);
+    {
+        InputManager input(nullptr);
+        SDL_JoystickSetVirtualAxis(joystick, 0, 25000);
+        input.updateInput();
+        require(input.sliderDirection() == 1, "Held stick did not produce initial slider step");
+        int repeats = 0;
+        for (int i = 0; i < 12; ++i)
+        {
+            SDL_Delay(50);
+            input.updateInput();
+            repeats += input.sliderDirection() == 1;
+        }
+        require(repeats >= 4, "Held stick did not repeat without new input edges");
+        SDL_JoystickSetVirtualAxis(joystick, 0, -25000);
+        input.updateInput();
+        require(input.sliderDirection() == -1, "Held stick reversal failed");
+        SDL_JoystickSetVirtualAxis(joystick, 0, 0);
+        input.updateInput();
+        require(input.sliderDirection() == 0, "Released stick kept changing slider");
+        SDL_JoystickSetVirtualButton(joystick, SDL_CONTROLLER_BUTTON_DPAD_RIGHT, 1);
+        input.updateInput();
+        require(input.sliderDirection() == 1, "D-pad slider initial step failed");
+        SDL_Delay(320);
+        input.updateInput();
+        require(input.sliderDirection() == 1, "Held D-pad slider did not repeat");
+        SDL_JoystickSetVirtualButton(joystick, SDL_CONTROLLER_BUTTON_DPAD_RIGHT, 0);
+        input.updateInput();
+        require(input.sliderDirection() == 0, "Released D-pad kept changing slider");
+    }
+    SDL_JoystickClose(joystick);
+    SDL_JoystickDetachVirtual(index);
+    std::cout << "Sliders: virtual stick/D-pad hold, reversal and release passed\n";
 }

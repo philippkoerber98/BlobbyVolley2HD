@@ -28,6 +28,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 #include "BlobbyDebug.h"
 #include "PlayerInput.h"
+#include "input_device/MenuRepeat.h"
 #include "Vector.h"
 
 enum class KeyAction
@@ -73,6 +74,11 @@ class InputManager : public ObjectCounter<InputManager>
     bool down() const;
     bool left() const;
     bool right() const;
+    // Slider changes repeat for held controller directions; other actions remain edges.
+    int sliderDirection() const
+    {
+        return mLeft != mRight ? (mRight ? 1 : -1) : mSliderDirection;
+    }
     bool select() const;
     bool exit() const; // extension for mouse included, so that right click = exit
     bool previousTab() const
@@ -117,6 +123,8 @@ class InputManager : public ObjectCounter<InputManager>
     // static InputKeyMap mKeyMap[];	// Type for String <-convert-> SDLKey
 
     // GUI storage (because we need event based input for the GUI)
+    MenuRepeat mSliderRepeat;
+    int mSliderDirection = 0;
     bool mUp;
     bool mDown;
     bool mLeft;
