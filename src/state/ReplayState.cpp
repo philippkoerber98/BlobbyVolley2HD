@@ -215,6 +215,7 @@ void ReplayState::step_impl()
         }
         if (action == 1)
         {
+            resetCelebration();
             // we don't have to reset the match, because we don't use lua rules
             // we just have to jump to the beginning
             playSound(SoundManager::WHISTLE, ROUND_START_SOUND_VOLUME);

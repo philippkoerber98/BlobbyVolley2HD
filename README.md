@@ -39,7 +39,7 @@ cmake --build out/build --config Release --parallel 4
 cmake --install out/build --config Release --prefix out/install
 ```
 
-The manifest installs SDL2, SDL2_image with WebP decoding, PhysFS, and Boost.
+The manifest installs SDL2, SDL2_image with WebP decoding, SDL2_mixer with Vorbis decoding, PhysFS, and Boost.
 Start the installed game from the installation directory:
 
 ```powershell
@@ -60,19 +60,19 @@ beside `blobby.exe`; no installer is required.
 ## Build on Linux or macOS
 
 A C++11 compiler, CMake 3.16+, SDL2 2.0.18+, SDL2_image with WebP support,
-PhysFS, Boost, and desktop OpenGL development files are required.
+SDL2_mixer 2.6+ with Vorbis decoding, PhysFS, Boost, and desktop OpenGL development files are required.
 Lua and TinyXML2 are bundled under `deps/`.
 
 On Debian/Ubuntu:
 
 ```sh
-sudo apt-get install build-essential cmake libsdl2-dev libsdl2-image-dev libphysfs-dev libboost-dev libgl-dev
+sudo apt-get install build-essential cmake libsdl2-dev libsdl2-image-dev libsdl2-mixer-dev libphysfs-dev libboost-dev libgl-dev
 ```
 
 On macOS with Homebrew:
 
 ```sh
-brew install cmake sdl2 sdl2_image physfs boost
+brew install cmake sdl2 sdl2_image sdl2_mixer physfs boost
 ```
 
 Then configure and build outside the source tree:
@@ -103,9 +103,19 @@ interactive desktop and creates screenshots in the specified output directory.
 
 See [the architecture guide](doc/ARCHITECTURE.md) for the main components.
 Project-owned C++ follows `.clang-format`; do not reformat vendored libraries.
-New assets belong in `data/gfx/hd` or `data/backgrounds/hd`. WebP is preferred;
+New assets belong in `data/gfx` or a folder in `data/Levels`. WebP is preferred;
 a PNG can be used when no matching WebP exists. Graphics archives contain HD assets only.
 
 Normal gameplay uses 75 simulation steps per second at 100% speed. Render FPS
 is separate. Network games retain the classic court. The dedicated server
 uses port 1234 by default.
+
+## Level folders and audio
+
+Built-in courts live in `data/Levels/<name>/` and are installed as `Levels/`
+beside the Windows executable. Add your own folders to `Custom Levels/`.
+Only `background.webp` (or `background.png`) is required. Optional `level.ogg`,
+`victory.ogg`, `bums.ogg`, `chat.ogg` and `pfiff.ogg` override that level's sounds;
+WAV works too. Missing or broken audio falls back per file to the global sounds.
+No per-level configuration files are needed. Reopen options to discover new levels.
+See [custom levels and audio](doc/CUSTOM-LEVELS.md) for details.

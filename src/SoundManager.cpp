@@ -18,259 +18,294 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 =============================================================================*/
 
-/* header include */
 #include "SoundManager.h"
-
-/* includes */
-#include <cassert>
-#include <iostream>
-
 #include "FileRead.h"
-
-/* implementation */
+#include "LevelCatalog.h"
+#include <algorithm>
+#include <climits>
+#include <iostream>
+#include <stdexcept>
 
 namespace
 {
-struct WavDeleter
+float clampVolume(float value)
 {
-    void operator()(Uint8* ptr)
-    {
-        SDL_FreeWAV(ptr);
-    }
-};
-
-using WavPtr = std::unique_ptr<Uint8, WavDeleter>;
-
-/// Struct that collects all data from reading a sound file.
-struct WavData
-{
-    WavPtr Buffer;
-    unsigned Length;
-    SDL_AudioSpec Spec;
-};
-
-/// Reads in an entire WAV file and returns the audio samples in the original
-/// format.
-WavData readSoundFile(const std::string& filename)
-{
-    // read the entire file into memory
-    FileRead file(filename);
-    int fileLength = file.length();
-    auto fileBuffer = file.readRawBytes(fileLength);
-    file.close();
-
-    // prepare output variables
-    SDL_AudioSpec newSoundSpec;
-    Uint32 newSoundLength = 0;
-    Uint8* temp = nullptr;
-
-    // Do the actual file decoding.
-    // Note: rwops is always closed by this function
-    SDL_RWops* rwops = SDL_RWFromMem(fileBuffer.data(), fileLength);
-    if (!SDL_LoadWAV_RW(rwops, 1, &newSoundSpec, &temp, &newSoundLength))
-    {
-        BOOST_THROW_EXCEPTION(FileLoadException(filename));
-    }
-
-    return {WavPtr(temp), newSoundLength, newSoundSpec};
+    return (std::max)(0.f, (std::min)(1.f, value));
 }
 
-/// Clips the value between 0 and 1, ensuring a valid volume value.
-float clip_volume(float vol)
+std::vector<char> readAudio(const std::string& path)
 {
-    return std::min(1.f, std::max(0.f, vol));
+    FileRead file(path);
+    if (file.length() > INT_MAX)
+    {
+        throw std::runtime_error("Audio file is too large: " + path);
+    }
+    return file.readRawBytes(file.length());
+}
+
+std::string effectRole(const std::string& filename)
+{
+    const auto slash = filename.find_last_of('/');
+    auto role = filename.substr(slash == std::string::npos ? 0 : slash + 1);
+    return role.substr(0, role.find_last_of('.'));
 }
 } // namespace
 
-const Uint8* Sound::getCurrentSample() const
-{
-    return data + position;
-}
-
-int Sound::advance(int amount)
-{
-    if (position + amount > length)
-    {
-        amount = length - position;
-    }
-    position += amount;
-    return amount;
-}
-
-bool Sound::done() const
-{
-    return position >= length;
-}
-
-Sound::Sound(const Uint8* data_, int length_, float volume_)
-    : data(data_), length(length_), volume(clip_volume(volume_))
-{
-}
-
-std::vector<Uint8> SoundManager::loadSound(const std::string& filename) const
-{
-    auto newSound = readSoundFile(filename);
-
-    // check if current audio format is target format
-    if (newSound.Spec.freq == mAudioSpec.freq && newSound.Spec.format == mAudioSpec.format &&
-        newSound.Spec.channels == mAudioSpec.channels)
-    {
-        std::vector<Uint8> result(newSound.Buffer.get(), newSound.Buffer.get() + newSound.Length);
-        return result;
-    }
-    else // otherwise, convert audio
-    {
-        SDL_AudioCVT conversionStructure;
-        if (!SDL_BuildAudioCVT(&conversionStructure, newSound.Spec.format, newSound.Spec.channels,
-                               newSound.Spec.freq, mAudioSpec.format, mAudioSpec.channels, mAudioSpec.freq))
-        {
-            BOOST_THROW_EXCEPTION(FileLoadException(filename));
-        }
-
-        // allocate new sound buffer as a vector, and put the corresponding pointers into
-        // the conversion structure
-        std::vector<Uint8> result(newSound.Length * conversionStructure.len_mult);
-        std::copy(newSound.Buffer.get(), newSound.Buffer.get() + newSound.Length, result.begin());
-
-        conversionStructure.buf = result.data();
-        conversionStructure.len = newSound.Length;
-
-        if (SDL_ConvertAudio(&conversionStructure))
-        {
-            BOOST_THROW_EXCEPTION(FileLoadException(filename));
-        }
-
-        result.resize(conversionStructure.len_cvt);
-
-        return result;
-    }
-}
-
-bool SoundManager::playSound(const std::string& filename, float volume)
-{
-    if (mAudioDevice == 0)
-    {
-        return false;
-    }
-
-    // everything is fine, so we return true,
-    // but we don't need to play the sound
-    if (mMute)
-    {
-        return true;
-    }
-    try
-    {
-        auto cached_sound = mSoundCache.find(filename);
-        if (cached_sound == mSoundCache.end())
-        {
-            auto inserted = mSoundCache.insert({filename, loadSound(filename)});
-            cached_sound = inserted.first;
-        }
-        const auto& buffer = cached_sound->second;
-        SDL_LockAudioDevice(mAudioDevice);
-        mPlayingSound.emplace_back(buffer.data(), buffer.size(), volume);
-        SDL_UnlockAudioDevice(mAudioDevice);
-    }
-    catch (const FileLoadException& exception)
-    {
-        std::cerr << "Warning: " << exception.what() << std::endl;
-        return false;
-    }
-    return true;
-}
-
-void SoundManager::playCallback(void* sound_mgr, Uint8* stream, int length)
-{
-    reinterpret_cast<SoundManager*>(sound_mgr)->handleCallback(stream, length);
-}
-
-void SoundManager::handleCallback(Uint8* stream, int length)
-{
-    SDL_memset(stream, 0, length);
-    int volume = int(SDL_MIX_MAXVOLUME * mVolume);
-
-    for (auto& sound : mPlayingSound)
-    {
-        auto start = sound.getCurrentSample();
-        auto avail = sound.advance(length);
-        SDL_MixAudioFormat(stream, start, mAudioSpec.format, avail, int(volume * sound.volume));
-    }
-    auto new_end = std::remove_if(begin(mPlayingSound), end(mPlayingSound),
-                                  [](const Sound& sound) { return sound.done(); });
-    mPlayingSound.erase(new_end, mPlayingSound.end());
-}
-
 SoundManager::SoundManager()
 {
-    mMute = false;
-
-    SDL_AudioSpec desiredSpec;
-    desiredSpec.freq = 44100;
-    desiredSpec.format = AUDIO_S16LSB;
-    desiredSpec.channels = 2;
-    desiredSpec.samples = 1024;
-    desiredSpec.callback = playCallback;
-    desiredSpec.userdata = this;
-
-    mAudioDevice = SDL_OpenAudioDevice(nullptr, 0, &desiredSpec, &mAudioSpec, SDL_AUDIO_ALLOW_FORMAT_CHANGE);
-
-    if (mAudioDevice == 0)
+    mOwnAudio = !SDL_WasInit(SDL_INIT_AUDIO);
+    if (mOwnAudio && SDL_InitSubSystem(SDL_INIT_AUDIO) != 0)
     {
-        std::cerr << "Warning: Couldn't open audio Device!" << std::endl;
-        std::cerr << "Reason: " << SDL_GetError() << std::endl;
+        std::cerr << "Audio unavailable: " << SDL_GetError() << '\n';
         return;
     }
-
-    if (desiredSpec.format != mAudioSpec.format)
+    if ((Mix_Init(MIX_INIT_OGG) & MIX_INIT_OGG) == 0)
     {
-        std::cerr << "Warning: Can't create device with desired audio spec!" << std::endl;
-        std::cerr << "Reason: " << SDL_GetError() << std::endl;
+        std::cerr << "Ogg Vorbis unavailable: " << Mix_GetError() << '\n';
     }
-
-    SDL_PauseAudioDevice(mAudioDevice, 0);
-    mVolume = 1.0;
+    if (Mix_OpenAudio(48000, AUDIO_F32SYS, 2, 1024) != 0)
+    {
+        std::cerr << "Audio unavailable: " << Mix_GetError() << '\n';
+        return;
+    }
+    Mix_AllocateChannels(EffectChannels);
+    mReady = true;
 }
 
 SoundManager::~SoundManager()
 {
-    if (mAudioDevice != 0)
+    if (mReady)
     {
-        SDL_UnlockAudioDevice(mAudioDevice);
-        SDL_CloseAudioDevice(mAudioDevice);
+        Mix_HaltMusic();
+        Mix_HaltChannel(-1);
+        mMusic.reset();
+        mChunks.clear();
+        Mix_CloseAudio();
+    }
+    Mix_Quit();
+    if (mOwnAudio)
+    {
+        SDL_QuitSubSystem(SDL_INIT_AUDIO);
     }
 }
 
-void SoundManager::setVolume(float volume)
+void SoundManager::selectLevel(const std::string& level)
 {
-    mVolume = clip_volume(volume);
-}
-
-void SoundManager::setMute(bool mute)
-{
-    // don't do anything if mute is set.
-    // this prevents the crash under xp when mute is set to false, as the second call to SDL_PauseAudio(false)
-    // never returns in that case.
-    if (mute == mMute)
+    const auto resolved = resolveLevel(level).id;
+    if (mLevel == resolved)
     {
         return;
     }
-
-    static bool locked = false;
-    if (mute)
+    if (mReady)
     {
-        if (!locked) // locking audio twice leads to a bug(??)
+        Mix_HaltChannel(-1);
+    }
+    mChunks.clear();
+    mFailedSounds.clear();
+    mLevel = resolved;
+    if (mScene == Scene::Match)
+    {
+        requestMusic(levelSoundCandidates(mLevel, "level"));
+    }
+}
+
+void SoundManager::setScene(Scene scene, bool newMatch)
+{
+    if (scene != mScene || newMatch)
+    {
+        mVictoryPlayed = false;
+        if (mReady)
         {
-            locked = true;
-            SDL_LockAudioDevice(mAudioDevice);
+            Mix_HaltChannel(-1);
         }
+    }
+    mScene = scene;
+    requestMusic(levelSoundCandidates(mScene == Scene::Match ? mLevel : "",
+                                      mScene == Scene::Match ? "level" : "menu"));
+}
+
+bool SoundManager::playCandidates(const std::vector<std::string>& candidates, float volume)
+{
+    if (!mReady)
+    {
+        return false;
+    }
+    if (mMute)
+    {
+        return true;
+    }
+    for (const auto& path : candidates)
+    {
+        if (mFailedSounds.count(path))
+        {
+            continue;
+        }
+        try
+        {
+            auto found = mChunks.find(path);
+            if (found == mChunks.end())
+            {
+                const auto bytes = readAudio(path);
+                auto* rw = SDL_RWFromConstMem(bytes.data(), int(bytes.size()));
+                auto* decoded = rw ? Mix_LoadWAV_RW(rw, 1) : nullptr;
+                if (!decoded)
+                {
+                    throw std::runtime_error(Mix_GetError());
+                }
+                found = mChunks.emplace(path, Chunk(decoded, Mix_FreeChunk)).first;
+            }
+            // Set volume before starting a reused channel, avoiding a loud first buffer.
+            for (int channel = 0; channel < EffectChannels; ++channel)
+            {
+                if (!Mix_Playing(channel))
+                {
+                    mEffectGains[channel] = clampVolume(volume);
+                    Mix_Volume(channel,
+                               int(MIX_MAX_VOLUME * mVolume * mEffectsVolume * mEffectGains[channel]));
+                    mLastEffectPath = path;
+                    return Mix_PlayChannel(channel, found->second.get(), 0) >= 0;
+                }
+            }
+            return false;
+        }
+        catch (const std::exception& error)
+        {
+            mFailedSounds.insert(path);
+            std::cerr << "Skipping audio " << path << ": " << error.what() << '\n';
+        }
+    }
+    return false;
+}
+
+bool SoundManager::playSound(const std::string& filename, float volume)
+{
+    const auto role = effectRole(filename);
+    if (role == "bums" || role == "chat" || role == "pfiff")
+    {
+        return playCandidates(levelSoundCandidates(mLevel, role), volume);
+    }
+    return playCandidates({filename}, volume);
+}
+
+bool SoundManager::playVictory()
+{
+    if (mScene != Scene::Match || mVictoryPlayed)
+    {
+        return false;
+    }
+    mVictoryPlayed = true;
+    const bool played = playCandidates(levelSoundCandidates(mLevel, "victory"), 1);
+    if (played)
+    {
+        ++mVictoryPlayCount;
+    }
+    return played;
+}
+
+void SoundManager::requestMusic(std::vector<std::string> candidates)
+{
+    if (candidates == mRequestedMusic)
+    {
+        return;
+    }
+    mRequestedMusic = std::move(candidates);
+    if (!mReady)
+    {
+        return;
+    }
+    mMusicPending = true;
+    if (Mix_PlayingMusic())
+    {
+        Mix_FadeOutMusic(180);
+        mSwitchMusicAt = SDL_GetTicks() + 180;
     }
     else
     {
-        mPlayingSound.clear();
-        SDL_UnlockAudioDevice(mAudioDevice);
-        locked = false;
+        mSwitchMusicAt = SDL_GetTicks();
+        update();
     }
-    mMute = mute;
-    SDL_PauseAudioDevice(mAudioDevice, (int)mute);
+}
+
+void SoundManager::update()
+{
+    if (mReady && mMusicPending && SDL_TICKS_PASSED(SDL_GetTicks(), mSwitchMusicAt))
+    {
+        startRequestedMusic();
+    }
+}
+
+void SoundManager::startRequestedMusic()
+{
+    mMusicPending = false;
+    Mix_HaltMusic();
+    mMusic.reset();
+    mMusicBytes.clear();
+    mMusicPath.clear();
+    for (const auto& path : mRequestedMusic)
+    {
+        try
+        {
+            mMusicBytes = readAudio(path);
+            auto* rw = SDL_RWFromConstMem(mMusicBytes.data(), int(mMusicBytes.size()));
+            mMusic.reset(rw ? Mix_LoadMUS_RW(rw, 1) : nullptr);
+            if (!mMusic)
+            {
+                throw std::runtime_error(Mix_GetError());
+            }
+            Mix_VolumeMusic(mMute ? 0 : int(MIX_MAX_VOLUME * mVolume * mMusicVolume));
+            if (Mix_FadeInMusic(mMusic.get(), -1, 180) != 0)
+            {
+                throw std::runtime_error(Mix_GetError());
+            }
+            mMusicPath = path;
+            ++mMusicStartCount;
+            return;
+        }
+        catch (const std::exception& error)
+        {
+            mMusic.reset();
+            mMusicBytes.clear();
+            std::cerr << "Skipping music " << path << ": " << error.what() << '\n';
+        }
+    }
+}
+
+bool SoundManager::musicPlaying() const
+{
+    return mReady && Mix_PlayingMusic() != 0;
+}
+
+void SoundManager::applyVolumes()
+{
+    if (!mReady)
+    {
+        return;
+    }
+    Mix_VolumeMusic(mMute ? 0 : int(MIX_MAX_VOLUME * mVolume * mMusicVolume));
+    for (int channel = 0; channel < EffectChannels; ++channel)
+    {
+        Mix_Volume(channel,
+                   mMute ? 0 : int(MIX_MAX_VOLUME * mVolume * mEffectsVolume * mEffectGains[channel]));
+    }
+}
+
+void SoundManager::setVolume(float value)
+{
+    mVolume = clampVolume(value);
+    applyVolumes();
+}
+void SoundManager::setEffectsVolume(float value)
+{
+    mEffectsVolume = clampVolume(value);
+    applyVolumes();
+}
+void SoundManager::setMusicVolume(float value)
+{
+    mMusicVolume = clampVolume(value);
+    applyVolumes();
+}
+void SoundManager::setMute(bool value)
+{
+    mMute = value;
+    applyVolumes();
 }

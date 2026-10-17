@@ -301,11 +301,13 @@ void OptionState::Menu::graphics()
     {
         auto title = backgroundTitles.find(name);
         backgroundLabels.push_back(title == backgroundTitles.end()
-                                       ? name.substr(0, name.size() - 4)
+                                       ? (name.compare(0, 7, "custom:") == 0
+                                              ? name.substr(7) + " (" + tr("Custom") + ")"
+                                              : name.substr(0, name.size() - 4))
                                        : translateUI(config.getString("language"), title->second));
     }
-    choice(332, tr("Background"), config, "background", backgrounds, backgroundLabels,
-           tr("Select an HD court background."));
+    choice(332, tr("Level"), config, "background", backgrounds, backgroundLabels,
+           tr("Select a level with its background and sounds."));
 #if HAVE_LIBGL
     choice(372, tr("Renderer"), config, "device", {"OpenGL", "SDL"}, {"OpenGL", "SDL"},
            tr("The renderer switches immediately."));
@@ -335,9 +337,23 @@ void OptionState::Menu::audio()
     {
         config.setFloat("global_volume", volume);
     }
-    toggle(196, tr("Mute"), config, "mute", tr("Mute all game sounds."));
-    if (button(40, 236, 180, tr("Test sound")))
+    float effects = config.getFloat("effects_volume", 1);
+    if (slider(40, 198, 350, tr("Effects volume"), effects,
+               std::to_string(int(std::lround(effects * 100))) + " %",
+               tr("Volume of impacts, whistles, chat and victory sounds.")))
     {
-        owner.playSound(SoundManager::IMPACT, volume);
+        config.setFloat("effects_volume", effects);
+    }
+    float music = config.getFloat("music_volume", 1);
+    if (slider(40, 248, 350, tr("Music / background"), music,
+               std::to_string(int(std::lround(music * 100))) + " %",
+               tr("Volume of menu and level music or background noise.")))
+    {
+        config.setFloat("music_volume", music);
+    }
+    toggle(302, tr("Mute"), config, "mute", tr("Mute all game sounds."));
+    if (button(40, 346, 180, tr("Test sound")))
+    {
+        owner.playSound(SoundManager::IMPACT, 1);
     }
 }

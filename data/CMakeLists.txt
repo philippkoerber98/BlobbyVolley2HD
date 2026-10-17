@@ -1,12 +1,12 @@
-# Runtime graphics come exclusively from the HD directories. Other categories
+# Runtime graphics live directly in gfx. Other categories
 # retain their source hierarchy (for example scripts/wide).
 function(add_runtime_archive directory extension)
     if(directory STREQUAL "gfx")
         file(GLOB archive_sources CONFIGURE_DEPENDS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
-            gfx/hd/*.png gfx/hd/*.webp gfx/hd/*.ttf gfx/hd/*.txt)
-    elseif(directory STREQUAL "backgrounds")
-        file(GLOB archive_sources CONFIGURE_DEPENDS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
-            backgrounds/hd/*.png backgrounds/hd/*.webp)
+            gfx/*.png gfx/*.webp gfx/*.ttf gfx/*.txt)
+    elseif(directory STREQUAL "sounds")
+        file(GLOB_RECURSE archive_sources CONFIGURE_DEPENDS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
+            sounds/*.wav sounds/*.ogg)
     else()
         file(GLOB_RECURSE archive_sources CONFIGURE_DEPENDS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
             ${directory}/*.${extension})
@@ -33,7 +33,6 @@ function(add_runtime_archive directory extension)
 endfunction()
 
 add_runtime_archive(gfx webp)
-add_runtime_archive(backgrounds webp)
 add_runtime_archive(sounds wav)
 add_runtime_archive(scripts lua)
 add_runtime_archive(rules lua)
@@ -43,7 +42,6 @@ set(install_files
 	${CMAKE_CURRENT_BINARY_DIR}/gfx.zip
 	${CMAKE_CURRENT_BINARY_DIR}/sounds.zip
 	${CMAKE_CURRENT_BINARY_DIR}/scripts.zip
-	${CMAKE_CURRENT_BINARY_DIR}/backgrounds.zip
 	${CMAKE_CURRENT_BINARY_DIR}/rules.zip
 	${CMAKE_CURRENT_SOURCE_DIR}/api.lua
 	${CMAKE_CURRENT_SOURCE_DIR}/bot_api.lua
@@ -67,3 +65,13 @@ elseif (UNIX AND NOT APPLE)
 endif (WIN32)
 
 set(data_files ${install_files} PARENT_SCOPE)
+
+# Level folders remain editable beside the Windows executable.
+if(WIN32)
+    install(DIRECTORY Levels "Custom Levels" DESTINATION .)
+elseif(APPLE AND BUILD_MACOS_BUNDLE)
+    install(DIRECTORY Levels DESTINATION blobby.app/Contents/Resources)
+    install(DIRECTORY "Custom Levels" DESTINATION .)
+else()
+    install(DIRECTORY Levels "Custom Levels" DESTINATION share/blobby)
+endif()

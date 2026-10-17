@@ -19,9 +19,9 @@ struct NetRodOcclusion
 inline SDL_Surface* extractNetRod(SDL_Surface* background)
 {
     auto* rgba = SDL_ConvertSurfaceFormat(background, SDL_PIXELFORMAT_RGBA32, 0);
-    const int stripWidth = NetRodOcclusion::w * rgba->h / 600;
+    const int stripWidth = (std::max)(1, (std::min)(rgba->w, NetRodOcclusion::w * rgba->h / 600));
     SDL_Rect area = {(rgba->w - stripWidth) / 2, NetRodOcclusion::y * rgba->h / 600, stripWidth,
-                     NetRodOcclusion::h * rgba->h / 600};
+                     (std::max)(1, NetRodOcclusion::h * rgba->h / 600)};
     auto* result = SDL_CreateRGBSurfaceWithFormat(0, area.w, area.h, 32, SDL_PIXELFORMAT_RGBA32);
     SDL_FillRect(result, nullptr, 0);
     auto material = [](const Uint8* p, int kind)

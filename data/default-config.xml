@@ -24,6 +24,8 @@
 	<var name="gamefps" value="75"/>
 	<var name="render_fps" value="0"/>
 	<var name="global_volume" value="1.000000"/>
+	<var name="effects_volume" value="1.000000"/>
+	<var name="music_volume" value="1.000000"/>
 	<var name="mute" value="false"/>
 	<var name="scoretowin" value="15"/>
 	<var name="showfps" value="true"/>

@@ -24,62 +24,95 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
 #pragma once
-
 #include "BlobbyDebug.h"
 #include <SDL.h>
+#include <SDL_mixer.h>
+#include <array>
 #include <map>
+#include <memory>
+#include <set>
 #include <string>
 #include <vector>
 
-/// \brief struct for holding sound data
-struct Sound : public ObjectCounter<Sound>
-{
-    Sound(const Uint8* data_, int length_, float volume_);
-
-    const Uint8* getCurrentSample() const;
-    int advance(int amount);
-    bool done() const;
-
-    const Uint8* data = nullptr;
-    int length = 0;
-    int position = 0;
-    float volume = 1.f;
-};
-
-/*! \class SoundManager
-    \brief class managing game sound.
-    \details Managing loading, converting to target format, muting, setting volume
-            and, of couse, playing of sounds.
-*/
 class SoundManager : public ObjectCounter<SoundManager>
 {
   public:
-    explicit SoundManager();
+    enum class Scene
+    {
+        Menu,
+        Match
+    };
+    SoundManager();
     ~SoundManager();
+    SoundManager(const SoundManager&) = delete;
+    SoundManager& operator=(const SoundManager&) = delete;
 
     bool playSound(const std::string& filename, float volume);
+    bool playVictory();
+    void selectLevel(const std::string& level);
+    void setScene(Scene scene, bool newMatch = false);
+    void update();
     void setVolume(float volume);
+    void setEffectsVolume(float volume);
+    void setMusicVolume(float volume);
     void setMute(bool mute);
 
-    // Known Sounds
+    bool ready() const
+    {
+        return mReady;
+    }
+    const std::string& musicPath() const
+    {
+        return mMusicPath;
+    }
+    bool musicPlaying() const;
+    float effectsVolume() const
+    {
+        return mEffectsVolume;
+    }
+    float musicVolume() const
+    {
+        return mMusicVolume;
+    }
+    unsigned victoryPlayCount() const
+    {
+        return mVictoryPlayCount;
+    }
+    unsigned musicStartCount() const
+    {
+        return mMusicStartCount;
+    }
+    const std::string& lastEffectPath() const
+    {
+        return mLastEffectPath;
+    }
+
     static constexpr const char* IMPACT = "sounds/bums.wav";
     static constexpr const char* WHISTLE = "sounds/pfiff.wav";
     static constexpr const char* CHAT = "sounds/chat.wav";
 
   private:
-    SDL_AudioDeviceID mAudioDevice = 0;
+    using Chunk = std::unique_ptr<Mix_Chunk, decltype(&Mix_FreeChunk)>;
+    using Music = std::unique_ptr<Mix_Music, decltype(&Mix_FreeMusic)>;
+    static constexpr int EffectChannels = 32;
+    std::map<std::string, Chunk> mChunks;
+    std::set<std::string> mFailedSounds;
+    // Keep compressed bytes alive for the streaming decoder and its SDL_RWops.
+    std::vector<char> mMusicBytes;
+    Music mMusic{nullptr, Mix_FreeMusic};
+    std::vector<std::string> mRequestedMusic;
+    std::array<float, EffectChannels> mEffectGains{};
+    std::string mLevel, mMusicPath, mLastEffectPath;
+    Scene mScene = Scene::Menu;
+    float mVolume = 1, mEffectsVolume = 1, mMusicVolume = 1;
+    bool mReady = false, mOwnAudio = false, mMute = false;
+    bool mMusicPending = false, mVictoryPlayed = false;
+    Uint32 mSwitchMusicAt = 0;
+    unsigned mVictoryPlayCount = 0;
+    unsigned mMusicStartCount = 0;
 
-    /// This maps filenames to sound buffers, which are always in
-    /// target format
-    std::map<std::string, std::vector<Uint8>> mSoundCache;
-    std::vector<Sound> mPlayingSound;
-    SDL_AudioSpec mAudioSpec;
-
-    float mVolume;
-    bool mMute;
-
-    void handleCallback(Uint8* stream, int length);
-
-    std::vector<Uint8> loadSound(const std::string& filename) const;
-    static void playCallback(void* sound_mgr, Uint8* stream, int length);
+    bool playCandidates(const std::vector<std::string>& candidates, float volume);
+    void requestMusic(std::vector<std::string> candidates);
+    void startRequestedMusic();
+    void applyVolumes();
 };

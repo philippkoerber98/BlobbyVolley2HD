@@ -120,6 +120,9 @@ void OptionState::Menu::apply()
             }
         }
         app.getSoundManager().setVolume(config.getFloat("global_volume", 1));
+        app.getSoundManager().setEffectsVolume(config.getFloat("effects_volume", 1));
+        app.getSoundManager().setMusicVolume(config.getFloat("music_volume", 1));
+        app.getSoundManager().selectLevel(config.getString("background", "strand1.bmp"));
         app.getSoundManager().setMute(config.getBool("mute"));
         if (auto* speed = SpeedController::getMainInstance())
         {

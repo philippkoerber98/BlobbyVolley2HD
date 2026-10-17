@@ -36,6 +36,10 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 class GameState : public State
 {
   public:
+    bool isMatchState() const override
+    {
+        return true;
+    }
     explicit GameState(DuelMatch* match = nullptr);
     ~GameState() override;
 
@@ -71,6 +75,7 @@ class GameState : public State
     /// this function draws the winning player screen
     /// does not display any buttons because they depend on the game type
     bool displayWinningPlayerScreen(PlayerSide winner);
+    void resetCelebration();
     int displayVictoryActions(bool rematch, bool replay = false);
     bool beginDialog(const std::string& key, int count);
     WarmUI::Navigation mDialogNavigation;

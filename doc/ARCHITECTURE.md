@@ -23,10 +23,12 @@
 - `RenderManagerAssets.cpp`: HD image decoding, logical names, and cached sprite dimensions.
 - `RenderManagerText.cpp`: runtime glyph atlas selection and text layout.
 - `RenderManagerSDL.*` / `RenderManagerGL2D.*`: the two drawing backends.
-- `RuntimeFont.*`: Nunito outline rasterization; the TTF and its license are under `data/gfx/hd`.
+- `RuntimeFont.*`: Nunito outline rasterization; the TTF and its license are under `data/gfx`.
 - `AssetTransforms.h`: image processing, crop geometry, ball rotation, and shadow/pole layering.
-- `HDImagePaths.h`: prefers WebP, with PNG supported when no WebP exists.
-- `BackgroundSettings.h`: background enumeration and safe fallback for renamed files.
+- `ImagePaths.h`: prefers WebP, with PNG supported when no WebP exists.
+- `LevelCatalog.*` / `BackgroundSettings.h`: folder discovery, saved background IDs,
+  image selection, and per-role sound fallback.
+- `SoundManager.*`: SDL2_mixer Vorbis/WAV effects, streamed music, audio buses and scene transitions.
 - `IMGUI.*` / `WarmUI.h`: buffered widgets, styling, and presentation helpers.
 
 ## Menus
@@ -44,7 +46,8 @@ Options apply completed edits immediately; changing render FPS must not change m
 
 ## Assets and compatibility names
 
-Only `data/gfx/hd` and `data/backgrounds/hd` are packaged as graphics.
+Graphics are packaged from `data/gfx`; level images and optional audio remain
+in editable `Levels/` and `Custom Levels/` folders.
 Some source calls and saved preferences use historical names such as `gfx/titel.bmp`
 or `strand1.bmp`. These are logical identifiers resolved to HD files; they do not
 require physical BMP copies. `metrics.txt` stores logical sprite dimensions.

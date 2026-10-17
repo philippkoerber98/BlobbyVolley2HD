@@ -46,6 +46,7 @@ set(BLOBBY_COMMON_SOURCES
 
 set (BLOBBY_CLIENT_SOURCES ${BLOBBY_COMMON_SOURCES}
 	ApplicationLoop.cpp ApplicationLoop.h
+	LevelCatalog.cpp LevelCatalog.h
 	Blood.cpp Blood.h
 	TextManager.cpp TextManager.h
 	IMGUI.cpp IMGUI.h
@@ -104,6 +105,12 @@ if (UNIX AND (NOT ANDROID))
 endif()
 
 find_package(SDL2_image CONFIG REQUIRED)
+find_package(SDL2_mixer CONFIG REQUIRED)
+if(TARGET SDL2_mixer::SDL2_mixer)
+    set(BLOBBY_AUDIO_LIBRARY SDL2_mixer::SDL2_mixer)
+else()
+    set(BLOBBY_AUDIO_LIBRARY SDL2_mixer::SDL2_mixer-static)
+endif()
 set(BLOBBY_COMMON_LIBS lua::lua blobnet::blobnet tinyxml2::tinyxml2 PhysFS::PhysFS SDL2::SDL2main SDL2::SDL2 SDL2_image::SDL2_image Boost::boost)
 
 # other additional dependencies
@@ -120,10 +127,12 @@ else ()
     add_executable(blobby main.cpp ${BLOBBY_CLIENT_SOURCES})
 endif ()
 
-target_link_libraries(blobby ${BLOBBY_COMMON_LIBS} ${OPENGL_LIBRARIES})
+target_link_libraries(blobby ${BLOBBY_COMMON_LIBS} ${BLOBBY_AUDIO_LIBRARY} ${OPENGL_LIBRARIES})
 
 add_executable(assets-smoke-test EXCLUDE_FROM_ALL ../test/AssetsSmokeTest.cpp ../test/FrameTimingTest.cpp ${BLOBBY_CLIENT_SOURCES})
-target_link_libraries(assets-smoke-test PRIVATE ${BLOBBY_COMMON_LIBS} ${OPENGL_LIBRARIES})
+target_sources(assets-smoke-test PRIVATE ../test/LevelAudioTest.cpp)
+target_compile_definitions(assets-smoke-test PRIVATE BLOBBY_TEST_SOURCE_DIR="${PROJECT_SOURCE_DIR}/test")
+target_link_libraries(assets-smoke-test PRIVATE ${BLOBBY_COMMON_LIBS} ${BLOBBY_AUDIO_LIBRARY} ${OPENGL_LIBRARIES})
 
 
 if (UNIX AND (NOT ANDROID) OR WIN32)
@@ -132,10 +141,10 @@ if (UNIX AND (NOT ANDROID) OR WIN32)
 endif ()
 if (UNIX AND (NOT ANDROID))
 	add_executable(blobby-runtest EXCLUDE_FROM_ALL runtest.cpp ${BLOBBY_CLIENT_SOURCES})
-	target_link_libraries(blobby-runtest ${BLOBBY_COMMON_LIBS} ${OPENGL_LIBRARIES})
+	target_link_libraries(blobby-runtest ${BLOBBY_COMMON_LIBS} ${BLOBBY_AUDIO_LIBRARY} ${OPENGL_LIBRARIES})
 
 	add_executable(botbench EXCLUDE_FROM_ALL botbench.cpp ${BLOBBY_CLIENT_SOURCES})
-	target_link_libraries(botbench ${BLOBBY_COMMON_LIBS} ${OPENGL_LIBRARIES})
+	target_link_libraries(botbench ${BLOBBY_COMMON_LIBS} ${BLOBBY_AUDIO_LIBRARY} ${OPENGL_LIBRARIES})
 endif ()
 
 if (MSYS)
@@ -178,7 +187,7 @@ foreach(HEADER ${HEADERS})
 	target_sources(test-compile-headers PUBLIC ${TEST_COMPILE_FILE})
 endforeach()
 
-target_link_libraries(test-compile-headers PRIVATE ${BLOBBY_COMMON_LIBS})
+target_link_libraries(test-compile-headers PRIVATE ${BLOBBY_COMMON_LIBS} ${BLOBBY_AUDIO_LIBRARY})
 
 add_executable(display-viewport-test EXCLUDE_FROM_ALL ../test/DisplayViewportTest.cpp)
 target_link_libraries(display-viewport-test PRIVATE SDL2::SDL2main SDL2::SDL2)

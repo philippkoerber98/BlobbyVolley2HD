@@ -2,7 +2,7 @@
 #include "DisplaySettings.h"
 #include "DuelMatchState.h"
 #include "FileSystem.h"
-#include "HDImagePaths.h"
+#include "ImagePaths.h"
 #include "RenderManager.h"
 #include <SDL.h>
 #include <SDL_image.h>
@@ -19,6 +19,7 @@ void testRoundedPanels(const std::string& outputDirectory);
 void testSceneBlurAspect(const std::string& outputDirectory);
 void testWidescreen(const std::string& outputDirectory);
 void testBotModes(const std::string& outputDirectory);
+void testLevelAudio(const std::string& outputDirectory);
 
 class AssetProbe : public RenderManager
 {
@@ -88,6 +89,7 @@ int main(int argc, char** argv)
     }
     try
     {
+        SDL_setenv("SDL_AUDIODRIVER", "dummy", 1);
         const bool hardware = argc == 4 && std::string(argv[3]) == "--hardware";
         if (!hardware)
         {
@@ -104,11 +106,19 @@ int main(int argc, char** argv)
         }
         FileSystem fs(argv[0]);
         fs.addToSearchPath(argv[1]);
-        for (const char* archive : {"gfx", "backgrounds", "sounds", "scripts", "rules"})
+        fs.addToSearchPath(fs.join(argv[1], ".."));
+        for (const char* archive : {"gfx", "sounds", "scripts", "rules"})
         {
             fs.addToSearchPath(std::string(argv[1]) + "/" + archive + ".zip");
         }
+        if (argc == 4 && std::string(argv[3]) == "--audio-only")
+        {
+            testLevelAudio(argv[2]);
+            SDL_Quit();
+            return 0;
+        }
         testFrameTiming();
+        testLevelAudio(argv[2]);
         testSceneBlurAspect(argv[2]);
         testTabbedOptions(argv[2]);
         testGameMenus(argv[2]);
@@ -138,7 +148,7 @@ int main(int argc, char** argv)
         }
         SDL_FreeSurface(material);
         SDL_FreeSurface(tinted);
-        auto* champion = probe.loadSurface("gfx/hd/champion.webp");
+        auto* champion = probe.loadSurface("gfx/champion.webp");
         if (champion->w < 1024 || champion->h < 1024 || !champion->format->Amask)
         {
             throw std::runtime_error("Champion must retain native HD resolution and transparency");
@@ -218,7 +228,7 @@ int main(int argc, char** argv)
         // Rotations inside one former 22.5-degree frame must now differ,
         // while lighting remains brighter above the ball at every angle.
         {
-            auto* source = probe.loadSurface("gfx/hd/volleyball.png");
+            auto* source = probe.loadSurface("gfx/volleyball.png");
             auto* panels = rotateVolleyball(source, 1, VolleyballLayer::Panels);
             auto* lighting = rotateVolleyball(source, 1, VolleyballLayer::Lighting);
             auto* canvas = SDL_CreateRGBSurfaceWithFormat(0, 256, 256, 32, SDL_PIXELFORMAT_RGBA32);
@@ -339,7 +349,7 @@ int main(int argc, char** argv)
             save(*render, std::string(argv[2]) + "/assets-stadium.png");
             render->refresh();
             if (fs.exists("backgrounds/strand3.bmp") ||
-                fs.exists(preferredHDImage("backgrounds/hd/strand3.png")))
+                fs.exists(preferredImage("Levels/strand3/background.png")))
             {
                 if (!render->setBackground("backgrounds/strand3.bmp"))
                 {
@@ -381,7 +391,7 @@ int main(int argc, char** argv)
             {
                 if (!fs.exists("backgrounds/strand" + std::to_string(background) + ".bmp") &&
                     !fs.exists(
-                        preferredHDImage("backgrounds/hd/strand" + std::to_string(background) + ".png")))
+                        preferredImage("Levels/strand" + std::to_string(background) + "/background.png")))
                 {
                     continue;
                 }

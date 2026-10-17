@@ -3,7 +3,7 @@
 #include <string>
 
 // Prefer one compressed HD image; keep PNG as an authoring/fallback format.
-inline std::string preferredHDImage(const std::string& path)
+inline std::string preferredImage(const std::string& path)
 {
     const auto dot = path.find_last_of('.');
     if (dot == std::string::npos)

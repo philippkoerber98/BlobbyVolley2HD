@@ -73,8 +73,11 @@ New-Item -ItemType Directory -Force $dataDirectory, $licenseDirectory | Out-Null
 foreach ($name in @('blobby.exe', 'blobby-server.exe')) {
     Copy-Item -LiteralPath (Join-Path $binaryDirectory $name) -Destination $package
 }
-foreach ($name in @('gfx.zip', 'backgrounds.zip', 'sounds.zip', 'scripts.zip', 'rules.zip')) {
+foreach ($name in @('gfx.zip', 'sounds.zip', 'scripts.zip', 'rules.zip')) {
     Copy-Item -LiteralPath (Join-Path $projectRoot "out/build/data/$name") -Destination $dataDirectory
+}
+foreach ($folder in @('Levels', 'Custom Levels')) {
+    Copy-Item -LiteralPath (Join-Path $projectRoot "data/$folder") -Destination $package -Recurse
 }
 foreach ($file in Get-ChildItem -LiteralPath (Join-Path $projectRoot 'data') -File) {
     if ($file.Extension -in @('.xml', '.lua')) {
@@ -89,11 +92,11 @@ Copy-RuntimeDependencies -PackageDirectory $package -SearchDirectories @($binary
 foreach ($name in @('COPYING', 'AUTHORS')) {
     Copy-Item -LiteralPath (Join-Path $projectRoot $name) -Destination $package
 }
-foreach ($name in @('sdl2', 'sdl2-image', 'physfs', 'libpng', 'zlib', 'libwebp')) {
+foreach ($name in @('sdl2', 'sdl2-image', 'physfs', 'libpng', 'zlib', 'libwebp', 'sdl2-mixer', 'libogg', 'libvorbis')) {
     $notice = Join-Path $projectRoot "out/build/vcpkg_installed/x64-windows/share/$name/copyright"
     Copy-Item -LiteralPath $notice -Destination (Join-Path $licenseDirectory "$name.txt")
 }
-Copy-Item -LiteralPath (Join-Path $projectRoot 'data/gfx/hd/menu-font-license.txt') -Destination (Join-Path $licenseDirectory 'Nunito-OFL.txt')
+Copy-Item -LiteralPath (Join-Path $projectRoot 'data/gfx/menu-font-license.txt') -Destination (Join-Path $licenseDirectory 'Nunito-OFL.txt')
 
 @('@echo off', 'cd /d "%~dp0"', 'start "" "%~dp0blobby.exe"') |
     Set-Content -LiteralPath (Join-Path $package 'Start-Blobby.cmd') -Encoding ascii
@@ -108,7 +111,9 @@ Copy-Item -LiteralPath (Join-Path $projectRoot 'data/gfx/hd/menu-font-license.tx
     '',
     'Languages: German, English, Czech, Spanish, French, and Italian.',
     'Default background: strand1. Settings start with clean project defaults.',
-    'Graphics archives contain HD artwork and the runtime Nunito TTF only.',
+    'Graphics archives contain artwork and the runtime Nunito TTF only.',
+    'DE: Eigene Level als Unterordner in Custom Levels ablegen; siehe README dort.',
+    'EN: Add your own level folders to Custom Levels; see its README.',
     '',
     'The game license is in COPYING. Third-party notices are in licenses/.',
     'When distributing a binary, make its corresponding GPL source available.'

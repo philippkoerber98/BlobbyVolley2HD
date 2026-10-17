@@ -31,7 +31,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #include "FileExceptions.h"
 #include "FileSystem.h"
 #include "Global.h"
-#include "HDImagePaths.h"
+#include "ImagePaths.h"
 #include "NetRodOcclusion.h"
 
 static void updateGameViewport(SDL_Window* window, float courtWidth = 800.f)
@@ -294,9 +294,9 @@ void RenderManagerGL2D::init(int xResolution, int yResolution, bool fullscreen)
 
     mBallShadow = loadTexture(loadSurface("gfx/schball.bmp"), false);
 
-    if (FileSystem::getSingleton().exists(preferredHDImage("gfx/hd/volleyball.png")))
+    if (FileSystem::getSingleton().exists(preferredImage("gfx/volleyball.png")))
     {
-        auto* source = loadSurface("gfx/hd/volleyball.png");
+        auto* source = loadSurface("gfx/volleyball.png");
         mBallPanels = loadTexture(rotateVolleyball(source, 1, VolleyballLayer::Panels), false);
         mBallLighting = loadTexture(rotateVolleyball(source, 1, VolleyballLayer::Lighting), false);
         SDL_FreeSurface(source);
