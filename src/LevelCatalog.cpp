@@ -126,3 +126,18 @@ std::vector<std::string> levelSoundCandidates(const std::string& level, const st
     }
     return result;
 }
+
+std::vector<std::string> levelBallCandidates(const std::string& level)
+{
+    std::vector<std::string> result;
+    const auto directory = resolveLevel(level).directory;
+    for (const char* name : {"ball.webp", "ball.png"})
+    {
+        auto path = matchingFile(directory, name);
+        if (!path.empty())
+        {
+            result.push_back(std::move(path));
+        }
+    }
+    return result;
+}

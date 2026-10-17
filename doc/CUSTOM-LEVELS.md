@@ -17,6 +17,14 @@ The net pole must remain centered and aligned with existing artwork. Use a
 background from `Levels/` as a reference. Gameplay geometry is never read from
 images. Broken selected images recover to the default background.
 
+Optional ball: `ball.webp` or `ball.png` (WebP first, case-insensitive). Use a
+square transparent image with a centered round ball filling the canvas, ideally
+512 x 512 or larger. The renderer retains colors, rotates the artwork smoothly
+and overlays fixed lighting. Missing, undecodable or non-square images fall back
+to the standard ball (trying PNG if WebP is invalid). Switching levels restores
+the appropriate ball in both SDL and OpenGL. Only appearance changes; collision
+size, physics and network/replay data remain unchanged.
+
 Optional audio, with `.ogg` preferred over `.wav` for the same base name:
 
 | Base name | Playback | Bus |
