@@ -98,9 +98,9 @@ SDL_Surface* RenderManager::loadSurface(const std::string& filename)
         }
         return blurred;
     }
-    auto readImage = [](const std::string& path) -> SDL_Surface*
+    auto readImage = [](const std::string& path, bool preferCompressed = true) -> SDL_Surface*
     {
-        FileRead file(preferredImage(path));
+        FileRead file(preferCompressed ? preferredImage(path) : path);
         int fileLength = file.length();
         auto content = file.readRawBytes(fileLength);
         auto* image = IMG_Load_RW(SDL_RWFromMem(content.data(), fileLength), 1);
@@ -110,6 +110,42 @@ SDL_Surface* RenderManager::loadSurface(const std::string& filename)
         }
         return image;
     };
+
+    // Per-level ball artwork uses the same continuous rotation and fixed lighting.
+    // Keep RGB detail intact; the default volleyball's seam extraction is grayscale.
+    const std::string ballPrefix = "level-ball/";
+    if (filename.compare(0, ballPrefix.size(), ballPrefix) == 0)
+    {
+        for (const auto& path : levelBallCandidates(filename.substr(ballPrefix.size())))
+        {
+            try
+            {
+                std::unique_ptr<SDL_Surface, decltype(&SDL_FreeSurface)> image(readImage(path, false),
+                                                                               SDL_FreeSurface);
+                if (image->w != image->h || image->w < 2)
+                {
+                    continue;
+                }
+                auto* result = scaleAsset(image.get(), 512, 512);
+                if (result)
+                {
+                    return result;
+                }
+            }
+            catch (const std::exception&)
+            {
+                // Optional artwork must never prevent a level from loading.
+            }
+        }
+        std::unique_ptr<SDL_Surface, decltype(&SDL_FreeSurface)> source(readImage("gfx/volleyball.png"),
+                                                                        SDL_FreeSurface);
+        auto* result = rotateVolleyball(source.get(), 1, VolleyballLayer::Panels);
+        if (!result)
+        {
+            BOOST_THROW_EXCEPTION(FileLoadException(filename));
+        }
+        return result;
+    }
 
     if (filename.compare(0, 12, "backgrounds/") == 0)
     {

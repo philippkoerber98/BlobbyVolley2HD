@@ -248,67 +248,39 @@ const char* MainMenuState::getStateName() const
     return "MainMenuState";
 }
 
-CreditsState::CreditsState()
-{
-    mYPosition = 600;
-}
+CreditsState::CreditsState() = default;
 
 void CreditsState::step_impl()
 {
     IMGUI& imgui = getIMGUI();
-    imgui.doCursor();
-    imgui.doImage(GEN_ID, Vector2(400.0, 300.0), "background");
-    imgui.doOverlay(GEN_ID, Vector2(0.0, 0.0), Vector2(800.0, 600.0));
-
-    const float xPosition = 50;
-
-    imgui.doText(GEN_ID, Vector2(xPosition, mYPosition), TextManager::CRD_PROGRAMMERS);
-    imgui.doText(GEN_ID, Vector2(xPosition, mYPosition + 30), "Daniel Knobe");
-    imgui.doText(GEN_ID, Vector2(xPosition, mYPosition + 60), "  (daniel-knobe(at)web.de)", TF_SMALL_FONT);
-    imgui.doText(GEN_ID, Vector2(xPosition, mYPosition + 85), "Jonathan Sieber");
-    imgui.doText(GEN_ID, Vector2(xPosition, mYPosition + 115), "  (jonathan_sieber(at)yahoo.de)",
-                 TF_SMALL_FONT);
-    imgui.doText(GEN_ID, Vector2(xPosition, mYPosition + 140), "Erik Schultheis");
-    imgui.doText(GEN_ID, Vector2(xPosition, mYPosition + 170), "  (erik-schultheis(at)freenet.de)",
-                 TF_SMALL_FONT);
-
-    imgui.doText(GEN_ID, Vector2(xPosition, mYPosition + 210), TextManager::CRD_GRAPHICS);
-    imgui.doText(GEN_ID, Vector2(xPosition, mYPosition + 240), "Silvio Mummert");
-    imgui.doText(GEN_ID, Vector2(xPosition, mYPosition + 270), "  (mummertathome(at)t-online.de)",
-                 TF_SMALL_FONT);
-    imgui.doText(GEN_ID, Vector2(xPosition, mYPosition + 295), "Richard Bertrand");
-    imgui.doText(GEN_ID, Vector2(xPosition, mYPosition + 325), "  (ricbertrand(at)hotmail.com)",
-                 TF_SMALL_FONT);
-
-    imgui.doText(GEN_ID, Vector2(xPosition, mYPosition + 365), TextManager::CRD_THX);
-    imgui.doText(GEN_ID, Vector2(xPosition, mYPosition + 395), "Daniel Skoraszewsky");
-    imgui.doText(GEN_ID, Vector2(xPosition, mYPosition + 425), "  (skoraszewsky(at)t-online.de)",
-                 TF_SMALL_FONT);
-
-    if (mYPosition > 20)
+    using namespace WarmUI;
+    page(imgui, translateUI(language(), "Credits"));
+    text(imgui, 40, 578, translateUI(language(), "D-pad: navigate    A: select    B: back"), 16);
+    panel(imgui, 40, 100, 720, 390);
+    text(imgui, 62, 116, imgui.getText(TextManager::CRD_PROGRAMMERS), 24, 2);
+    text(imgui, 62, 156, "Daniel Knobe", 22);
+    text(imgui, 62, 184, "daniel-knobe(at)web.de", 17);
+    text(imgui, 62, 224, "Jonathan Sieber", 22);
+    text(imgui, 62, 252, "jonathan_sieber(at)yahoo.de", 17);
+    text(imgui, 62, 292, "Erik Schultheis", 22);
+    text(imgui, 62, 320, "erik-schultheis(at)freenet.de", 17);
+    text(imgui, 420, 116, imgui.getText(TextManager::CRD_GRAPHICS), 24, 2);
+    text(imgui, 420, 156, "Silvio Mummert", 22);
+    text(imgui, 420, 184, "mummertathome(at)t-online.de", 16);
+    text(imgui, 420, 224, "Richard Bertrand", 22);
+    text(imgui, 420, 252, "ricbertrand(at)hotmail.com", 17);
+    text(imgui, 62, 376, imgui.getText(TextManager::CRD_THX), 24, 2);
+    text(imgui, 62, 414, "Daniel Skoraszewsky", 22);
+    text(imgui, 62, 442, "skoraszewsky(at)t-online.de", 17);
+    if (imgui.doButton(GEN_ID, Vector2(40, 530), "www.blobbyvolley.de", TF_NORMAL, 220))
     {
-        mYPosition -= 2.5;
+        SDL_OpenURL("https://www.blobbyvolley.de");
     }
-
-    if (imgui.doButton(GEN_ID, Vector2(74.0, 530.0), TextManager::LBL_OK))
+    if (imgui.doButton(GEN_ID, Vector2(620, 530), TextManager::LBL_BACK, TF_NORMAL, 140))
     {
         switchState(new MainMenuState());
+        return;
     }
-
-#if SDL_VERSION_ATLEAST(2, 0, 14)
-    {
-        SDL_version linked;
-        SDL_GetVersion(&linked);
-
-        if (SDL_VERSIONNUM(linked.major, linked.minor, linked.patch) >= SDL_VERSIONNUM(2, 0, 14))
-        {
-            if (imgui.doButton(GEN_ID, Vector2(294.0, 530.0), "www.blobbyvolley.de"))
-            {
-                SDL_OpenURL("https://www.blobbyvolley.de");
-            }
-        }
-    }
-#endif
 }
 
 const char* CreditsState::getStateName() const

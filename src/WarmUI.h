@@ -95,4 +95,20 @@ inline void shade(IMGUI& g, const std::string& key)
     g.doSceneBlur(g.getNextId(), key);
     g.doOverlay(g.getNextId(), Vector2(0, 0), Vector2(800, 600));
 }
+inline void page(IMGUI& g, const std::string& title)
+{
+    g.useMenuStyle();
+    g.doInactiveMode(false);
+    g.doCursor();
+    UserConfig config;
+    config.loadFile("config.xml");
+    language() = config.getString("language", "en");
+    g.doImage(g.getNextId(), Vector2(400, 300),
+              "menu-backgrounds/" + config.getString("background", "strand1.bmp"), Vector2(800, 600));
+    g.doOverlay(g.getNextId(), Vector2(0, 0), Vector2(800, 600));
+    const auto titleHeight =
+        (std::min)(36.f, 36.f * 550 / (std::max)(1.f, RenderManager::menuTextWidth(title, 36)));
+    text(g, 40, 28, title, titleHeight);
+    g.doImage(g.getNextId(), Vector2(700, 43), "gfx/titel.bmp", Vector2(120, 69));
+}
 } // namespace WarmUI

@@ -19,6 +19,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 =============================================================================*/
 
 #include "DedicatedServer.h"
+#include <stdexcept>
 
 #include <algorithm>
 #include <iostream>
@@ -56,7 +57,7 @@ DedicatedServer::DedicatedServer(ServerInfo info, const std::vector<std::string>
     if (!mServer->access([&](RakServer& srv) { return srv.Start(max_clients, 1, mServerInfo.port); }))
     {
         syslog(LOG_ERR, "Couldn't bind to port %i, exiting", mServerInfo.port);
-        throw(2);
+        throw std::runtime_error("Could not bind server UDP port " + std::to_string(mServerInfo.port));
     }
 
     /// \todo this code should be places in ServerInfo
@@ -401,7 +402,6 @@ void DedicatedServer::processEnterServer(PlayerID source, RakNet::BitStream& dat
     if (mPlayerHosted && mMatchMaker.getOpenGamesCount() != 0)
     {
         RakNet::BitStream stream;
-        stream.Write((unsigned char)ID_LOBBY);
         stream.Write((unsigned char)LobbyPacketType::JOIN_GAME);
         auto writer = createGenericWriter(&stream);
         writer->uint32(mMatchMaker.getOpenGameIDs().front());

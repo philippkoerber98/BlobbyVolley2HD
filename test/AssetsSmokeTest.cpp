@@ -19,6 +19,9 @@ void testRoundedPanels(const std::string& outputDirectory);
 void testSceneBlurAspect(const std::string& outputDirectory);
 void testWidescreen(const std::string& outputDirectory);
 void testBotModes(const std::string& outputDirectory);
+void testLAN();
+void testHeldSliderInput();
+void testSecondaryMenus(const std::string& outputDirectory);
 void testLevelAudio(const std::string& outputDirectory);
 
 class AssetProbe : public RenderManager
@@ -90,7 +93,8 @@ int main(int argc, char** argv)
     try
     {
         SDL_setenv("SDL_AUDIODRIVER", "dummy", 1);
-        const bool hardware = argc == 4 && std::string(argv[3]) == "--hardware";
+        const bool hardware =
+            argc == 4 && (std::string(argv[3]) == "--hardware" || std::string(argv[3]) == "--menus-hardware");
         if (!hardware)
         {
             SDL_setenv("SDL_VIDEODRIVER", "dummy", 1);
@@ -117,11 +121,27 @@ int main(int argc, char** argv)
             SDL_Quit();
             return 0;
         }
+        if (argc == 4 && std::string(argv[3]) == "--lan-only")
+        {
+            testLAN();
+            SDL_Quit();
+            return 0;
+        }
+        if (argc == 4 &&
+            (std::string(argv[3]) == "--menus-only" || std::string(argv[3]) == "--menus-hardware"))
+        {
+            testHeldSliderInput();
+            testSecondaryMenus(argv[2]);
+            SDL_Quit();
+            return 0;
+        }
         testFrameTiming();
+        testHeldSliderInput();
         testLevelAudio(argv[2]);
         testSceneBlurAspect(argv[2]);
         testTabbedOptions(argv[2]);
         testGameMenus(argv[2]);
+        testSecondaryMenus(argv[2]);
         testRoundedPanels(argv[2]);
         testPresentation(argv[2]);
         testWindowDecorations(argv[2]);

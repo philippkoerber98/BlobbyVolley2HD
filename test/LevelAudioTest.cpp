@@ -137,6 +137,31 @@ void testLevelAudio(const std::string& outputDirectory)
         auto* background = renderer.loadSurface("backgrounds/custom:Audio Test");
         requireAudio(background->w == 32 && background->h == 18, "Custom image dimensions were changed");
         SDL_FreeSurface(background);
+        auto* ball = SDL_CreateRGBSurfaceWithFormat(0, 64, 64, 32, SDL_PIXELFORMAT_RGBA32);
+        SDL_FillRect(ball, nullptr, SDL_MapRGBA(ball->format, 210, 40, 80, 255));
+        requireAudio(IMG_SavePNG(ball, (outputDirectory + "/" + good + "/ball.png").c_str()) == 0,
+                     "Cannot create custom ball fixture");
+        SDL_FreeSurface(ball);
+        created.push_back(good + "/ball.png");
+        // A broken preferred file must still allow the valid PNG.
+        write(good + "/ball.webp", {'b', 'a', 'd'});
+        ball = renderer.loadSurface("level-ball/custom:Audio Test");
+        Uint8 r, g, b, a;
+        SDL_GetRGBA(*static_cast<Uint32*>(ball->pixels), ball->format, &r, &g, &b, &a);
+        requireAudio(ball->w == 512 && ball->h == 512 && r > 190 && g < 60 && b < 100,
+                     "Custom ball lost its color or did not recover from broken WebP");
+        SDL_FreeSurface(ball);
+        write(bad + "/ball.webp", {'b', 'a', 'd'});
+        {
+            FileRead nonSquare(good + "/BACKGROUND.PNG");
+            write(bad + "/ball.png", nonSquare.readRawBytes(nonSquare.length()));
+        }
+        ball = renderer.loadSurface("level-ball/custom:Broken Audio Test");
+        requireAudio(ball->w == 256 && ball->h == 256, "Broken ball did not use the standard ball");
+        SDL_FreeSurface(ball);
+        ball = renderer.loadSurface("level-ball/mars.bmp");
+        requireAudio(ball->w == 256 && ball->h == 256, "Missing ball did not restore the standard ball");
+        SDL_FreeSurface(ball);
         write(bad + "/background.png", {'b', 'a', 'd'});
         background = renderer.loadSurface("backgrounds/custom:Broken Audio Test");
         requireAudio(background->w > 32 && background->h > 18,
@@ -187,8 +212,17 @@ void testLevelAudio(const std::string& outputDirectory)
         audio.selectLevel("custom:Broken Audio Test");
         SDL_Delay(230);
         audio.update();
-        requireAudio(audio.musicPath() == "sounds/level.ogg",
-                     "Broken level music did not use standard fallback");
+        requireAudio(audio.musicPath().empty() && !audio.musicPlaying(),
+                     "Broken level music must stay silent, ignoring global level music");
+        audio.selectLevel("mars.bmp");
+        SDL_Delay(230);
+        audio.update();
+        requireAudio(audio.musicPath().empty() && !audio.musicPlaying(),
+                     "A level without its own music used a global fallback");
+        requireAudio(audio.playSound(SoundManager::WHISTLE, 1) &&
+                         audio.lastEffectPath() == "sounds/pfiff.wav",
+                     "Silent level lost standard sound effects");
+        audio.selectLevel("custom:Broken Audio Test");
         requireAudio(audio.playSound(SoundManager::IMPACT, 1) && audio.lastEffectPath() == "sounds/bums.wav",
                      "Broken Ogg effect did not fall back to built-in WAV");
         audio.setScene(SoundManager::Scene::Match, true);

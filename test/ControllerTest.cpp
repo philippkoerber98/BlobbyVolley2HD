@@ -1,5 +1,6 @@
 #include "input_device/JoystickPool.h"
 #include "input_device/ReleaseGate.h"
+#include "input_device/MenuRepeat.h"
 #include <SDL.h>
 #include <iostream>
 #include <stdexcept>
@@ -16,6 +17,15 @@ int main(int, char**)
 {
     try
     {
+        MenuRepeat repeat;
+        check(repeat.update(false, true, 0) == 1, "Slider initial press failed");
+        check(repeat.update(false, true, 299) == 0, "Slider repeated too soon");
+        check(repeat.update(false, true, 300) == 1 && repeat.update(false, true, 345) == 1,
+              "Held slider did not repeat");
+        check(repeat.update(true, false, 346) == -1, "Slider reversal did not react immediately");
+        check(repeat.update(true, true, 347) == 0 && repeat.update(false, false, 348) == 0,
+              "Opposing or released directions kept moving");
+        check(repeat.update(false, true, 349) == 1, "Slider did not rearm after release");
         ReleaseGate gate;
         check(!gate.update(true) && !gate.update(true), "Held menu A caused jump");
         check(!gate.update(false) && gate.update(true) && gate.update(true), "Jump after release failed");

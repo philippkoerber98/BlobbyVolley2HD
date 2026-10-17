@@ -1,123 +1,127 @@
 <?xml version="1.0" encoding="utf-8"?>
 
 <language>
-	<string english = "ok" translation = "ok" />
-	<string english = "cancel" translation = "annuler" />
-	<string english = "yes" translation = "oui" />
-	<string english = "no" translation = "non" />
-	<string english = "really quit?" translation = "quitter?" />
-	<string english = "continue" translation = "continuer" />
+	<string english = "ok" translation = "OK" />
+	<string english = "cancel" translation = "Annuler" />
+	<string english = "yes" translation = "Oui" />
+	<string english = "no" translation = "Non" />
+	<string english = "really quit?" translation = "Quitter?" />
+	<string english = "continue" translation = "Continuer" />
 
-	<string english = "online game" translation = "jeu en reseau" />
-	<string english = "lan game" translation = "jeu en reseau local" />
-	<string english = "start" translation = "commencer" />
-	<string english = "options" translation = "options" />
-	<string english = "watch replay" translation = "regarder a nouveau" />
-	<string english = "credits" translation = "developpeurs" />
-	<string english = "exit" translation = "quitter" />
+	<string english = "online game" translation = "Jouer en ligne" />
+	<string english = "lan game" translation = "Jouer en réseau local" />
+	<string english = "start" translation = "Lancer un match" />
+	<string english = "options" translation = "Options" />
+	<string english = "watch replay" translation = "Regarder un replay" />
+	<string english = "credits" translation = "Crédits" />
+	<string english = "exit" translation = "Quitter" />
 	
-	<string english = "programmers:" translation = "programmeurs:" />
-	<string english = "graphics:" translation = "graphiques:" />
-	<string english = "special thanks at:" translation = "remerciement special a:" />
+	<string english = "programmers:" translation = "Programmeurs:" />
+	<string english = "graphics:" translation = "Graphiques:" />
+	<string english = "special thanks at:" translation = "Remerciements à :" />
 
-	<string english = "show again" translation = "montrer de nouveau" />
-	<string english = "play" translation = "demarrer" />
-	<string english = "delete" translation = "effacer" />
-	<string english = "info" translation = "info" />
-	<string english = "duration:" translation = "durée:" />
-	<string english = "result:" translation = "score:" />
-	<string english = "checksum error" translation = "erreur de la somme de controle" />
-	<string english = "file is corrupt" translation = "fichier endommage" />
-	<string english = "version error" translation = "erreur de version" />
-	<string english = "file is outdated" translation = "fichier obsolète" />
-	<string english = "receiving replay..." translation = "recevant la vidéo..." />
-	<string english = "name of the replay:" translation = "nom de la video:" />
-	<string english = "save replay" translation = "sauvegarder la video" />
+	<string english = "show again" translation = "Revoir le replay" />
+	<string english = "play" translation = "Lire le replay" />
+	<string english = "delete" translation = "Supprimer le replay" />
+	<string english = "info" translation = "Détails du replay" />
+	<string english = "duration:" translation = "Durée:" />
+	<string english = "result:" translation = "Score:" />
+	<string english = "checksum error" translation = "Erreur de somme de contrôle" />
+	<string english = "file is corrupt" translation = "Le fichier de replay est endommagé." />
+	<string english = "version error" translation = "Version de replay incompatible" />
+	<string english = "file is outdated" translation = "Ce replay utilise un ancien format." />
+	<string english = "receiving replay..." translation = "Réception du replay..." />
+	<string english = "name of the replay:" translation = "Nom du replay :" />
+	<string english = "save replay" translation = "Enregistrer le replay" />
 	
 	<string english = "has won the game!" translation = "a gagne!" />
-	<string english = "try again" translation = "essayer a nouveau" />
-	<string english = "waiting for opponent..." translation = "attente de l'adversaire ..." />
-	<string english = "opponent left the game" translation = "l'adversaire a quitte le match" />
-	<string english = "game paused" translation = "pause" />
-	<string english = "quit" translation = "quitter" />
+	<string english = "try again" translation = "Rejouer" />
+	<string english = "waiting for opponent..." translation = "En attente d'un adversaire..." />
+	<string english = "opponent left the game" translation = "Votre adversaire a quitté le match." />
+	<string english = "game paused" translation = "Match en pause" />
+	<string english = "quit" translation = "Quitter le match" />
 	
-	<string english = "scan for servers" translation = "recherche des serveurs" />
-	<string english = "direct connect" translation = "connexion directe" />
-	<string english = "server info" translation = "info serveur" />
-	<string english = "waiting player: " translation = "joueur attendant" />
-	<string english = "host game" translation = "heberger une partie" />
-	<string english = "connecting to server ..." translation = "connexion au serveur ..." />
-	<string english = "disconnected from server" translation = "deconnecte du serveur" />
-	<string english = "connection failed" translation = "echec de connexion" />
-	<string english = "server full" translation = "serveur surcharge" />
+	<string english = "scan for servers" translation = "Chercher des serveurs" />
+	<string english = "direct connect" translation = "Connexion directe" />
+	<string english = "server info" translation = "Détails du serveur" />
+	<string english = "waiting player: " translation = "Joueurs en attente : " />
+	<string english = "host game" translation = "Héberger une partie" />
+	<string english = "connecting to server ..." translation = "Connexion au serveur..." />
+	<string english = "disconnected from server" translation = "Déconnecté du serveur" />
+	<string english = "connection failed" translation = "Échec de la connexion" />
+	<string english = "server full" translation = "Le serveur est complet." />
 	<string english = " by " translation = " par " />
-	<string english = "challenger: " translation = "adversaire: " />
-	<string english = "games: " translation = "ombre de parties: " />
-	<string english = "random" translation = "aléatoire" />
-	<string english = "rules: " translation = "règles: " />
-	<string english = "speed: " translation = "vitesse: " />
-	<string english = "stay on server" translation = "rester sur le serveur" />
-	<string english = "join game" translation = "Rejoindre la partie" />
-	<string english = "leave game" translation = "quitter la partie" />
-	<string english = "open game" translation = "démarrer une partie" />
-	<string english = "points: " translation = "points: " />
+	<string english = "challenger: " translation = "Adversaire : " />
+	<string english = "games: " translation = "Matchs en cours : " />
+	<string english = "random" translation = "Aléatoire" />
+	<string english = "rules: " translation = "Règles: " />
+	<string english = "speed: " translation = "Vitesse: " />
+	<string english = "stay on server" translation = "Retour au salon" />
+	<string english = "join game" translation = "Rejoindre le match" />
+	<string english = "leave game" translation = "Quitter le match" />
+	<string english = "open game" translation = "Créer un match" />
+	<string english = "points: " translation = "Points : " />
 
-	<string english = "touch input type:" translation = "mode de saisie tactile:" />
-	<string english = "arrow keys" translation = "touches directionnelles" />
-	<string english = "blobby follows finger" translation = "blobby suit le mouvement du doigt" />
-	<string english = "input options" translation = "options des peripheriques" />
-	<string english = "graphic options" translation = "options graphiques" />
-	<string english = "misc options" translation = "options diverses" />
-	<string english = "video settings" translation = "parametres video" />
-	<string english = "fullscreen mode" translation = "mode plein ecran" />
-	<string english = "window mode" translation = "mode fenetre" />
-	<string english = "render device" translation = "peripherique de rendu" />
-	<string english = "show shadow" translation = "afficher les ombres" />
-	<string english = "blob colors" translation = "couleurs du blob" />
-	<string english = "left player" translation = "joueur a gauche" />
-	<string english = "right player" translation = "joueur a droite" />
+	<string english = "touch input type:" translation = "Mode de saisie tactile:" />
+	<string english = "arrow keys" translation = "Touches directionnelles" />
+	<string english = "blobby follows finger" translation = "Blobby suit le mouvement du doigt" />
+	<string english = "input options" translation = "Commandes" />
+	<string english = "graphic options" translation = "Réglages graphiques" />
+	<string english = "misc options" translation = "Options diverses" />
+	<string english = "video settings" translation = "Réglages de l'affichage" />
+	<string english = "fullscreen mode" translation = "Plein écran" />
+	<string english = "window mode" translation = "Mode fenêtre" />
+	<string english = "render device" translation = "Moteur de rendu" />
+	<string english = "show shadow" translation = "Afficher les ombres" />
+	<string english = "blob colors" translation = "Couleurs des blobs" />
+	<string english = "left player" translation = "Joueur de gauche" />
+	<string english = "right player" translation = "Joueur de droite" />
 	
-	<string english = "red" translation = "rouge" />
-	<string english = "green" translation = "vert" />
-	<string english = "blue" translation = "bleu" />
-	<string english = "morphing blob?" translation = "change de couleur?" />
-	<string english = "keyboard" translation = "clavier" />
-	<string english = "mouse" translation = "souris" />
-	<string english = "joystick" translation = "joystick" />
-	<string english = "jump button" translation = "bouton sauter" />
-	<string english = "set all" translation = "regler tout" />
-	<string english = "left key" translation = "touche gauche" />
-	<string english = "right key" translation = "touche droite" />
-	<string english = "jump key" translation = "touche sauter" />
-	<string english = "left button" translation = "bouton gauche" />
-	<string english = "right button" translation = "bouton droite" />
-	<string english = "press mouse button for" translation = "cliquer pour" />
-	<string english = "press key for" translation = "presser la touche pour" />
-	<string english = "moving left" translation = "aller a gauche" />
-	<string english = "moving right" translation = "aller a droite" />
+	<string english = "red" translation = "Rouge" />
+	<string english = "green" translation = "Vert" />
+	<string english = "blue" translation = "Bleu" />
+	<string english = "morphing blob?" translation = "Faire varier les couleurs du blob" />
+	<string english = "keyboard" translation = "Clavier" />
+	<string english = "mouse" translation = "Souris" />
+	<string english = "joystick" translation = "Joystick" />
+	<string english = "jump button" translation = "Bouton de saut" />
+	<string english = "set all" translation = "Configurer toutes les touches" />
+	<string english = "left key" translation = "Touche gauche" />
+	<string english = "right key" translation = "Touche droite" />
+	<string english = "jump key" translation = "Touche de saut" />
+	<string english = "left button" translation = "Bouton gauche" />
+	<string english = "right button" translation = "Bouton droit" />
+	<string english = "press mouse button for" translation = "Cliquer pour" />
+	<string english = "press key for" translation = "Presser la touche pour" />
+	<string english = "moving left" translation = "aller à gauche" />
+	<string english = "moving right" translation = "aller à droite" />
 	<string english = "jumping" translation = "sauter" />
-	<string english = "press button for" translation = "presser le bouton pour" />
-	<string english = "background:" translation = "arriere-plan:" />
-	<string english = "volume:" translation = "volume:" />
-	<string english = "mute" translation = "muet" />
-	<string english = "show fps" translation = "afficher les fps" />
-	<string english = "show blood" translation = "afficher le sang" />
-	<string english = "network side:" translation = "position reseau:" />
-	<string english = "left" translation = "gauche" />
-	<string english = "right" translation = "droite" />
-	<string english = "gamespeed:" translation = "vitesse:" />
-	<string english = "very slow" translation = "tres lent" />
-	<string english = "slow" translation = "lent" />
-	<string english = "default" translation = "par defaut" />
-	<string english = "fast" translation = "rapide" />
-	<string english = "very fast" translation = "tres rapide" />
+	<string english = "press button for" translation = "Presser le bouton pour" />
+	<string english = "background:" translation = "Arrière-plan :" />
+	<string english = "volume:" translation = "Volume:" />
+	<string english = "mute" translation = "Muet" />
+	<string english = "show fps" translation = "Afficher les FPS" />
+	<string english = "show blood" translation = "Afficher le sang" />
+	<string english = "network side:" translation = "Côté préféré :" />
+	<string english = "left" translation = "Gauche" />
+	<string english = "right" translation = "Droite" />
+	<string english = "gamespeed:" translation = "Vitesse du jeu :" />
+	<string english = "very slow" translation = "Très lent" />
+	<string english = "slow" translation = "Lent" />
+	<string english = "default" translation = "Par défaut" />
+	<string english = "fast" translation = "Rapide" />
+	<string english = "very fast" translation = "Très rapide" />
 	
-	<string english = "language" translation = "langue" />
-	<string english = "bot strength" translation = "puissance du robot" />
-	<string english = "weak" translation = "faible" />
-	<string english = "medium" translation = "moyen" />
-	<string english = "strong" translation = "fort" />
-	<string english = "rules:" translation = "règles:" />
+	<string english = "language" translation = "Langue" />
+	<string english = "bot strength" translation = "Niveau du bot" />
+	<string english = "weak" translation = "Facile" />
+	<string english = "medium" translation = "Moyen" />
+	<string english = "strong" translation = "Difficile" />
+	<string english = "rules:" translation = "Règles:" />
 	
-	<string english = "please visit https://blobbyvolley.de for a new version of blobby volley" translation = "veuillez visiter https://blobbyvolley.de for a new version of blobby volley" />
+	<string english = "please visit https://blobbyvolley.de for a new version of blobby volley" translation = "Ce serveur utilise une version plus récente du jeu." />
+	<string english="connect" translation="Se connecter" />
+	<string english="close" translation="Fermer" />
+	<string english="back" translation="Retour" />
+	<string english="main menu" translation="Menu principal" />
 </language>

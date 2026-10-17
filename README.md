@@ -116,6 +116,10 @@ Built-in courts live in `data/Levels/<name>/` and are installed as `Levels/`
 beside the Windows executable. Add your own folders to `Custom Levels/`.
 Only `background.webp` (or `background.png`) is required. Optional `level.ogg`,
 `victory.ogg`, `bums.ogg`, `chat.ogg` and `pfiff.ogg` override that level's sounds;
-WAV works too. Missing or broken audio falls back per file to the global sounds.
+WAV works too. Effects and victory sounds fall back to the global sounds; level
+music stays silent without a usable local track. Optional `ball.webp` or
+`ball.png` replaces the ball artwork; missing or invalid images use the standard
+ball. Use a square transparent image with a centered ball, ideally 512 x 512 or
+larger. Ball size and physics remain unchanged.
 No per-level configuration files are needed. Reopen options to discover new levels.
 See [custom levels and audio](doc/CUSTOM-LEVELS.md) for details.

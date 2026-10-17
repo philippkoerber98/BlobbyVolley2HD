@@ -41,6 +41,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #include "FileRead.h"
 #include "FileWrite.h"
 #include "IMGUI.h"
+#include "WarmUI.h"
 #include "IUserConfigReader.h"
 #include "LobbyStates.h"
 #include "NetworkState.h"
@@ -52,6 +53,10 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 // control variables for a dedicated server thread in case a game is hosted
 std::shared_ptr<std::thread> gHostedServerThread;
 std::atomic<bool> gKillHostThread{false};
+namespace
+{
+std::atomic<bool> hostFailed{false};
+}
 
 /* implementation */
 NetworkSearchState::NetworkSearchState() : mPingClient(new RakClient)
@@ -65,6 +70,7 @@ NetworkSearchState::NetworkSearchState() : mPingClient(new RakClient)
 
 NetworkSearchState::~NetworkSearchState()
 {
+    stopSearch();
     // Disconnect from servers
     for (auto& client : mQueryClients)
     {
@@ -74,13 +80,35 @@ NetworkSearchState::~NetworkSearchState()
             delete client;
         }
     }
-    // request ping thread to stop
+}
+
+void NetworkSearchState::stopSearch()
+{
     mCancelPing = true;
+    if (mPingJob.valid())
+    {
+        mPingJob.wait();
+    }
 }
 
 void NetworkSearchState::searchServers()
 {
+    if (mPingJob.valid() && mPingJob.wait_for(std::chrono::seconds(0)) != std::future_status::ready)
+    {
+        return;
+    }
+    if (mPingJob.valid())
+    {
+        mPingJob.get();
+    }
+    mScannedServers.clear();
+    mSelectedServer = 0;
     mCancelPing = false;
+    if (dynamic_cast<LANSearchState*>(this))
+    {
+        doSearchServers(); // One nonblocking UDP broadcast; no worker needs the state.
+        return;
+    }
     // we need the explicit async launch policy here, because otherwise gcc will always launch deferred and we
     // have no sync point where we would wait for that.
     mPingJob = std::async(std::launch::async, [this]() { doSearchServers(); });
@@ -116,6 +144,10 @@ void NetworkSearchState::step_impl()
             }
             case ID_BLOBBY_SERVER_PRESENT:
             {
+                if (packet->length != ServerInfo::BLOBBY_SERVER_PRESENT_PACKET_SIZE)
+                {
+                    break;
+                }
                 // FIXME: We must copy the needed information, so that we can call DeallocatePacket(packet)
                 // FIXME: The client finds a server at this point, which is not valid
                 RakNet::BitStream stream(packet->data, packet->length, false);
@@ -150,10 +182,20 @@ void NetworkSearchState::step_impl()
                     std::cout << " server invalid " << packet->length << " "
                               << ServerInfo::BLOBBY_SERVER_PRESENT_PACKET_SIZE << "\n";
                 }
+                if (*iter == mDirectConnectClient)
+                {
+                    const auto selected = std::find(mScannedServers.begin(), mScannedServers.end(), info);
+                    mSelectedServer = unsigned(selected - mScannedServers.begin());
+                    doEnterServer = true;
+                }
                 // the RakClient will be deleted, so
                 // we must free the packet here
                 packet.reset();
                 (*iter)->Disconnect(50);
+                if (*iter == mDirectConnectClient)
+                {
+                    mDirectConnectClient = nullptr;
+                }
                 delete *iter;
                 iter = mQueryClients.erase(iter);
                 if (iter == mQueryClients.end())
@@ -171,6 +213,22 @@ void NetworkSearchState::step_impl()
                                                          : PreviousState::ONLINE));
                     return;
                 }
+                break;
+            }
+            case ID_CONNECTION_ATTEMPT_FAILED:
+            case ID_NO_FREE_INCOMING_CONNECTIONS:
+            {
+                mNotice = getIMGUI().getText(TextManager::NET_CON_FAILED);
+                if (*iter == mDirectConnectClient)
+                {
+                    mDirectConnectClient = nullptr;
+                }
+                packet.reset();
+                (*iter)->Disconnect(0);
+                delete *iter;
+                iter = mQueryClients.erase(iter);
+                skip_iter = iter == mQueryClients.end();
+                skip = true;
                 break;
             }
             case ID_VERSION_MISMATCH:
@@ -193,6 +251,10 @@ void NetworkSearchState::step_impl()
                 // we must free the packet here
                 packet.reset();
                 (*iter)->Disconnect(50);
+                if (*iter == mDirectConnectClient)
+                {
+                    mDirectConnectClient = nullptr;
+                }
                 delete *iter;
                 iter = mQueryClients.erase(iter);
                 if (iter == mQueryClients.end())
@@ -236,22 +298,34 @@ void NetworkSearchState::step_impl()
 
     IMGUI& imgui = getIMGUI();
 
-    imgui.doCursor();
-    imgui.doImage(GEN_ID, Vector2(400.0, 300.0), "background");
-    imgui.doOverlay(GEN_ID, Vector2(0.0, 0.0), Vector2(800.0, 600.0));
-    imgui.doInactiveMode(false);
+    WarmUI::page(imgui, imgui.getText(TextManager::MNU_LABEL_LAN));
+    WarmUI::text(
+        imgui, 40, 578,
+        translateUI(WarmUI::language(), "Up/down: list    Left/right: actions    A: select    B: back"), 15);
+    bool startHosting = false;
+    if (hostFailed.exchange(false))
+    {
+        mHostedServer.reset();
+        mNotice = translateUI(WarmUI::language(),
+                              "Could not start server. Check whether the port is already in use.");
+    }
+    if (!mNotice.empty())
+    {
+        WarmUI::text(imgui, 40, 507, mNotice, 16, 2);
+    }
 
-    if (mDisplayInfo || mEnteringServer)
+    if (mDisplayInfo || mEnteringServer || mNamingServer)
     {
         imgui.doInactiveMode(true);
     }
 
-    if (imgui.doButton(GEN_ID, Vector2(10, 20), TextManager::NET_SERVER_SCAN))
+    if (imgui.doButton(GEN_ID, Vector2(40, 95), TextManager::NET_SERVER_SCAN, TF_NORMAL, 180))
     {
         searchServers();
     }
 
-    if (imgui.doButton(GEN_ID, Vector2(420, 20), TextManager::NET_DIRECT_CONNECT) && !mEnteringServer)
+    if (imgui.doButton(GEN_ID, Vector2(232, 95), TextManager::NET_DIRECT_CONNECT, TF_NORMAL, 220) &&
+        !mEnteringServer)
     {
         mEnteringServer = true;
         imgui.resetSelection();
@@ -259,20 +333,21 @@ void NetworkSearchState::step_impl()
         mServerBoxPosition = 0;
     }
 
+    const bool showInfo =
+        imgui.doButton(GEN_ID, Vector2(600, 95), TextManager::NET_SERVER_INFO, TF_NORMAL, 160);
     std::vector<std::string> servernames;
     for (auto& server : mScannedServers)
     {
         servernames.push_back(std::string(server.name) + " (" + std::to_string(server.waitingplayers) + ")");
     }
 
-    if (imgui.doSelectbox(GEN_ID, Vector2(25.0, 60.0), Vector2(775.0, 470.0), servernames, mSelectedServer) ==
+    if (imgui.doSelectbox(GEN_ID, Vector2(40, 145), Vector2(760, 505), servernames, mSelectedServer) ==
         SBA_DBL_CLICK)
     {
         doEnterServer = true;
     }
 
-    if (imgui.doButton(GEN_ID, Vector2(50, 480), TextManager::NET_SERVER_INFO) && !mDisplayInfo &&
-        !mScannedServers.empty())
+    if (showInfo && !mDisplayInfo && !mScannedServers.empty())
     {
         mDisplayInfo = true;
         imgui.resetSelection();
@@ -281,10 +356,11 @@ void NetworkSearchState::step_impl()
     if (mEnteringServer)
     {
         imgui.doInactiveMode(false);
-        imgui.doOverlay(GEN_ID, Vector2(100.0, 200.0), Vector2(650.0, 400.0));
+        WarmUI::panel(imgui, 120, 190, 560, 210);
+        WarmUI::text(imgui, 144, 210, imgui.getText(TextManager::NET_DIRECT_CONNECT), 26, 2);
         // Game crashes if the mEnteredServer is not a possible input
-        imgui.doEditbox(GEN_ID, Vector2(130.0, 210.0), 20, mEnteredServer, mServerBoxPosition);
-        if (imgui.doButton(GEN_ID, Vector2(270.0, 300.0), TextManager::LBL_OK))
+        imgui.doEditbox(GEN_ID, Vector2(144, 258), 31, mEnteredServer, mServerBoxPosition);
+        if (imgui.doButton(GEN_ID, Vector2(144, 342), TextManager::LBL_CONNECT, TF_NORMAL, 220))
         {
             /// \todo adapt direct connect
             std::string server = mEnteredServer;
@@ -310,12 +386,21 @@ void NetworkSearchState::step_impl()
 
             // add this address / port info as client
             mDirectConnectClient = new RakClient;
-            mDirectConnectClient->Connect(server.c_str(), port, 0, 0, RAKNET_THREAD_SLEEP_TIME);
-            mQueryClients.push_back(mDirectConnectClient);
+            if (server.empty() ||
+                !mDirectConnectClient->Connect(server.c_str(), port, 0, 0, RAKNET_THREAD_SLEEP_TIME))
+            {
+                delete mDirectConnectClient;
+                mDirectConnectClient = nullptr;
+                mNotice = imgui.getText(TextManager::NET_CON_FAILED);
+            }
+            else
+            {
+                mQueryClients.push_back(mDirectConnectClient);
+            }
             mEnteringServer = false;
             imgui.resetSelection();
         }
-        if (imgui.doButton(GEN_ID, Vector2(370.0, 300.0), TextManager::LBL_CANCEL))
+        if (imgui.doButton(GEN_ID, Vector2(490, 342), TextManager::LBL_CANCEL, TF_NORMAL, 166))
         {
             mEnteringServer = false;
             imgui.resetSelection();
@@ -326,25 +411,38 @@ void NetworkSearchState::step_impl()
     if (mDisplayInfo)
     {
         imgui.doInactiveMode(false);
-        imgui.doOverlay(GEN_ID, Vector2(40.0, 80.0), Vector2(760.0, 440.0), Color(0, 0, 0), 1.0);
-        imgui.doText(GEN_ID, Vector2(50, 100), mScannedServers[mSelectedServer].name);
-        imgui.doText(GEN_ID, Vector2(50, 130), mScannedServers[mSelectedServer].hostname);
-
-        std::stringstream activegames;
-        activegames << imgui.getText(TextManager::NET_ACTIVE_GAMES)
-                    << mScannedServers[mSelectedServer].activegames;
-        imgui.doText(GEN_ID, Vector2(50, 160), activegames.str());
-        std::stringstream waitingplayer;
-        waitingplayer << imgui.getText(TextManager::NET_WAITING_PLAYER)
-                      << mScannedServers[mSelectedServer].waitingplayers;
-        imgui.doText(GEN_ID, Vector2(50, 190), waitingplayer.str());
-        std::string description = mScannedServers[mSelectedServer].description;
-        for (unsigned int i = 0; i < description.length(); i += 29)
+        imgui.doOverlay(GEN_ID, Vector2(0, 0), Vector2(800, 600), Color(0, 0, 0), .55f);
+        WarmUI::panel(imgui, 120, 140, 560, 340);
+        const auto& server = mScannedServers[mSelectedServer];
+        WarmUI::text(imgui, 144, 158, server.name, 26, 2);
+        WarmUI::text(imgui, 144, 198, std::string(server.hostname) + ":" + std::to_string(server.port), 20);
+        WarmUI::text(imgui, 144, 232,
+                     imgui.getText(TextManager::NET_ACTIVE_GAMES) + std::to_string(server.activegames), 20);
+        WarmUI::text(imgui, 144, 262,
+                     imgui.getText(TextManager::NET_WAITING_PLAYER) + std::to_string(server.waitingplayers),
+                     20);
+        std::istringstream words(server.description);
+        std::string word, line;
+        float y = 306;
+        while (words >> word && y < 398)
         {
-            imgui.doText(GEN_ID, Vector2(50, 250 + i / 29 * 30), description.substr(i, 29));
+            if (!line.empty() && RenderManager::menuTextWidth(line + " " + word, 18) > 508)
+            {
+                WarmUI::text(imgui, 144, y, line, 18);
+                line = word;
+                y += 23;
+            }
+            else
+            {
+                line += (line.empty() ? "" : " ") + word;
+            }
         }
-
-        if (imgui.doButton(GEN_ID, Vector2(410, 405), TextManager::LBL_OK))
+        if (!line.empty() && y < 398)
+        {
+            WarmUI::text(imgui, 144, y, line, 18);
+        }
+        if (imgui.doButton(GEN_ID, Vector2(516, 424), TextManager::LBL_CLOSE, TF_NORMAL, 140) ||
+            getInputMgr().exit())
         {
             mDisplayInfo = false;
             imgui.resetSelection();
@@ -352,33 +450,82 @@ void NetworkSearchState::step_impl()
         imgui.doInactiveMode(true);
     }
 
-    if (imgui.doButton(GEN_ID, Vector2(450, 480), TextManager::NET_HOST_GAME) && !mDisplayInfo)
+    if (imgui.doButton(GEN_ID, Vector2(40, 530), TextManager::NET_HOST_GAME, TF_NORMAL, 220))
     {
-        auto server_func = []()
+        UserConfig config;
+        config.loadFile("config.xml");
+        mServerName = config.getString("lan_server_name", "Blobby Volley 2 HD");
+        mServerNamePosition = unsigned(mServerName.size());
+        mNamingServer = true;
+        imgui.resetSelection();
+    }
+    if (mNamingServer)
+    {
+        imgui.doInactiveMode(false);
+        imgui.doOverlay(GEN_ID, Vector2(0, 0), Vector2(800, 600), Color(0, 0, 0), .55f);
+        WarmUI::panel(imgui, 120, 190, 560, 210);
+        WarmUI::text(imgui, 144, 210, translateUI(WarmUI::language(), "Server name"), 26, 2);
+        imgui.doEditbox(GEN_ID, Vector2(144, 258), 31, mServerName, mServerNamePosition);
+        if (imgui.doButton(GEN_ID, Vector2(144, 342), TextManager::NET_HOST_GAME, TF_NORMAL, 220))
         {
-            // read config
-            /// \todo we need read-only access here!
+            if (mServerName.find_first_not_of(" \t\r\n") == std::string::npos)
+            {
+                mServerName = "Blobby Volley 2 HD";
+            }
+            // The existing network packet has 32 name bytes, including its terminator.
+            if (mServerName.size() > 31)
+            {
+                size_t end = 31;
+                while ((static_cast<unsigned char>(mServerName[end]) & 0xc0) == 0x80)
+                {
+                    --end;
+                }
+                mServerName.resize(end);
+            }
             UserConfig config;
             config.loadFile("config.xml");
-            PlayerSide localSide = (PlayerSide)config.getInteger("network_side");
-
-            PlayerIdentity local_player = config.loadPlayerIdentity(localSide, true);
-            ServerInfo info(local_player.getName());
-            std::vector<std::string> rule_vec{config.getString("rules")};
-
-            DedicatedServer server(info, rule_vec,
-                                   std::vector<float>{SpeedController::getMainInstance()->getGameSpeed()}, 4,
-                                   true);
-            SpeedController scontroller(10);
-            gKillHostThread = false;
-            while (!gKillHostThread)
+            config.setString("lan_server_name", mServerName);
+            config.saveFile("config.xml");
+            startHosting = true;
+            mNamingServer = false;
+            imgui.resetSelection();
+        }
+        if (imgui.doButton(GEN_ID, Vector2(490, 342), TextManager::LBL_CANCEL, TF_NORMAL, 166))
+        {
+            mNamingServer = false;
+            imgui.resetSelection();
+        }
+        imgui.doInactiveMode(true);
+    }
+    if (startHosting)
+    {
+        const auto hostName = mServerName;
+        UserConfig hostConfig;
+        hostConfig.loadFile("config.xml");
+        auto identity =
+            hostConfig.loadPlayerIdentity(PlayerSide(hostConfig.getInteger("network_side")), true);
+        ServerInfo hostInfo(identity.getName());
+        std::strncpy(hostInfo.name, hostName.c_str(), sizeof(hostInfo.name) - 1);
+        const auto rule = hostConfig.getString("rules");
+        const auto speed = SpeedController::getMainInstance()->getGameSpeed();
+        auto server_func = [hostInfo, rule, speed]()
+        {
+            try
             {
-                // now run the server
-                server.allowNewPlayers(!server.hasActiveGame());
-
-                server.processPackets();
-                server.updateGames();
-                scontroller.update();
+                DedicatedServer server(hostInfo, {rule}, {speed}, 4, true);
+                SpeedController clock(10);
+                while (!gKillHostThread)
+                {
+                    server.allowNewPlayers(!server.hasActiveGame());
+                    server.processPackets();
+                    server.updateGames();
+                    clock.update();
+                }
+            }
+            catch (const std::exception& error)
+            {
+                std::cerr << "LAN host failed: " << error.what() << '\n';
+                hostFailed = true;
             }
         };
 
@@ -390,6 +537,8 @@ void NetworkSearchState::step_impl()
         }
 
         // start server
+        hostFailed = false;
+        gKillHostThread = false;
         gHostedServerThread = std::make_shared<std::thread>(server_func);
 
         SDL_Delay(100); // give the server some time to start up.
@@ -397,26 +546,28 @@ void NetworkSearchState::step_impl()
         // live with that right now.
         searchServers();
 
-        // getting the server info
-        UserConfig config;
-        config.loadFile("config.xml");
-
-        PlayerIdentity local_player =
-            config.loadPlayerIdentity((PlayerSide)config.getInteger("network_side"), true);
-        mHostedServer.reset(new ServerInfo(local_player.getName()));
-        std::strncpy(mHostedServer->hostname, mPingClient->PlayerIDToDottedIP(mPingClient->GetInternalID()),
-                     sizeof(mHostedServer->hostname));
+        mHostedServer.reset(new ServerInfo(hostInfo));
+        std::strncpy(mHostedServer->hostname, "127.0.0.1", sizeof(mHostedServer->hostname) - 1);
+        mDirectConnectClient = new RakClient;
+        mDirectConnectClient->Connect("127.0.0.1", hostInfo.port, 0, 0, RAKNET_THREAD_SLEEP_TIME);
+        mQueryClients.push_back(mDirectConnectClient);
     }
 
-    if ((imgui.doButton(GEN_ID, Vector2(230, 530), TextManager::LBL_OK) && !mScannedServers.empty()) ||
+    const bool serverSelected = mSelectedServer < mScannedServers.size();
+    if ((imgui.doButton(GEN_ID, Vector2(460, 530), TextManager::LBL_CONNECT, TF_NORMAL, 140,
+                        serverSelected)) ||
         doEnterServer)
     {
+        if (mSelectedServer >= mScannedServers.size())
+        {
+            return;
+        }
         ServerInfo server = mScannedServers[mSelectedServer];
         switchState(new LobbyState(server, dynamic_cast<OnlineSearchState*>(this) == nullptr
                                                ? PreviousState::LAN
                                                : PreviousState::ONLINE));
     }
-    if (imgui.doButton(GEN_ID, Vector2(480, 530), TextManager::LBL_CANCEL))
+    if (imgui.doButton(GEN_ID, Vector2(620, 530), TextManager::LBL_BACK, TF_NORMAL, 140))
     {
         switchState(new MainMenuState);
     }
@@ -544,7 +695,6 @@ void OnlineSearchState::doSearchServers()
     std::pair<std::string, int> pairs(server.c_str(), port);
     serverList.push_back(pairs);
 
-    mScannedServers.clear();
     mPingClient->Initialize(serverList.size() + 2, 0, 10);
 
     for (auto& server : serverList)
@@ -572,7 +722,6 @@ LANSearchState::LANSearchState()
 
 void LANSearchState::doSearchServers()
 {
-    mScannedServers.clear();
     mPingClient->PingServer("255.255.255.255", BLOBBY_PORT, 0, true);
 }
 

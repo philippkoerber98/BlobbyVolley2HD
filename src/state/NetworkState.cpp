@@ -426,7 +426,7 @@ void NetworkGameState::step_impl()
 
             displayQueryPrompt(
                 200, TextManager::GAME_OPP_LEFT,
-                std::make_tuple(TextManager::LBL_OK, [&]() { switchState(new MainMenuState); }),
+                std::make_tuple(TextManager::LBL_MAIN_MENU, [&]() { switchState(new MainMenuState); }),
                 std::make_tuple(TextManager::RP_SAVE,
                                 [&]()
                                 {
@@ -447,14 +447,15 @@ void NetworkGameState::step_impl()
         }
         case DISCONNECTED:
         {
+            imgui.useMenuStyle();
             imgui.doCursor();
             imgui.doOverlay(GEN_ID, Vector2(100.0, 210.0), Vector2(700.0, 370.0));
             imgui.doText(GEN_ID, Vector2(120.0, 250.0), TextManager::NET_DISCONNECT);
-            if (imgui.doButton(GEN_ID, Vector2(230.0, 320.0), TextManager::LBL_OK))
+            if (imgui.doButton(GEN_ID, Vector2(120, 320), TextManager::LBL_MAIN_MENU, TF_NORMAL, 180))
             {
                 switchState(new MainMenuState);
             }
-            if (imgui.doButton(GEN_ID, Vector2(350.0, 320.0), TextManager::RP_SAVE))
+            if (imgui.doButton(GEN_ID, Vector2(320, 320), TextManager::RP_SAVE, TF_NORMAL, 220))
             {
                 mSaveReplay = true;
                 imgui.resetSelection();
@@ -463,10 +464,11 @@ void NetworkGameState::step_impl()
         }
         case SERVER_FULL:
         {
+            imgui.useMenuStyle();
             imgui.doCursor();
             imgui.doOverlay(GEN_ID, Vector2(100.0, 210.0), Vector2(700.0, 370.0));
             imgui.doText(GEN_ID, Vector2(200.0, 250.0), TextManager::NET_SERVER_FULL);
-            if (imgui.doButton(GEN_ID, Vector2(350.0, 300.0), TextManager::LBL_OK))
+            if (imgui.doButton(GEN_ID, Vector2(300, 310), TextManager::LBL_MAIN_MENU, TF_NORMAL, 200))
             {
                 switchState(new MainMenuState);
             }

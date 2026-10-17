@@ -163,6 +163,10 @@ void TextManager::setDefault()
 {
     // Hardcoded default language
     mStrings[LBL_OK] = "ok";
+    mStrings[LBL_CONNECT] = "connect";
+    mStrings[LBL_CLOSE] = "close";
+    mStrings[LBL_BACK] = "back";
+    mStrings[LBL_MAIN_MENU] = "main menu";
     mStrings[LBL_CANCEL] = "cancel";
     mStrings[LBL_YES] = "yes";
     mStrings[LBL_NO] = "no";
@@ -288,8 +292,8 @@ using lang_map_t = std::map<std::string, std::string>;
 lang_map_t makeLanguageNamesMap()
 {
     std::map<std::string, std::string> map{
-        {"de", "deutsch"}, {"en", "english"},  {"fr", "français"},
-        {"es", "español"}, {"it", "italiano"}, {"cs", "česky"},
+        {"de", "Deutsch"}, {"en", "English"},  {"fr", "français"},
+        {"es", "español"}, {"it", "italiano"}, {"cs", "Čeština"},
     };
     return map;
 }

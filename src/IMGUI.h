@@ -78,8 +78,18 @@ class IMGUI : public ObjectCounter<IMGUI>
     void doCursor(bool draw = true);
     void doRoundedPanel(int id, const Vector2& pos1, const Vector2& pos2, const Color& col, float alpha);
 
-    bool doButton(int id, const Vector2& position, const std::string& text, unsigned int flags = TF_NORMAL);
-    bool doButton(int id, const Vector2& position, TextManager::STRING text, unsigned int flags = TF_NORMAL);
+    void useMenuStyle()
+    {
+        mMenuStyle = true;
+        if (mActiveButton == -1)
+        {
+            mActiveButton = 0;
+        }
+    }
+    bool doButton(int id, const Vector2& position, const std::string& text, unsigned int flags = TF_NORMAL,
+                  float width = 0, bool enabled = true);
+    bool doButton(int id, const Vector2& position, TextManager::STRING text, unsigned int flags = TF_NORMAL,
+                  float width = 0, bool enabled = true);
 
     // draws an image that also works as a button
     // for now, it is not included in keyboard navigation, so it is more like a clickable image than a real
@@ -122,6 +132,7 @@ class IMGUI : public ObjectCounter<IMGUI>
     bool mHasSceneBlur = false;
     bool mButtonReset;
     bool mInactive;
+    bool mMenuStyle = false;
     bool mUsingCursor;
 
     int mIdCounter;

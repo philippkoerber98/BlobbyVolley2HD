@@ -108,7 +108,4 @@ class CreditsState : public State
     CreditsState();
     void step_impl() override;
     const char* getStateName() const override;
-
-  private:
-    float mYPosition;
 };

@@ -19,10 +19,15 @@
 #include "UITranslations.h"
 #include "UserConfig.h"
 #include "raknet/BitStream.h"
+#include "raknet/RakClient.h"
+#include "WarmUI.h"
 #include "replays/ReplayPlayer.h"
 #include "replays/ReplayRecorder.h"
 #include "state/GameState.h"
 #include "state/OptionsState.h"
+#include "state/ReplaySelectionState.h"
+#include "state/NetworkSearchState.h"
+#include "state/LobbyStates.h"
 #include <SDL_image.h>
 #if defined(_WIN32)
 #include <SDL_syswm.h>
@@ -491,6 +496,17 @@ void testTabbedOptions(const std::string& outputDirectory)
         require(unchanged.getInteger("gamefps") == 76, "Game-speed change was not saved immediately");
         key(SDLK_PAGEDOWN);
         screenshot("spieler");
+        key(SDLK_DOWN);
+        key(SDLK_DOWN); // Bot strength must advance one stored reaction step per press.
+        UserConfig strengthBefore;
+        strengthBefore.loadFile("config.xml");
+        const int delayBefore = strengthBefore.getInteger("left_script_strength");
+        key(delayBefore ? SDLK_RIGHT : SDLK_LEFT);
+        UserConfig strengthAfter;
+        strengthAfter.loadFile("config.xml");
+        require(strengthAfter.getInteger("left_script_strength") == delayBefore + (delayBefore ? -1 : 1),
+                "Bot strength step was rounded away");
+        key(delayBefore ? SDLK_LEFT : SDLK_RIGHT);
         auto mouseEvent = [&](int x, int y, Uint32 type)
         {
             SDL_WarpMouseInWindow(app.getWindow(), x, y);
@@ -1379,4 +1395,235 @@ void testBotModes(const std::string& outputDirectory)
                   << "\n";
     }
     fs.removeFromSearchPath(outputDirectory);
+}
+
+void testSecondaryMenus(const std::string& outputDirectory)
+{
+    for (const char* language : {"en", "de", "cs", "es", "fr", "it"})
+    {
+        TextManager labels(language);
+        for (int i = 0; i < TextManager::COUNT; ++i)
+        {
+            require(!labels.getString(TextManager::STRING(i)).empty(), "Missing legacy translation");
+        }
+        require(labels.getString(TextManager::LBL_CONNECT) == translateUI(language, "Connect"),
+                "Connection action did not load its localized label");
+        require(labels.getString(TextManager::LBL_CLOSE) == translateUI(language, "Close"),
+                "Close action did not load its localized label");
+        require(labels.getString(TextManager::LBL_BACK) == translateUI(language, "Back"),
+                "Back action differs between old and new menus");
+        require(labels.getString(TextManager::LBL_MAIN_MENU) == translateUI(language, "Main menu"),
+                "Main-menu action differs between old and new menus");
+    }
+    require(TextManager("de").getString(TextManager::NET_HOST_GAME) == "Spiel hosten",
+            "German host action lost its capitalization");
+
+    auto& fs = FileSystem::getSingleton();
+    fs.setWriteDir(outputDirectory);
+    UserConfig config;
+    config.loadFile("config.xml");
+    config.setBool("fullscreen", false);
+    config.setInteger("window_width", 800);
+    config.setInteger("window_height", 600);
+    SpeedController speed(75);
+    SpeedController::setMainInstance(&speed);
+    std::vector<std::string> backends{"SDL"};
+    if (SDL_getenv("BLOBBY_TEST_OPENGL"))
+    {
+        backends.push_back("OpenGL");
+    }
+    for (const auto& backend : backends)
+    {
+        config.setString("device", backend);
+        config.saveFile("config.xml");
+        for (int page = 0; page < 3; ++page)
+        {
+            std::unique_ptr<State> state(page == 0   ? static_cast<State*>(new CreditsState)
+                                         : page == 1 ? static_cast<State*>(new ReplaySelectionState)
+                                                     : static_cast<State*>(new LANSearchState));
+            BlobbyApp app(std::move(state), config);
+            SDL_HideWindow(app.getWindow());
+            app.getCurrentState().init();
+            app.getInputManager().updateInput();
+            stepApp(app);
+            captureApp(app, 0,
+                       outputDirectory + "/secondary-" + backend + "-" + std::to_string(page) + ".png");
+            if (page == 2)
+            {
+                SDL_WarpMouseInWindow(app.getWindow(), 140, 547);
+                SDL_Event click{};
+                click.type = SDL_MOUSEBUTTONDOWN;
+                click.button.button = SDL_BUTTON_LEFT;
+                SDL_PushEvent(&click);
+                app.getInputManager().updateInput();
+                stepApp(app);
+                app.getInputManager().updateInput();
+                stepApp(app);
+                SDL_Event typed{};
+                typed.type = SDL_TEXTINPUT;
+                SDL_strlcpy(typed.text.text, u8" Bühne", sizeof(typed.text.text));
+                SDL_PushEvent(&typed);
+                app.getInputManager().updateInput();
+                stepApp(app);
+                captureApp(app, 0, outputDirectory + "/secondary-" + backend + "-host-name.png");
+                SDL_Event cancel{};
+                cancel.type = SDL_CONTROLLERBUTTONDOWN;
+                cancel.cbutton.button = SDL_CONTROLLER_BUTTON_B;
+                SDL_PushEvent(&cancel);
+                app.getInputManager().updateInput();
+                stepApp(app);
+                require(std::string(app.getCurrenStateName()) == "LANSearchState",
+                        "Canceling host dialog left LAN page");
+                app.getInputManager().clearTransientInput();
+                auto client = std::make_shared<RakClient>();
+                ServerStatusData status;
+                status.mPossibleSpeeds = {75};
+                status.mPossibleRules = {"BV2 Default Rules"};
+                status.mPossibleRulesAuthor = {"Blobby Volley 2 Developers"};
+                LobbyMainSubstate create(client, 0, 0, 3);
+                auto& gui = app.getIMGUI();
+                gui.begin();
+                WarmUI::page(gui, "LAN Lobby");
+                create.step(gui, status);
+                captureApp(app, 0, outputDirectory + "/secondary-" + backend + "-lobby-create.png");
+                RakNet::BitStream data;
+                auto out = createGenericWriter(&data);
+                out->uint32(1);
+                out->generic<PlayerID>(client->GetPlayerID());
+                out->string("LAN Match");
+                out->uint32(0);
+                out->uint32(0);
+                out->uint32(15);
+                out->generic<std::vector<PlayerID>>({client->GetPlayerID()});
+                out->generic<std::vector<std::string>>({"Guest"});
+                LobbyGameSubstate match(client, createGenericReader(&data));
+                gui.begin();
+                WarmUI::page(gui, "LAN Lobby");
+                match.step(gui, status);
+                captureApp(app, 0, outputDirectory + "/secondary-" + backend + "-lobby-match.png");
+                app.getInputManager().updateInput();
+                stepApp(app);
+            }
+            // Shared modern fields accept an entire UTF-8 SDL text event and edit codepoints safely.
+            if (page == 0)
+            {
+                // A focused action becoming disabled must reject both mouse and controller input.
+                {
+                    IMGUI buttons(&app.getInputManager());
+                    auto press = [&](bool enabled, bool mouse)
+                    {
+                        app.getInputManager().clearTransientInput();
+                        SDL_Event event{};
+                        if (mouse)
+                        {
+                            SDL_WarpMouseInWindow(app.getWindow(), 100, 117);
+                            event.type = SDL_MOUSEBUTTONDOWN;
+                            event.button.button = SDL_BUTTON_LEFT;
+                        }
+                        else
+                        {
+                            event.type = SDL_CONTROLLERBUTTONDOWN;
+                            event.cbutton.button = SDL_CONTROLLER_BUTTON_A;
+                        }
+                        SDL_PushEvent(&event);
+                        app.getInputManager().updateInput();
+                        buttons.begin();
+                        buttons.useMenuStyle();
+                        return buttons.doButton(buttons.getNextId(), Vector2(40, 100), "Connect", TF_NORMAL,
+                                                140, enabled);
+                    };
+                    require(press(true, true), "Enabled button ignored mouse activation");
+                    require(!press(false, false), "Disabled focused button accepted controller A");
+                    require(!press(false, true), "Disabled button accepted a mouse click");
+                    require(press(true, true), "Re-enabled button did not accept mouse activation");
+                    app.getInputManager().clearTransientInput();
+                }
+                std::string name;
+                unsigned cursor = 0;
+                auto edit = [&](SDL_Event event)
+                {
+                    SDL_PushEvent(&event);
+                    app.getInputManager().updateInput();
+                    auto& gui = app.getIMGUI();
+                    gui.begin();
+                    gui.useMenuStyle();
+                    gui.doEditbox(gui.getNextId(), Vector2(40, 100), 31, name, cursor, TF_NORMAL, true);
+                };
+                SDL_Event typed{};
+                typed.type = SDL_TEXTINPUT;
+                SDL_strlcpy(typed.text.text, u8"Grüße", sizeof(typed.text.text));
+                edit(typed);
+                require(name == u8"Grüße", "Modern field lost UTF-8 text input");
+                SDL_Event key{};
+                key.type = SDL_KEYDOWN;
+                key.key.keysym.sym = SDLK_LEFT;
+                edit(key);
+                key.key.keysym.sym = SDLK_BACKSPACE;
+                edit(key);
+                require(name == u8"Grüe", "Modern field split a UTF-8 character");
+            }
+            SDL_Event back{};
+            back.type = SDL_CONTROLLERBUTTONDOWN;
+            back.cbutton.button = SDL_CONTROLLER_BUTTON_B;
+            SDL_PushEvent(&back);
+            app.getInputManager().updateInput();
+            stepApp(app);
+            require(std::string(app.getCurrenStateName()) == "MainMenuState",
+                    "Secondary menu ignored controller Back");
+        }
+    }
+    SpeedController::setMainInstance(nullptr);
+    fs.removeFromSearchPath(outputDirectory);
+    std::cout << "Credits, replays and LAN: new UI and controller Back passed\n";
+}
+
+void testHeldSliderInput()
+{
+    SDL_SetHint(SDL_HINT_JOYSTICK_ALLOW_BACKGROUND_EVENTS, "1");
+    SDL_InitSubSystem(SDL_INIT_GAMECONTROLLER);
+    int mapped = 0;
+    for (int i = 0; i < SDL_NumJoysticks(); ++i)
+    {
+        mapped += SDL_IsGameController(i) != 0;
+    }
+    if (mapped >= 2)
+    {
+        std::cout << "Held-input virtual test skipped: both controller slots are occupied\n";
+        return;
+    }
+    const int index = SDL_JoystickAttachVirtual(SDL_JOYSTICK_TYPE_GAMECONTROLLER, 6, 21, 0);
+    require(index >= 0, "Cannot attach slider test controller");
+    auto* joystick = SDL_JoystickOpen(index);
+    {
+        InputManager input(nullptr);
+        SDL_JoystickSetVirtualAxis(joystick, 0, 25000);
+        input.updateInput();
+        require(input.sliderDirection() == 1, "Held stick did not produce initial slider step");
+        int repeats = 0;
+        for (int i = 0; i < 12; ++i)
+        {
+            SDL_Delay(50);
+            input.updateInput();
+            repeats += input.sliderDirection() == 1;
+        }
+        require(repeats >= 4, "Held stick did not repeat without new input edges");
+        SDL_JoystickSetVirtualAxis(joystick, 0, -25000);
+        input.updateInput();
+        require(input.sliderDirection() == -1, "Held stick reversal failed");
+        SDL_JoystickSetVirtualAxis(joystick, 0, 0);
+        input.updateInput();
+        require(input.sliderDirection() == 0, "Released stick kept changing slider");
+        SDL_JoystickSetVirtualButton(joystick, SDL_CONTROLLER_BUTTON_DPAD_RIGHT, 1);
+        input.updateInput();
+        require(input.sliderDirection() == 1, "D-pad slider initial step failed");
+        SDL_Delay(320);
+        input.updateInput();
+        require(input.sliderDirection() == 1, "Held D-pad slider did not repeat");
+        SDL_JoystickSetVirtualButton(joystick, SDL_CONTROLLER_BUTTON_DPAD_RIGHT, 0);
+        input.updateInput();
+        require(input.sliderDirection() == 0, "Released D-pad kept changing slider");
+    }
+    SDL_JoystickClose(joystick);
+    SDL_JoystickDetachVirtual(index);
+    std::cout << "Sliders: virtual stick/D-pad hold, reversal and release passed\n";
 }

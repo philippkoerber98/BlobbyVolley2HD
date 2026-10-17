@@ -24,10 +24,12 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 /* includes */
 #include <algorithm>
 #include <ctime>
+#include <utility>
 #include <iostream> // for cerr
 
 #include "FileSystem.h"
 #include "IMGUI.h"
+#include "WarmUI.h"
 #include "ReplayState.h"
 #include "SpeedController.h"
 #include "TextManager.h"
@@ -55,11 +57,24 @@ void ReplaySelectionState::step_impl()
 {
     IMGUI& imgui = getIMGUI();
 
-    imgui.doCursor();
-    imgui.doImage(GEN_ID, Vector2(400.0, 300.0), "background");
-    imgui.doOverlay(GEN_ID, Vector2(0.0, 0.0), Vector2(800.0, 600.0));
+    WarmUI::page(imgui, translateUI(WarmUI::language(), "Replays"));
+    WarmUI::text(
+        imgui, 40, 578,
+        translateUI(WarmUI::language(), "Up/down: list    Left/right: actions    A: select    B: back"), 15);
+    imgui.doInactiveMode(mShowReplayInfo || mChecksumError || mVersionError);
 
-    if (imgui.doButton(GEN_ID, Vector2(224.0, 10.0), TextManager::RP_PLAY) && (mSelectedReplay != -1u))
+    const bool play = imgui.doButton(GEN_ID, Vector2(40, 95), TextManager::RP_PLAY, TF_NORMAL, 160);
+    const bool info = imgui.doButton(GEN_ID, Vector2(212, 95), TextManager::RP_INFO, TF_NORMAL, 160);
+    const bool remove = imgui.doButton(GEN_ID, Vector2(600, 95), TextManager::RP_DELETE, TF_NORMAL, 160);
+    mPlayRequested = mPlayRequested || imgui.doSelectbox(GEN_ID, Vector2(40, 145), Vector2(760, 505),
+                                                         mReplayFiles, mSelectedReplay) == SBA_DBL_CLICK;
+    if (mReplayFiles.empty())
+    {
+        WarmUI::text(imgui, 56, 165, translateUI(WarmUI::language(), "No replays found."));
+    }
+    const bool back = imgui.doButton(GEN_ID, Vector2(620, 530), TextManager::LBL_BACK, TF_NORMAL, 140);
+
+    if ((play || std::exchange(mPlayRequested, false)) && mSelectedReplay < mReplayFiles.size())
     {
         std::string loadrep = mReplayFiles[mSelectedReplay];
 
@@ -86,17 +101,13 @@ void ReplaySelectionState::step_impl()
         }
         return;
     }
-    else if (imgui.doButton(GEN_ID, Vector2(424.0, 10.0), TextManager::LBL_CANCEL))
+    else if (back)
     {
         switchState(new MainMenuState());
         return;
     }
-    else
-    {
-        imgui.doSelectbox(GEN_ID, Vector2(34.0, 50.0), Vector2(634.0, 550.0), mReplayFiles, mSelectedReplay);
-    }
 
-    if (imgui.doButton(GEN_ID, Vector2(644.0, 60.0), TextManager::RP_INFO))
+    if (info)
     {
         if (!mReplayFiles.empty())
         {
@@ -105,6 +116,7 @@ void ReplaySelectionState::step_impl()
                 mReplayLoader.reset(IReplayLoader::createReplayLoader(
                     std::string("replays/" + mReplayFiles[mSelectedReplay] + ".bvr")));
                 mShowReplayInfo = true;
+                imgui.resetSelection();
             }
             catch (std::exception& e)
             {
@@ -112,7 +124,7 @@ void ReplaySelectionState::step_impl()
             }
         }
     }
-    if (imgui.doButton(GEN_ID, Vector2(644.0, 95.0), TextManager::RP_DELETE))
+    if (remove)
     {
         if (!mReplayFiles.empty())
         {
@@ -129,65 +141,41 @@ void ReplaySelectionState::step_impl()
 
     if (mShowReplayInfo)
     {
-        // setup
-        std::string left = mReplayLoader->getPlayerName(LEFT_PLAYER);
-        std::string right = mReplayLoader->getPlayerName(RIGHT_PLAYER);
-
-        const int MARGIN = std::min(std::max(int(300 - 24 * (std::max(left.size(), right.size()))), 50), 150);
-
-        const int RIGHT = 800 - MARGIN;
         imgui.doInactiveMode(false);
-        imgui.doOverlay(GEN_ID, Vector2(MARGIN, 180), Vector2(800 - MARGIN, 445));
-        std::string repname = mReplayFiles[mSelectedReplay];
-        imgui.doText(GEN_ID, Vector2(400 - repname.size() * 12, 190), repname);
-
-        // calculate text positions
-
-        imgui.doText(GEN_ID, Vector2(MARGIN + 20, 225), left);
-        imgui.doText(GEN_ID, Vector2(400 - 24, 225), "vs");
-        imgui.doText(GEN_ID, Vector2(RIGHT - 20 - 24 * right.size(), 225), right);
-
-        time_t rd = mReplayLoader->getDate();
-        struct tm* ptm;
-        ptm = gmtime(&rd);
-        // std::
-        char buffer[255];
-        std::strftime(buffer, sizeof(buffer), "%d.%m.%Y - %H:%M", ptm);
-        std::string date = buffer;
-        imgui.doText(GEN_ID, Vector2(400 - 12 * date.size(), 255), date);
-
-        imgui.doText(GEN_ID, Vector2(MARGIN + 20, 300), TextManager::OP_SPEED);
-        std::string speed = std::to_string(mReplayLoader->getSpeed() * 100 / 75) + "%";
-        imgui.doText(GEN_ID, Vector2(RIGHT - 20 - 24 * speed.size(), 300), speed);
-
-        imgui.doText(GEN_ID, Vector2(MARGIN + 20, 335), TextManager::RP_DURATION);
-        std::string dur;
-        if (mReplayLoader->getDuration() > 99)
+        imgui.doOverlay(GEN_ID, Vector2(0, 0), Vector2(800, 600), Color(0, 0, 0), .55f);
+        WarmUI::panel(imgui, 120, 160, 560, 310);
+        WarmUI::text(imgui, 144, 180, mReplayFiles[mSelectedReplay], 26, 2);
+        time_t date = mReplayLoader->getDate();
+        char dateText[64]{};
+        if (auto* utc = std::gmtime(&date))
         {
-            // +30 because of rounding
-            dur = std::to_string((mReplayLoader->getDuration() + 30) / 60) + "min";
+            std::strftime(dateText, sizeof(dateText), "%Y-%m-%d  %H:%M UTC", utc);
         }
-        else
-        {
-            dur = std::to_string(mReplayLoader->getDuration()) + "s";
-        }
-        imgui.doText(GEN_ID, Vector2(RIGHT - 20 - 24 * dur.size(), 335), dur);
-
-        std::string res;
-        res = std::to_string(mReplayLoader->getFinalScore(LEFT_PLAYER)) + " : " +
-              std::to_string(mReplayLoader->getFinalScore(RIGHT_PLAYER));
-
-        imgui.doText(GEN_ID, Vector2(MARGIN + 20, 370), TextManager::RP_RESULT);
-        imgui.doText(GEN_ID, Vector2(RIGHT - 20 - 24 * res.size(), 370), res);
-
-        if (imgui.doButton(GEN_ID, Vector2(400 - 24, 410), TextManager::LBL_OK))
+        WarmUI::text(imgui, 144, 211, dateText, 16);
+        WarmUI::text(imgui, 144, 240,
+                     mReplayLoader->getPlayerName(LEFT_PLAYER) + "  vs  " +
+                         mReplayLoader->getPlayerName(RIGHT_PLAYER),
+                     22);
+        WarmUI::text(imgui, 144, 272,
+                     imgui.getText(TextManager::OP_SPEED) + "  " +
+                         std::to_string(mReplayLoader->getSpeed() * 100 / 75) + " %",
+                     22);
+        WarmUI::text(imgui, 144, 310,
+                     imgui.getText(TextManager::RP_DURATION) + "  " +
+                         std::to_string(mReplayLoader->getDuration()) + " s",
+                     22);
+        WarmUI::text(imgui, 144, 348,
+                     imgui.getText(TextManager::RP_RESULT) + "  " +
+                         std::to_string(mReplayLoader->getFinalScore(LEFT_PLAYER)) + " : " +
+                         std::to_string(mReplayLoader->getFinalScore(RIGHT_PLAYER)),
+                     22);
+        if (imgui.doButton(GEN_ID, Vector2(516, 410), TextManager::LBL_CLOSE, TF_NORMAL, 140) ||
+            getInputMgr().exit())
         {
             mShowReplayInfo = false;
+            imgui.resetSelection();
         }
-        else
-        {
-            imgui.doInactiveMode(true);
-        }
+        imgui.doInactiveMode(false);
     }
 
     if (mChecksumError)
@@ -197,7 +185,7 @@ void ReplaySelectionState::step_impl()
         imgui.doText(GEN_ID, Vector2(250, 200), TextManager::RP_CHECKSUM);
         imgui.doText(GEN_ID, Vector2(250, 250), TextManager::RP_FILE_CORRUPT);
 
-        if (imgui.doButton(GEN_ID, Vector2(400, 330), TextManager::LBL_OK))
+        if (imgui.doButton(GEN_ID, Vector2(486, 330), TextManager::LBL_CLOSE, TF_NORMAL, 140))
         {
             mChecksumError = false;
         }
@@ -214,7 +202,7 @@ void ReplaySelectionState::step_impl()
         imgui.doText(GEN_ID, Vector2(250, 200), TextManager::RP_VERSION);
         imgui.doText(GEN_ID, Vector2(250, 250), TextManager::RP_FILE_OUTDATED);
 
-        if (imgui.doButton(GEN_ID, Vector2(400, 330), TextManager::LBL_OK))
+        if (imgui.doButton(GEN_ID, Vector2(486, 330), TextManager::LBL_CLOSE, TF_NORMAL, 140))
         {
             mVersionError = false;
         }

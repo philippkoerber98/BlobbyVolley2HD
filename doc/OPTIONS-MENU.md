@@ -60,3 +60,45 @@ point destination rectangles; OpenGL uses filtered texture regions. This keeps
 corners antialiased at native, HD and 4K sizes without blurring panel contents.
 The rounded-panel regression checks coverage and seamless transparency at
 800x600 and 3200x2400 in both renderers.
+
+## Controller sliders and secondary pages
+
+Slider input steps immediately, waits 300 ms, then repeats every 45 ms while
+holding left/right on the D-pad or left stick. Release, opposing directions and
+stick reversal reset the repeat state. Repeat input is buffered separately from
+activation/navigation edges, so it cannot repeatedly activate buttons. Bot
+strength steps by one stored reaction-delay unit (4%), avoiding rounding away
+1% changes. RGB, speed, volume and deadzone retain their own step sizes.
+
+Credits, replay selection, LAN browsing and the lobby use the options palette,
+runtime Nunito text, compact 34-pixel buttons and rounded panels. In lists,
+up/down changes the selection; left/right moves between the list and actions.
+A/Enter activates, B/Escape returns or dismisses a dialog. Replay lists also
+support activation by A or double-click. Modal dialogs disable their underlying
+controls. The selected level provides the blurred, darkened page background.
+
+Hosting a LAN server first asks for a server name and persists it as
+`lan_server_name`. Names fit the existing 32-byte discovery field without
+changing the network protocol. A dedicated server's name remains configurable
+through `name` in `data/server.xml`. Dedicated servers locate `data` relative to
+the executable even when started from another working directory.
+
+LAN regressions (`assets-smoke-test <installed-data> <output> --lan-only`) use
+real local UDP connections on ports 23456 and 23457. They verify both dedicated
+and player-hosted servers: advertised names, two clients, opening/joining a
+lobby, rules handshake, match start and cleanup after disconnect. This does
+not test public Internet matchmaking, another PC's firewall or router behavior.
+
+Secondary-page actions use fixed-width, centered labels. Utilities sit above
+the list, primary actions below it, and Back is aligned to the bottom-right
+720-pixel content edge. Replay deletion is separated from play/info. Lobby
+selectors share one width; leave/start and modal confirm/cancel form aligned
+rows with consistent spacing.
+
+Legacy `lang_*.xml` lookup keys remain unchanged; their display values use
+consistent capitalization and corrected terminology in all six languages.
+Connection, close, back and main-menu actions have distinct labels rather than
+sharing OK/Cancel. The controller Back action recognizes these return/dismiss
+labels independently of the active language. Catalog checks validate all legacy
+and modern entries, and runtime tests compare shared action labels across both
+catalogs for every supported language.

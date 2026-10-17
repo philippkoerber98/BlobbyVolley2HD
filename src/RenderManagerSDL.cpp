@@ -417,6 +417,16 @@ bool RenderManagerSDL::setBackground(const std::string& filename)
         SDL_FreeSurface(tempBackgroundSurface);
         mBackground = newImage->sdlImage;
         mImageMap["background"] = newImage;
+        auto* ballSurface = loadSurface("level-ball/" + filename.substr(12));
+        auto* ballTexture = SDL_CreateTextureFromSurface(mRenderer, ballSurface);
+        SDL_FreeSurface(ballSurface);
+        if (!ballTexture)
+        {
+            BOOST_THROW_EXCEPTION(FileLoadException(filename));
+        }
+        SDL_SetTextureBlendMode(ballTexture, SDL_BLENDMODE_BLEND);
+        SDL_DestroyTexture(mBallPanels);
+        mBallPanels = ballTexture;
     }
     catch (const FileLoadException&)
     {

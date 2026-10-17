@@ -8,61 +8,61 @@
 	<string english = "really quit?" translation = "Skutečně ukončit?" />
 	<string english = "continue" translation = "Pokračovat" />
 
-	<string english = "online game" translation = "Internetová hra" />
-	<string english = "lan game" translation = "Hra v místní síti" />
-	<string english = "start" translation = "Spustit" />
+	<string english = "online game" translation = "Hrát online" />
+	<string english = "lan game" translation = "Hrát v síti LAN" />
+	<string english = "start" translation = "Spustit zápas" />
 	<string english = "options" translation = "Volby" />
-	<string english = "watch replay" translation = "Přehrát záznam hry" />
-	<string english = "credits" translation = "Zásluhy" />
+	<string english = "watch replay" translation = "Přehrát záznam" />
+	<string english = "credits" translation = "Autoři" />
 	<string english = "exit" translation = "Ukončit" />
 	
 	<string english = "programmers:" translation = "Programátoři:" />
 	<string english = "graphics:" translation = "Grafika:" />
 	<string english = "special thanks at:" translation = "Zvláštní poděkování:" />
 
-	<string english = "show again" translation = "Podívat se ještě jednou" />
-	<string english = "play" translation = "Přehrát" />
-	<string english = "delete" translation = "Smazat" />
-	<string english = "info" translation = "Informace" />
+	<string english = "show again" translation = "Přehrát znovu" />
+	<string english = "play" translation = "Přehrát záznam" />
+	<string english = "delete" translation = "Smazat záznam" />
+	<string english = "info" translation = "Podrobnosti záznamu" />
 	<string english = "duration:" translation = "Doba trvání:" />
 	<string english = "result:" translation = "Výsledek:" />
-	<string english = "checksum error" translation = "Chyba v kontrolním součtu" />
-	<string english = "file is corrupt" translation = "Soubor je poškozen" />
-	<string english = "version error" translation = "Chyba ve verzi" />
-	<string english = "file is outdated" translation = "Soubor je zastaralý" />
-	<string english = "receiving replay..." translation = "Přijímá se opakovaný záznam..." />
-	<string english = "name of the replay:" translation = "Název opakovaného záznamu:" />
-	<string english = "save replay" translation = "Uložit opakovaný záznam" />
+	<string english = "checksum error" translation = "Nesouhlasí kontrolní součet" />
+	<string english = "file is corrupt" translation = "Soubor záznamu je poškozen." />
+	<string english = "version error" translation = "Nepodporovaná verze záznamu" />
+	<string english = "file is outdated" translation = "Tento záznam používá starší formát." />
+	<string english = "receiving replay..." translation = "Přijímání záznamu..." />
+	<string english = "name of the replay:" translation = "Název záznamu:" />
+	<string english = "save replay" translation = "Uložit záznam" />
 	
 	<string english = "has won the game!" translation = "vyhrál" />
-	<string english = "try again" translation = "Ještě jednou" />
-	<string english = "waiting for opponent..." translation = "Čeká se na protihráče" />
-	<string english = "opponent left the game" translation = "Protihráč opustil hru" />
-	<string english = "game paused" translation = "Hra pozastavena" />
-	<string english = "quit" translation = "Odejít" />
+	<string english = "try again" translation = "Hrát znovu" />
+	<string english = "waiting for opponent..." translation = "Čekání na soupeře..." />
+	<string english = "opponent left the game" translation = "Soupeř opustil zápas." />
+	<string english = "game paused" translation = "Zápas pozastaven" />
+	<string english = "quit" translation = "Opustit zápas" />
 	
-	<string english = "scan for servers" translation = "Vyhledat server" />
-	<string english = "direct connect" translation = "Přímé spojení" />
-	<string english = "server info" translation = "Informace o serveru" />
-	<string english = "waiting player: " translation = "Čekající hráč: " />
+	<string english = "scan for servers" translation = "Vyhledat servery" />
+	<string english = "direct connect" translation = "Přímé připojení" />
+	<string english = "server info" translation = "Podrobnosti serveru" />
+	<string english = "waiting player: " translation = "Čekající hráči: " />
 	<string english = "host game" translation = "Hostit hru" />
-	<string english = "connecting to server ..." translation = "Připojuje se k serveru..." />
-	<string english = "disconnected from server" translation = "Odpojen od serveru" />
-	<string english = "connection failed" translation = "Chyba spojení" />
-	<string english = "server full" translation = "Server plný" />
+	<string english = "connecting to server ..." translation = "Připojování k serveru..." />
+	<string english = "disconnected from server" translation = "Odpojeno od serveru" />
+	<string english = "connection failed" translation = "Připojení se nezdařilo" />
+	<string english = "server full" translation = "Server je plný." />
 	<string english = " by " translation = " od " />
-	<string english = "challenger: " translation = "Vyzyvatel: " />
-	<string english = "games: " translation = "Hry: " />
+	<string english = "challenger: " translation = "Soupeř: " />
+	<string english = "games: " translation = "Probíhající zápasy: " />
 	<string english = "random" translation = "Náhodná" />
 	<string english = "rules: " translation = "Pravidla: " />
 	<string english = "speed: " translation = "Rychlost: " />
-	<string english = "stay on server" translation = "Zůstat na serveru" />
-	<string english = "join game" translation = "Připojit se ke hře" />
-	<string english = "leave game" translation = "Opustit hru" />
-	<string english = "open game" translation = "Otevřít hru" />
+	<string english = "stay on server" translation = "Zpět do lobby" />
+	<string english = "join game" translation = "Připojit se k zápasu" />
+	<string english = "leave game" translation = "Opustit zápas" />
+	<string english = "open game" translation = "Vytvořit zápas" />
 	<string english = "points: " translation = "Body: " />
 
-	<string english = "touch input type:" translation = "Dotykový zadávací režim:" />
+	<string english = "touch input type:" translation = "Dotykové ovládání:" />
 	<string english = "arrow keys" translation = "Klávesy šipek" />
 	<string english = "blobby follows finger" translation = "Hráč následuje pohyb prstu" />
 	<string english = "input options" translation = "Ovládání hráčů" />
@@ -71,16 +71,16 @@
 	<string english = "video settings" translation = "Nastavení obrazu" />
 	<string english = "fullscreen mode" translation = "Režim celé obrazovky" />
 	<string english = "window mode" translation = "Okenní režim" />
-	<string english = "render device" translation = "Vykreslovací zařízení" />
+	<string english = "render device" translation = "Vykreslovač" />
 	<string english = "show shadow" translation = "Ukázat stíny" />
-	<string english = "blob colors" translation = "Barvy kapkovitých hráčů" />
-	<string english = "left player" translation = "Hráč nalevo" />
-	<string english = "right player" translation = "Hráč napravo" />
+	<string english = "blob colors" translation = "Barvy blobů" />
+	<string english = "left player" translation = "Levý hráč" />
+	<string english = "right player" translation = "Pravý hráč" />
 	
 	<string english = "red" translation = "Červená" />
 	<string english = "green" translation = "Zelená" />
 	<string english = "blue" translation = "Modrá" />
-	<string english = "morphing blob?" translation = "Hráč měnící barvu?" />
+	<string english = "morphing blob?" translation = "Střídat barvy bloba" />
 	<string english = "keyboard" translation = "Klávesnice" />
 	<string english = "mouse" translation = "Myš" />
 	<string english = "joystick" translation = "Joystick" />
@@ -100,24 +100,28 @@
 	<string english = "background:" translation = "Pozadí:" />
 	<string english = "volume:" translation = "Hlasitost:" />
 	<string english = "mute" translation = "Ztlumit" />
-	<string english = "show fps" translation = "Ukázat počet snímků za sekundu" />
-	<string english = "show blood" translation = "Ukázat krev" />
-	<string english = "network side:" translation = "Strana sítě:" />
+	<string english = "show fps" translation = "Zobrazit FPS" />
+	<string english = "show blood" translation = "Zobrazit krev" />
+	<string english = "network side:" translation = "Preferovaná strana:" />
 	<string english = "left" translation = "Vlevo" />
 	<string english = "right" translation = "Vpravo" />
 	<string english = "gamespeed:" translation = "Rychlost hry:" />
-	<string english = "very slow" translation = "Velice pomalá" />
+	<string english = "very slow" translation = "Velmi pomalá" />
 	<string english = "slow" translation = "Pomalá" />
 	<string english = "default" translation = "Výchozí" />
 	<string english = "fast" translation = "Rychlá" />
-	<string english = "very fast" translation = "Velice rychlá" />
+	<string english = "very fast" translation = "Velmi rychlá" />
 	
 	<string english = "language" translation = "Jazyk" />
-	<string english = "bot strength" translation = "Náročnost hry" />
-	<string english = "weak" translation = "Jednoduchá" />
+	<string english = "bot strength" translation = "Síla bota" />
+	<string english = "weak" translation = "Snadná" />
 	<string english = "medium" translation = "Střední" />
 	<string english = "strong" translation = "Těžká" />
 	<string english = "rules:" translation = "Pravidla:" />
 	
-	<string english = "please visit https://blobbyvolley.de for a new version of blobby volley" translation = "Navštivte, prosím, https://blobbyvolley.de kvůli nové verzi Blobby Volley" />
+	<string english = "please visit https://blobbyvolley.de for a new version of blobby volley" translation = "Tento server používá novější verzi hry." />
+	<string english="connect" translation="Připojit" />
+	<string english="close" translation="Zavřít" />
+	<string english="back" translation="Zpět" />
+	<string english="main menu" translation="Hlavní nabídka" />
 </language>

@@ -7,15 +7,23 @@ the game's level selection. Keep the filenames below exactly as shown.
 
 My Level/
     background.webp  (or background.png; required)
+    ball.webp        (ball.png)
     level.ogg        (optional; looping music or ambience)
     victory.ogg      (optional; victory sound, played once)
     bums.ogg         (optional; ball impact)
     chat.ogg         (optional; chat notification)
     pfiff.ogg        (optional; whistle)
 
+Optional ball: add ball.webp or ball.png (WebP takes priority). Use a square
+image with a transparent background and a centered round ball filling the
+canvas, preferably 512 x 512 pixels or larger. Keep lighting subtle: the game
+adds fixed lighting and rotates the ball. Missing or invalid artwork uses the
+standard ball. This changes appearance only, not size or physics.
+
 All sounds also accept WAV. Use Vorbis encoding for OGG files. OGG takes priority
-over WAV; WebP takes priority over PNG. Missing or broken sounds use the global
-defaults. If no usable default exists, that sound remains silent.
+over WAV; WebP takes priority over PNG. Missing or broken effects and victory sounds use the global
+defaults. Level music has no global fallback: without a usable level.ogg or
+level.wav, there is no background audio. Effects still play normally.
 The victory sound plays once while the level music continues.
 
 No configuration file is needed. Reopen the options to discover newly added
@@ -31,16 +39,24 @@ erscheint in der Levelauswahl des Spiels. Behalte die folgenden Dateinamen bei.
 
 Mein Level/
     background.webp  (oder background.png; erforderlich)
+    ball.webp        (ball.png)
     level.ogg        (optional; Musik oder Hintergrundgeräusche in Dauerschleife)
     victory.ogg      (optional; einmaliger Siegeston)
     bums.ogg         (optional; Ballkontakt)
     chat.ogg         (optional; Chatbenachrichtigung)
     pfiff.ogg        (optional; Pfiff)
 
+Optionaler Ball: Lege ball.webp oder ball.png dazu (WebP hat Vorrang). Nutze
+ein quadratisches Bild mit transparentem Hintergrund und einem mittigen runden
+Ball, der das Bild ausfüllt, möglichst ab 512 x 512 Pixeln. Beleuchtung dezent
+halten: Das Spiel ergänzt feste Beleuchtung und dreht den Ball. Fehlt ein
+gültiges Bild, wird der Standardball verwendet. Größe und Physik bleiben gleich.
+
 Alle Sounds dürfen auch WAV-Dateien sein. Verwende für OGG-Dateien den
 Vorbis-Codec. OGG wird vor WAV und WebP vor PNG bevorzugt. Fehlende oder defekte
-Sounds werden durch die globalen Standardsounds ersetzt. Gibt es keinen
-nutzbaren Standardsound, bleibt dieser Sound stumm.
+Effekte und Siegestöne werden durch globale Standardsounds ersetzt. Für
+Levelmusik gibt es keinen globalen Ersatz: Ohne nutzbare level.ogg oder
+level.wav bleibt der Hintergrund still. Effekte werden weiterhin abgespielt.
 Der Siegeston wird einmal abgespielt, während die Levelmusik weiterläuft.
 
 Eine Konfigurationsdatei ist nicht nötig. Öffne die Optionen erneut, damit neue
@@ -57,16 +73,24 @@ se zobrazí ve výběru úrovní ve hře. Níže uvedené názvy souborů nemě�
 
 Moje úroveň/
     background.webp  (nebo background.png; povinné)
+    ball.webp        (ball.png)
     level.ogg        (volitelné; hudba nebo zvuky prostředí ve smyčce)
     victory.ogg      (volitelné; zvuk vítězství, přehraje se jednou)
     bums.ogg         (volitelné; náraz míče)
     chat.ogg         (volitelné; upozornění na zprávu v chatu)
     pfiff.ogg        (volitelné; písknutí)
 
+Volitelný míč: přidejte ball.webp nebo ball.png (WebP má přednost). Použijte
+čtvercový obrázek s průhledným pozadím a kulatým míčem uprostřed, který vyplňuje
+plátno, nejlépe alespoň 512 x 512 pixelů. Osvětlení má být jemné: hra přidává
+stálé osvětlení a míč otáčí. Chybějící či neplatný obrázek nahradí standardní
+míč. Velikost a fyzika se nemění.
+
 Všechny zvuky mohou být také ve formátu WAV. Pro soubory OGG použijte kodek
-Vorbis. OGG má přednost před WAV a WebP před PNG. Chybějící nebo poškozené zvuky
-se nahradí globálními výchozími zvuky. Pokud není dostupný použitelný výchozí
-zvuk, daný zvuk se nepřehraje.
+Vorbis. OGG má přednost před WAV a WebP před PNG. Chybějící nebo poškozené efekty a zvuky vítězství
+se nahradí globálními výchozími zvuky. Hudba úrovně nemá globální náhradu:
+bez použitelného level.ogg nebo level.wav se hudba ani prostředí nepřehrají.
+Zvukové efekty zůstávají aktivní.
 Zvuk vítězství se přehraje jednou a hudba úrovně přitom pokračuje.
 
 Konfigurační soubor není potřeba. Znovu otevřete nastavení, aby hra našla nově
@@ -84,16 +108,24 @@ de archivo que se indican a continuación.
 
 Mi nivel/
     background.webp  (o background.png; obligatorio)
+    ball.webp        (ball.png)
     level.ogg        (opcional; música o sonido ambiental en bucle)
     victory.ogg      (opcional; sonido de victoria, se reproduce una sola vez)
     bums.ogg         (opcional; impacto del balón)
     chat.ogg         (opcional; notificación del chat)
     pfiff.ogg        (opcional; silbato)
 
+Balón opcional: añade ball.webp o ball.png (WebP tiene prioridad). Usa una
+imagen cuadrada con fondo transparente y un balón redondo centrado que llene
+el lienzo, preferiblemente de 512 x 512 píxeles o más. Usa iluminación suave:
+el juego añade iluminación fija y gira el balón. Si falta una imagen válida,
+se usa el balón estándar. El tamaño y la física no cambian.
+
 Todos los sonidos también admiten WAV. Usa el códec Vorbis para los archivos
-OGG. OGG tiene prioridad sobre WAV y WebP sobre PNG. Los sonidos que falten o
-estén dañados se sustituyen por los sonidos predeterminados globales. Si no
-existe un sonido predeterminado válido, ese sonido no se reproduce.
+OGG. OGG tiene prioridad sobre WAV y WebP sobre PNG. Los efectos y sonidos de victoria que falten o
+estén dañados usan los sonidos predeterminados globales. La música del nivel
+no tiene sustituto global: sin un level.ogg o level.wav válido no habrá audio
+de fondo. Los efectos seguirán sonando.
 El sonido de victoria se reproduce una vez mientras continúa la música del nivel.
 
 No se necesita ningún archivo de configuración. Vuelve a abrir las opciones
@@ -111,16 +143,24 @@ ci-dessous.
 
 Mon niveau/
     background.webp  (ou background.png ; obligatoire)
+    ball.webp        (ball.png)
     level.ogg        (facultatif ; musique ou ambiance sonore en boucle)
     victory.ogg      (facultatif ; son de victoire, joué une seule fois)
     bums.ogg         (facultatif ; impact du ballon)
     chat.ogg         (facultatif ; notification du chat)
     pfiff.ogg        (facultatif ; coup de sifflet)
 
+Ballon facultatif : ajoutez ball.webp ou ball.png (WebP est prioritaire).
+Utilisez une image carrée au fond transparent avec un ballon rond centré qui
+remplit l’image, de préférence au moins 512 x 512 pixels. Gardez un éclairage
+discret : le jeu ajoute un éclairage fixe et fait tourner le ballon. Sans image
+valide, le ballon standard est utilisé. La taille et la physique ne changent pas.
+
 Tous les sons acceptent aussi le format WAV. Utilisez le codec Vorbis pour les
-fichiers OGG. OGG est prioritaire sur WAV et WebP sur PNG. Les sons absents ou
-endommagés sont remplacés par les sons globaux par défaut. Si aucun son par
-défaut utilisable n'existe, le son concerné reste muet.
+fichiers OGG. OGG est prioritaire sur WAV et WebP sur PNG. Les effets et sons de victoire absents ou
+endommagés utilisent les sons globaux par défaut. La musique du niveau n'a pas
+de remplacement global : sans level.ogg ou level.wav utilisable, aucun son
+d'ambiance ne sera joué. Les effets restent actifs.
 Le son de victoire est joué une fois tandis que la musique du niveau continue.
 
 Aucun fichier de configuration n'est nécessaire. Rouvrez les options pour
@@ -138,16 +178,24 @@ nomi dei file riportati qui sotto.
 
 Il mio livello/
     background.webp  (oppure background.png; obbligatorio)
+    ball.webp        (ball.png)
     level.ogg        (facoltativo; musica o suoni ambientali in ciclo continuo)
     victory.ogg      (facoltativo; suono di vittoria, riprodotto una sola volta)
     bums.ogg         (facoltativo; impatto del pallone)
     chat.ogg         (facoltativo; notifica della chat)
     pfiff.ogg        (facoltativo; fischio)
 
+Pallone facoltativo: aggiungi ball.webp o ball.png (WebP ha la precedenza). Usa
+un’immagine quadrata con sfondo trasparente e un pallone rotondo al centro che
+riempia il quadro, preferibilmente di almeno 512 x 512 pixel. Usa luci delicate:
+il gioco aggiunge luce fissa e ruota il pallone. Senza un’immagine valida viene
+usato il pallone standard. Dimensioni e fisica non cambiano.
+
 Tutti i suoni possono essere anche in formato WAV. Usa il codec Vorbis per i
-file OGG. OGG ha la precedenza su WAV e WebP su PNG. I suoni mancanti o danneggiati
-vengono sostituiti dai suoni globali predefiniti. Se non esiste un suono
-predefinito utilizzabile, quel suono non viene riprodotto.
+file OGG. OGG ha la precedenza su WAV e WebP su PNG. Gli effetti e i suoni di vittoria mancanti o danneggiati
+usano i suoni globali predefiniti. La musica del livello non ha un sostituto
+globale: senza un level.ogg o level.wav valido non ci sarà audio di sottofondo.
+Gli effetti continueranno a essere riprodotti.
 Il suono di vittoria viene riprodotto una volta mentre la musica del livello continua.
 
 Non serve alcun file di configurazione. Riapri le opzioni per rilevare le nuove

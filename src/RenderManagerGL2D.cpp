@@ -392,6 +392,10 @@ bool RenderManagerGL2D::setBackground(const std::string& filename)
         imgBuffer->glHandle = loadTexture(newSurface, false);
         mBackground = imgBuffer->glHandle;
         mImageMap["background"] = imgBuffer;
+        auto* ballSurface = loadSurface("level-ball/" + filename.substr(12));
+        const auto ballTexture = loadTexture(ballSurface, false);
+        glDeleteTextures(1, &mBallPanels);
+        mBallPanels = ballTexture;
     }
     catch (const FileLoadException&)
     {
