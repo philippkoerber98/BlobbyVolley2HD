@@ -301,8 +301,9 @@ void setup_physfs(char* argv0)
     fs.addToSearchPath(BLOBBY_DATA_DIR);
     fs.addToSearchPath(fs.join(BLOBBY_DATA_DIR, "rules.zip"));
 #endif
-    fs.addToSearchPath("data");
-    fs.addToSearchPath(fs.join("data", "rules.zip"));
+    const auto data = fs.join(fs.getBaseDir(), "data");
+    fs.addToSearchPath(data);
+    fs.addToSearchPath(fs.join(data, "rules.zip"));
 }
 
 std::string statistics()

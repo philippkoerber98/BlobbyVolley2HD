@@ -82,6 +82,7 @@ void RenderManager::drawRuntimeText(const std::string& text, Vector2 position, f
     const float scale = height / pixels;
     const Color color = style == 1   ? Color(53, 36, 20)
                         : style == 2 ? Color(255, 207, 91)
+                        : style == 3 ? Color(145, 133, 111)
                                      : Color(255, 245, 220);
     for (size_t i = 0; i < text.size();)
     {

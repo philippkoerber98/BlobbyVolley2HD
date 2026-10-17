@@ -130,7 +130,7 @@ endif ()
 target_link_libraries(blobby ${BLOBBY_COMMON_LIBS} ${BLOBBY_AUDIO_LIBRARY} ${OPENGL_LIBRARIES})
 
 add_executable(assets-smoke-test EXCLUDE_FROM_ALL ../test/AssetsSmokeTest.cpp ../test/FrameTimingTest.cpp ${BLOBBY_CLIENT_SOURCES})
-target_sources(assets-smoke-test PRIVATE ../test/LevelAudioTest.cpp)
+target_sources(assets-smoke-test PRIVATE ../test/LevelAudioTest.cpp ../test/LANTest.cpp)
 target_compile_definitions(assets-smoke-test PRIVATE BLOBBY_TEST_SOURCE_DIR="${PROJECT_SOURCE_DIR}/test")
 target_link_libraries(assets-smoke-test PRIVATE ${BLOBBY_COMMON_LIBS} ${BLOBBY_AUDIO_LIBRARY} ${OPENGL_LIBRARIES})
 

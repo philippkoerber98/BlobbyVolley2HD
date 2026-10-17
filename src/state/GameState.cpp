@@ -418,7 +418,8 @@ bool GameState::displayErrorMessageBox()
         --h;
     }
     text(g, 400, 258, info, h, 0, 1);
-    bool done = mDialogNavigation.button(g, in, 0, 300, 308, 200, 36, "OK") || (active && in.exit());
+    bool done = mDialogNavigation.button(g, in, 0, 300, 308, 200, 36, tr("Schließen", "Close")) ||
+                (active && in.exit());
     g.doCursor();
     if (done)
     {

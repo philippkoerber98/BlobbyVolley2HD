@@ -29,6 +29,8 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 /* implementation */
 
+constexpr unsigned MenuStyle = 1u << 30;
+
 enum ObjectType
 {
     IMAGE,
@@ -84,6 +86,7 @@ IMGUI::~IMGUI() = default;
 
 void IMGUI::begin()
 {
+    mMenuStyle = false;
     mHasSceneBlur = false;
     mDrawCursor = false;
     mUsingCursor = false;
@@ -204,28 +207,60 @@ void IMGUI::end(RenderManager& renderer)
             break;
 
         case EDITBOX:
-            FontSize = (obj.flags & TF_SMALL_FONT ? FONT_WIDTH_SMALL : FONT_WIDTH_NORMAL);
-            renderer.drawOverlay(0.5, obj.pos1,
-                                 obj.pos1 + Vector2(10 + obj.length * FontSize, 10 + FontSize));
-            renderer.drawText(obj.text, obj.pos1 + Vector2(5, 5), obj.flags);
-            break;
-
         case ACTIVEEDITBOX:
             FontSize = (obj.flags & TF_SMALL_FONT ? FONT_WIDTH_SMALL : FONT_WIDTH_NORMAL);
-            renderer.drawOverlay(0.3, obj.pos1,
-                                 obj.pos1 + Vector2(10 + obj.length * FontSize, 10 + FontSize));
-            renderer.drawText(obj.text, obj.pos1 + Vector2(5, 5), obj.flags);
-            if (obj.pos2.x >= 0)
+            if (obj.flags & MenuStyle)
             {
-                renderer.drawOverlay(
-                    1.0, Vector2((obj.pos2.x) * FontSize + obj.pos1.x + 5, obj.pos1.y + 5),
-                    Vector2((obj.pos2.x) * FontSize + obj.pos1.x + 5 + 3, obj.pos1.y + 5 + FontSize),
-                    Color(255, 255, 255));
+                const auto end = obj.pos1 + Vector2(obj.pos2.y, 34);
+                renderer.drawRoundedPanel(.9f, obj.pos1, end,
+                                          obj.type == ACTIVEEDITBOX ? Color(104, 75, 43) : Color(65, 45, 29));
+                const auto visible = obj.flags & TF_OBFUSCATE ? std::string(obj.text.size(), '*') : obj.text;
+                renderer.drawMenuText(visible, obj.pos1 + Vector2(5, 5), 22, 0);
+                if (obj.type == ACTIVEEDITBOX && obj.pos2.x >= 0)
+                {
+                    const float caret =
+                        RenderManager::menuTextWidth(visible.substr(0, size_t(obj.pos2.x)), 22);
+                    renderer.drawOverlay(1.f, obj.pos1 + Vector2(caret + 5, 5),
+                                         obj.pos1 + Vector2(caret + 7, 29), Color(255, 207, 91));
+                }
+            }
+            else
+            {
+                renderer.drawOverlay(obj.type == ACTIVEEDITBOX ? .3f : .5f, obj.pos1,
+                                     obj.pos1 + Vector2(10 + obj.length * FontSize, 10 + FontSize));
+                renderer.drawText(obj.text, obj.pos1 + Vector2(5, 5), obj.flags);
+                if (obj.type == ACTIVEEDITBOX && obj.pos2.x >= 0)
+                {
+                    renderer.drawOverlay(1.f, obj.pos1 + Vector2(obj.pos2.x * FontSize + 5, 5),
+                                         obj.pos1 + Vector2(obj.pos2.x * FontSize + 8, 5 + FontSize),
+                                         Color(255, 255, 255));
+                }
             }
             break;
 
         case SELECTBOX:
         case ACTIVESELECTBOX:
+            if (obj.flags & MenuStyle)
+            {
+                renderer.drawRoundedPanel(.88f, obj.pos1, obj.pos2, Color(65, 45, 29));
+                for (size_t i = 0; i < obj.entries.size(); ++i)
+                {
+                    const auto start = obj.pos1 + Vector2(8, 5 + i * 34.f);
+                    if (i == size_t(obj.selected))
+                    {
+                        renderer.drawRoundedPanel(1.f, start, Vector2(obj.pos2.x - 34, start.y + 32),
+                                                  Color(104, 75, 43));
+                    }
+                    const float width = obj.pos2.x - obj.pos1.x - 54;
+                    const float height =
+                        (std::min)(21.f,
+                                   21.f * width /
+                                       (std::max)(1.f, RenderManager::menuTextWidth(obj.entries[i], 21)));
+                    renderer.drawMenuText(obj.entries[i], start + Vector2(6, 5), height,
+                                          i == size_t(obj.selected) ? 2 : 0);
+                }
+                break;
+            }
             FontSize = (obj.flags & TF_SMALL_FONT ? (FONT_WIDTH_SMALL + LINE_SPACER_SMALL)
                                                   : (FONT_WIDTH_NORMAL + LINE_SPACER_NORMAL));
             renderer.drawOverlay((obj.type == SELECTBOX ? 0.5 : 0.3), obj.pos1, obj.pos2);
@@ -333,6 +368,22 @@ void IMGUI::doImage(int id, const Vector2& position, const std::string& name, co
 
 void IMGUI::doText(int id, const Vector2& position, const std::string& text, unsigned int flags)
 {
+    if (mMenuStyle)
+    {
+        const float height = flags & TF_SMALL_FONT ? 16.f : 22.f;
+        Vector2 start = position;
+        const float width = RenderManager::menuTextWidth(text, height);
+        if (flags & TF_ALIGN_CENTER)
+        {
+            start.x -= width / 2;
+        }
+        if (flags & TF_ALIGN_RIGHT)
+        {
+            start.x -= width;
+        }
+        doMenuText(id, start, text, height, flags & TF_HIGHLIGHT ? 2 : 0);
+        return;
+    }
     QueueObject obj;
     obj.type = TEXT;
     obj.id = id;
@@ -386,6 +437,11 @@ void IMGUI::doRoundedPanel(int id, const Vector2& pos1, const Vector2& pos2, con
 
 void IMGUI::doOverlay(int id, const Vector2& pos1, const Vector2& pos2, const Color& col, float alpha)
 {
+    if (mMenuStyle && pos2.x - pos1.x < 800 && pos2.y - pos1.y < 600)
+    {
+        doRoundedPanel(id, pos1, pos2, col.r == 0 && col.g == 0 && col.b == 0 ? Color(65, 45, 29) : col, .9f);
+        return;
+    }
     QueueObject obj;
     obj.type = OVERLAY;
     obj.id = id;
@@ -396,12 +452,14 @@ void IMGUI::doOverlay(int id, const Vector2& pos1, const Vector2& pos2, const Co
     mQueue->push(obj);
 }
 
-bool IMGUI::doButton(int id, const Vector2& position, TextManager::STRING text, unsigned int flags)
+bool IMGUI::doButton(int id, const Vector2& position, TextManager::STRING text, unsigned int flags,
+                     float width, bool enabled)
 {
-    return doButton(id, position, getText(text), flags);
+    return doButton(id, position, getText(text), flags, width, enabled);
 }
 
-bool IMGUI::doButton(int id, const Vector2& position, const std::string& text, unsigned int flags)
+bool IMGUI::doButton(int id, const Vector2& position, const std::string& text, unsigned int flags,
+                     float width, bool enabled)
 {
     bool clicked = false;
     QueueObject obj;
@@ -414,29 +472,52 @@ bool IMGUI::doButton(int id, const Vector2& position, const std::string& text, u
     int const textLength = TextManager::getUTF8Length(text);
     int const fontSize = flags & TF_SMALL_FONT ? FONT_WIDTH_SMALL : FONT_WIDTH_NORMAL;
 
+    const float buttonWidth =
+        mMenuStyle
+            ? (std::min)(760.f - position.x, width > 0 ? width : RenderManager::menuTextWidth(text, 21) + 24)
+            : float(textLength * fontSize);
+    const float buttonHeight = mMenuStyle ? 34.f : float(fontSize);
     // update position depending on alignment
     if (flags & TF_ALIGN_CENTER)
     {
-        obj.pos1.x -= textLength * fontSize / 2;
+        obj.pos1.x -= buttonWidth / 2;
     }
 
     if (flags & TF_ALIGN_RIGHT)
     {
-        obj.pos1.x -= textLength * fontSize;
+        obj.pos1.x -= buttonWidth;
     }
 
-    if (!mInactive)
+    if (!enabled && mActiveButton == id)
+    {
+        mActiveButton =
+            (mLastKeyAction == KeyAction::UP || mLastKeyAction == KeyAction::LEFT) ? mLastWidget : 0;
+        mLastKeyAction = KeyAction::NONE;
+    }
+    if (!mInactive && enabled)
     {
         // M.W. : Activate cursorless object-highlighting once the up or down key is pressed.
         if (mActiveButton == -1)
         {
             switch (mLastKeyAction)
             {
+            case KeyAction::RIGHT:
+                if (!mMenuStyle)
+                {
+                    break;
+                }
+                [[fallthrough]];
             case KeyAction::DOWN:
                 mActiveButton = 0;
                 mLastKeyAction = KeyAction::NONE;
                 break;
 
+            case KeyAction::LEFT:
+                if (!mMenuStyle)
+                {
+                    break;
+                }
+                [[fallthrough]];
             case KeyAction::UP:
                 mActiveButton = mLastWidget;
                 mLastKeyAction = KeyAction::NONE;
@@ -459,11 +540,23 @@ bool IMGUI::doButton(int id, const Vector2& position, const std::string& text, u
             obj.flags = obj.flags | TF_HIGHLIGHT;
             switch (mLastKeyAction)
             {
+            case KeyAction::RIGHT:
+                if (!mMenuStyle)
+                {
+                    break;
+                }
+                [[fallthrough]];
             case KeyAction::DOWN:
                 mActiveButton = 0;
                 mLastKeyAction = KeyAction::NONE;
                 break;
 
+            case KeyAction::LEFT:
+                if (!mMenuStyle)
+                {
+                    break;
+                }
+                [[fallthrough]];
             case KeyAction::UP:
                 mActiveButton = mLastWidget;
                 mLastKeyAction = KeyAction::NONE;
@@ -482,7 +575,8 @@ bool IMGUI::doButton(int id, const Vector2& position, const std::string& text, u
         if (mLastKeyAction == KeyAction::BACK)
         {
             if ((text == getText(TextManager::LBL_CANCEL)) || (text == getText(TextManager::LBL_NO)) ||
-                (text == getText(TextManager::MNU_LABEL_EXIT)))
+                (text == getText(TextManager::MNU_LABEL_EXIT)) || (text == getText(TextManager::LBL_BACK)) ||
+                (text == getText(TextManager::LBL_CLOSE)) || (text == getText(TextManager::LBL_MAIN_MENU)))
             {
                 // todo: Workaround to catch backkey
                 clicked = true;
@@ -498,8 +592,8 @@ bool IMGUI::doButton(int id, const Vector2& position, const std::string& text, u
         // React to mouse input.
         Vector2 mousepos = mInputManager->position();
         if (mousepos.x + tolerance >= obj.pos1.x && mousepos.y + tolerance * 2 >= obj.pos1.y &&
-            mousepos.x - tolerance <= obj.pos1.x + textLength * fontSize &&
-            mousepos.y - tolerance * 2 <= obj.pos1.y + fontSize)
+            mousepos.x - tolerance <= obj.pos1.x + buttonWidth &&
+            mousepos.y - tolerance * 2 <= obj.pos1.y + buttonHeight)
         {
             obj.flags = obj.flags
 #if BLOBBY_ON_DESKTOP
@@ -514,8 +608,29 @@ bool IMGUI::doButton(int id, const Vector2& position, const std::string& text, u
         }
     }
 
-    mLastWidget = id;
-    mQueue->push(obj);
+    if (enabled)
+    {
+        mLastWidget = id;
+    }
+    if (mMenuStyle)
+    {
+        const bool selected = obj.flags & TF_HIGHLIGHT;
+        doRoundedPanel(
+            getNextId(), obj.pos1 - Vector2(1, 1), obj.pos1 + Vector2(buttonWidth + 1, buttonHeight + 1),
+            selected ? Color(255, 207, 91) : Color(65, 45, 29), mInactive || !enabled ? .55f : .9f);
+        doRoundedPanel(getNextId(), obj.pos1, obj.pos1 + Vector2(buttonWidth, buttonHeight),
+                       Color(65, 45, 29), mInactive || !enabled ? .55f : .9f);
+        const float height = (std::min)(21.f, 21.f * (buttonWidth - 16) /
+                                                  (std::max)(1.f, RenderManager::menuTextWidth(text, 21)));
+        doMenuText(getNextId(),
+                   obj.pos1 + Vector2((buttonWidth - RenderManager::menuTextWidth(text, height)) / 2,
+                                      (34 - height) / 2),
+                   text, height, enabled ? 0 : 3);
+    }
+    else
+    {
+        mQueue->push(obj);
+    }
     return clicked;
 }
 
@@ -671,18 +786,19 @@ void IMGUI::resetSelection()
 bool IMGUI::doEditbox(int id, const Vector2& position, unsigned int length, std::string& text, unsigned& cpos,
                       unsigned int flags, bool force_active)
 {
-    int FontSize = (flags & TF_SMALL_FONT ? FONT_WIDTH_SMALL : FONT_WIDTH_NORMAL);
+    int FontSize = mMenuStyle ? 16 : (flags & TF_SMALL_FONT ? FONT_WIDTH_SMALL : FONT_WIDTH_NORMAL);
     bool changed = false;
     QueueObject obj;
     obj.id = id;
     obj.pos1 = position;
     obj.type = EDITBOX;
     obj.length = length; // length does not actually work!
-    obj.flags = flags;
+    obj.flags = flags | (mMenuStyle ? MenuStyle : 0);
 
     // Width and height including border
     int width = length * FontSize + 10;
-    int height = FontSize + 10;
+    int height = mMenuStyle ? 34 : FontSize + 10;
+    obj.pos2.y = float(width);
 
     // update position depending on alignment
     if (flags & TF_ALIGN_CENTER)
@@ -692,7 +808,7 @@ bool IMGUI::doEditbox(int id, const Vector2& position, unsigned int length, std:
 
     // React to mouse input.
     Vector2 mousepos = mInputManager->position();
-    if (mousepos.x > obj.pos1.x && mousepos.y > obj.pos1.y && mousepos.x < obj.pos1.x + width &&
+    if (!mInactive && mousepos.x > obj.pos1.x && mousepos.y > obj.pos1.y && mousepos.x < obj.pos1.x + width &&
         mousepos.y < obj.pos1.y + height)
     {
         obj.flags = obj.flags | TF_HIGHLIGHT;
@@ -771,6 +887,10 @@ bool IMGUI::doEditbox(int id, const Vector2& position, unsigned int length, std:
                 if (cpos > 0)
                 {
                     cpos--;
+                    while (mMenuStyle && cpos > 0 && (static_cast<unsigned char>(text[cpos]) & 0xc0) == 0x80)
+                    {
+                        --cpos;
+                    }
                 }
                 mLastKeyAction = KeyAction::NONE;
                 break;
@@ -779,6 +899,11 @@ bool IMGUI::doEditbox(int id, const Vector2& position, unsigned int length, std:
                 if (cpos < text.length())
                 {
                     cpos++;
+                    while (mMenuStyle && cpos < text.size() &&
+                           (static_cast<unsigned char>(text[cpos]) & 0xc0) == 0x80)
+                    {
+                        ++cpos;
+                    }
                 }
                 mLastKeyAction = KeyAction::NONE;
                 break;
@@ -790,12 +915,24 @@ bool IMGUI::doEditbox(int id, const Vector2& position, unsigned int length, std:
 
             if (input == "backspace" && text.length() > 0 && cpos > 0)
             {
-                text.erase(cpos - 1, 1);
-                cpos--;
+                auto previous = cpos - 1;
+                while (mMenuStyle && previous > 0 &&
+                       (static_cast<unsigned char>(text[previous]) & 0xc0) == 0x80)
+                {
+                    --previous;
+                }
+                text.erase(previous, cpos - previous);
+                cpos = previous;
             }
             else if (input == "del" && text.length() > cpos)
             {
-                text.erase(cpos, 1);
+                auto next = cpos + 1;
+                while (mMenuStyle && next < text.size() &&
+                       (static_cast<unsigned char>(text[next]) & 0xc0) == 0x80)
+                {
+                    ++next;
+                }
+                text.erase(cpos, next - cpos);
             }
             else if (input == "return")
             {
@@ -896,11 +1033,15 @@ bool IMGUI::doEditbox(int id, const Vector2& position, unsigned int length, std:
                     cpos++;
                     changed = true;
                 }
-                else if (input.length() == 1)
+                else if (input.length() == 1 || (mMenuStyle && !input.empty() && input != "paste" &&
+                                                 input != "backspace" && input != "del"))
                 {
-                    text.insert(cpos, input);
-                    cpos++;
-                    changed = true;
+                    if (text.size() + input.size() <= length)
+                    {
+                        text.insert(cpos, input);
+                        cpos += unsigned(input.size());
+                        changed = true;
+                    }
                 }
             }
         }
@@ -928,13 +1069,21 @@ SelectBoxAction IMGUI::doSelectbox(int id, const Vector2& pos1, const Vector2& p
 {
     int FontSize = (flags & TF_SMALL_FONT ? (FONT_WIDTH_SMALL + LINE_SPACER_SMALL)
                                           : (FONT_WIDTH_NORMAL + LINE_SPACER_NORMAL));
+    if (mMenuStyle)
+    {
+        FontSize = 34;
+    }
+    if (!entries.empty() && selected >= entries.size())
+    {
+        selected = 0;
+    }
     SelectBoxAction changed = SBA_NONE;
     QueueObject obj;
     obj.id = id;
     obj.pos1 = pos1;
     obj.pos2 = pos2;
     obj.type = SELECTBOX;
-    obj.flags = flags;
+    obj.flags = flags | (mMenuStyle ? MenuStyle : 0);
 
     const int itemsPerPage = int(pos2.y - pos1.y - 10) / FontSize;
     int first = (int)(selected / itemsPerPage) * itemsPerPage; // the first visible element in the list
@@ -974,16 +1123,51 @@ SelectBoxAction IMGUI::doSelectbox(int id, const Vector2& pos1, const Vector2& p
             switch (mLastKeyAction)
             {
             case KeyAction::DOWN:
+                if (mMenuStyle && selected + 1 < entries.size())
+                {
+                    ++selected;
+                    changed = SBA_SELECT;
+                    mLastKeyAction = KeyAction::NONE;
+                    break;
+                }
+                if (mMenuStyle)
+                {
+                    mLastKeyAction = KeyAction::NONE;
+                    break;
+                }
                 mActiveButton = 0;
                 mLastKeyAction = KeyAction::NONE;
                 break;
 
             case KeyAction::UP:
+                if (mMenuStyle)
+                {
+                    if (selected > 0)
+                    {
+                        --selected;
+                        changed = SBA_SELECT;
+                    }
+                    mLastKeyAction = KeyAction::NONE;
+                    break;
+                }
                 mActiveButton = mLastWidget;
                 mLastKeyAction = KeyAction::NONE;
                 break;
 
+            case KeyAction::SELECT:
+                if (mMenuStyle && !entries.empty())
+                {
+                    changed = SBA_DBL_CLICK;
+                    mLastKeyAction = KeyAction::NONE;
+                }
+                break;
             case KeyAction::LEFT:
+                if (mMenuStyle)
+                {
+                    mActiveButton = mLastWidget;
+                    mLastKeyAction = KeyAction::NONE;
+                    break;
+                }
                 if (selected > 0)
                 {
                     selected--;
@@ -993,6 +1177,12 @@ SelectBoxAction IMGUI::doSelectbox(int id, const Vector2& pos1, const Vector2& p
                 break;
 
             case KeyAction::RIGHT:
+                if (mMenuStyle)
+                {
+                    mActiveButton = 0;
+                    mLastKeyAction = KeyAction::NONE;
+                    break;
+                }
                 if (selected + 1 < entries.size())
                 {
                     selected++;
@@ -1064,8 +1254,11 @@ SelectBoxAction IMGUI::doSelectbox(int id, const Vector2& pos1, const Vector2& p
             }
         }
     }
-    doImage(getNextId(), Vector2(pos2.x - 15, pos1.y + 15), "gfx/pfeil_oben.bmp");
-    doImage(getNextId(), Vector2(pos2.x - 15, pos2.y - 15), "gfx/pfeil_unten.bmp");
+    if (!mMenuStyle)
+    {
+        doImage(getNextId(), Vector2(pos2.x - 15, pos1.y + 15), "gfx/pfeil_oben.bmp");
+        doImage(getNextId(), Vector2(pos2.x - 15, pos2.y - 15), "gfx/pfeil_unten.bmp");
+    }
 
     first = (selected / itemsPerPage) * itemsPerPage; // recalc first
     if (!entries.empty())
@@ -1087,7 +1280,11 @@ SelectBoxAction IMGUI::doSelectbox(int id, const Vector2& pos1, const Vector2& p
 
     mLastWidget = id;
     mQueue->push(obj);
-
+    if (mMenuStyle)
+    {
+        doMenuText(getNextId(), Vector2(pos2.x - 24, pos1.y + 6), "^", 22, 2);
+        doMenuText(getNextId(), Vector2(pos2.x - 24, pos2.y - 28), "v", 22, 2);
+    }
     return changed;
 }
 

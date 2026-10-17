@@ -35,6 +35,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #include "GameLogic.h"
 #include "GenericIO.h"
 #include "IMGUI.h"
+#include "WarmUI.h"
 #include "NetworkSearchState.h"
 #include "NetworkState.h"
 #include "UserConfig.h"
@@ -226,13 +227,12 @@ void LobbyState::step_impl()
 
     IMGUI& imgui = getIMGUI();
 
-    imgui.doCursor();
-    imgui.doImage(GEN_ID, Vector2(400.0, 300.0), "background");
-    imgui.doOverlay(GEN_ID, Vector2(0.0, 0.0), Vector2(800.0, 600.0));
-    imgui.doInactiveMode(false);
+    WarmUI::page(imgui, mInfo.name);
+    WarmUI::text(
+        imgui, 40, 578,
+        translateUI(WarmUI::language(), "Up/down: list    Left/right: actions    A: select    B: back"), 15);
 
     // server name
-    imgui.doText(GEN_ID, Vector2(400 - 12 * std::strlen(mInfo.name), 20), mInfo.name);
 
     // server description
     if (mLobbyState != ConnectionState::CONNECTED)
@@ -253,24 +253,24 @@ void LobbyState::step_impl()
 
         // empty player list
         unsigned int s;
-        imgui.doSelectbox(GEN_ID, Vector2(25.0, 90.0), Vector2(375.0, 470.0), std::vector<std::string>{}, s);
+        imgui.doSelectbox(GEN_ID, Vector2(40, 90), Vector2(390, 470), std::vector<std::string>{}, s);
 
         // empty info panel
-        imgui.doOverlay(GEN_ID, Vector2(425.0, 90.0), Vector2(775.0, 470.0));
+        imgui.doOverlay(GEN_ID, Vector2(410, 90), Vector2(760, 470));
     }
     else
     {
         std::string description = mInfo.description;
         for (unsigned int i = 0; i < description.length(); i += 63)
         {
-            imgui.doText(GEN_ID, Vector2(25, 55 + i / 63 * 15), description.substr(i, 63), TF_SMALL_FONT);
+            imgui.doText(GEN_ID, Vector2(40, 72 + i / 63 * 15), description.substr(i, 63), TF_SMALL_FONT);
         }
 
         mSubState->step(imgui, mStatus);
     }
 
     // back button
-    if (imgui.doButton(GEN_ID, Vector2(50, 530), TextManager::LBL_CANCEL))
+    if (imgui.doButton(GEN_ID, Vector2(620, 530), TextManager::LBL_BACK, TF_NORMAL, 140))
     {
         if (mPrevious == PreviousState::ONLINE)
         {
@@ -314,7 +314,7 @@ void LobbyMainSubstate::step(IMGUI& imgui, const ServerStatusData& status)
     }
 
     unsigned int previousSelectedGame = mSelectedGame;
-    bool doEnterGame = imgui.doSelectbox(GEN_ID, Vector2(25.0, 90.0), Vector2(375.0, 470.0), gamelist,
+    bool doEnterGame = imgui.doSelectbox(GEN_ID, Vector2(40, 90), Vector2(390, 470), gamelist,
                                          mSelectedGame) == SBA_DBL_CLICK;
 
     // Reset some configuration on change
@@ -336,7 +336,7 @@ void LobbyMainSubstate::step(IMGUI& imgui, const ServerStatusData& status)
         unsigned gameIndex = mSelectedGame - 1;
 
         // info panel
-        imgui.doOverlay(GEN_ID, Vector2(425.0, 90.0), Vector2(775.0, 470.0));
+        imgui.doOverlay(GEN_ID, Vector2(410, 90), Vector2(760, 470));
 
         // info panel contents:
         //  * gamespeed
@@ -347,35 +347,39 @@ void LobbyMainSubstate::step(IMGUI& imgui, const ServerStatusData& status)
                     int(0.5 + 100.0 / 75.0 * status.mPossibleSpeeds.at(status.getGame(gameIndex).speed))) +
                 "%");
         //  * points
-        imgui.doText(GEN_ID, Vector2(435, 135),
+        imgui.doText(GEN_ID, Vector2(435, 140),
                      imgui.getText(TextManager::NET_POINTS) +
                          std::to_string(status.getGame(gameIndex).score));
 
         //  * rulesfile
-        imgui.doText(GEN_ID, Vector2(435, 170), imgui.getText(TextManager::NET_RULES_TITLE));
+        imgui.doText(GEN_ID, Vector2(435, 180), imgui.getText(TextManager::NET_RULES_TITLE));
         std::string rulesstring = status.mPossibleRules.at(status.getGame(gameIndex).rules) +
                                   imgui.getText(TextManager::NET_RULES_BY);
-        rulesstring += status.mPossibleRulesAuthor.at(mChosenRules);
+        rulesstring += status.mPossibleRulesAuthor.at(status.getGame(gameIndex).rules);
         for (unsigned int i = 0; i < rulesstring.length(); i += 25)
         {
-            imgui.doText(GEN_ID, Vector2(445, 205 + i / 25 * 15), rulesstring.substr(i, 25), TF_SMALL_FONT);
+            imgui.doText(GEN_ID, Vector2(445, 224 + i / 25 * 15), rulesstring.substr(i, 25), TF_SMALL_FONT);
         }
         //  * password
         if (status.getGame(gameIndex).hasPassword)
         {
-            imgui.doText(GEN_ID, Vector2(435, 240), "Password:");
-            if (imgui.doEditbox(GEN_ID, Vector2(445, 275), 11, mChosenPassword, mChosenPasswordPosition,
+            imgui.doText(GEN_ID, Vector2(435, 290), translateUI(WarmUI::language(), "Password"));
+            if (imgui.doEditbox(GEN_ID, Vector2(445, 325), 11, mChosenPassword, mChosenPasswordPosition,
                                 mChosenPasswordVisible ? 0 : TF_OBFUSCATE))
             {
             }
-            if (imgui.doButton(GEN_ID, Vector2(735, 278), "👁"))
+            if (imgui.doButton(GEN_ID, Vector2(435, 370),
+                               translateUI(WarmUI::language(),
+                                           mChosenPasswordVisible ? "Hide password" : "Show password"),
+                               TF_NORMAL, 300))
             {
                 mChosenPasswordVisible = !mChosenPasswordVisible;
             }
         }
 
         // open game button
-        if (imgui.doButton(GEN_ID, Vector2(435, 430), imgui.getText(TextManager::NET_JOIN)) || doEnterGame)
+        if (imgui.doButton(GEN_ID, Vector2(435, 430), imgui.getText(TextManager::NET_JOIN), TF_NORMAL, 300) ||
+            doEnterGame)
         {
             // send open game packet to server
             RakNet::BitStream stream;
@@ -393,27 +397,30 @@ void LobbyMainSubstate::step(IMGUI& imgui, const ServerStatusData& status)
     else
     {
         // info panel
-        imgui.doOverlay(GEN_ID, Vector2(425.0, 90.0), Vector2(775.0, 470.0));
+        imgui.doOverlay(GEN_ID, Vector2(410, 90), Vector2(760, 470));
 
         // info panel contents:
         //  * gamespeed
         if (imgui.doButton(
                 GEN_ID, Vector2(435, 100),
                 imgui.getText(TextManager::NET_SPEED) +
-                    std::to_string(int(0.5 + 100.0 / 75.0 * status.mPossibleSpeeds.at(mChosenSpeed))) + "%"))
+                    std::to_string(int(0.5 + 100.0 / 75.0 * status.mPossibleSpeeds.at(mChosenSpeed))) + "%",
+                TF_NORMAL, 300))
         {
             mChosenSpeed = (mChosenSpeed + 1) % status.mPossibleSpeeds.size();
         }
         //  * points
-        if (imgui.doButton(GEN_ID, Vector2(435, 135),
+        if (imgui.doButton(GEN_ID, Vector2(435, 140),
                            imgui.getText(TextManager::NET_POINTS) +
-                               std::to_string(mPossibleScores.at(mChosenScore))))
+                               std::to_string(mPossibleScores.at(mChosenScore)),
+                           TF_NORMAL, 300))
         {
             mChosenScore = (mChosenScore + 1) % mPossibleScores.size();
         }
 
         //  * rulesfile
-        if (imgui.doButton(GEN_ID, Vector2(435, 170), imgui.getText(TextManager::NET_RULES_TITLE)))
+        if (imgui.doButton(GEN_ID, Vector2(435, 180), imgui.getText(TextManager::NET_RULES_TITLE), TF_NORMAL,
+                           300))
         {
             mChosenRules = (mChosenRules + 1) % status.mPossibleRules.size();
         }
@@ -422,21 +429,25 @@ void LobbyMainSubstate::step(IMGUI& imgui, const ServerStatusData& status)
         rulesstring += status.mPossibleRulesAuthor.at(mChosenRules);
         for (unsigned int i = 0; i < rulesstring.length(); i += 25)
         {
-            imgui.doText(GEN_ID, Vector2(445, 205 + i / 25 * 15), rulesstring.substr(i, 25), TF_SMALL_FONT);
+            imgui.doText(GEN_ID, Vector2(445, 224 + i / 25 * 15), rulesstring.substr(i, 25), TF_SMALL_FONT);
         }
         //  * password
-        imgui.doText(GEN_ID, Vector2(435, 240), "Password:");
-        if (imgui.doEditbox(GEN_ID, Vector2(445, 275), 11, mChosenPassword, mChosenPasswordPosition,
+        imgui.doText(GEN_ID, Vector2(435, 290), translateUI(WarmUI::language(), "Password"));
+        if (imgui.doEditbox(GEN_ID, Vector2(445, 325), 11, mChosenPassword, mChosenPasswordPosition,
                             mChosenPasswordVisible ? 0 : TF_OBFUSCATE))
         {
         }
-        if (imgui.doButton(GEN_ID, Vector2(735, 278), "👁"))
+        if (imgui.doButton(
+                GEN_ID, Vector2(435, 370),
+                translateUI(WarmUI::language(), mChosenPasswordVisible ? "Hide password" : "Show password"),
+                TF_NORMAL, 300))
         {
             mChosenPasswordVisible = !mChosenPasswordVisible;
         }
 
         // open game button
-        if (imgui.doButton(GEN_ID, Vector2(435, 430), imgui.getText(TextManager::NET_OPEN_GAME)))
+        if (imgui.doButton(GEN_ID, Vector2(435, 430), imgui.getText(TextManager::NET_OPEN_GAME), TF_NORMAL,
+                           300))
         {
             // send open game packet to server
             RakNet::BitStream stream;
@@ -483,14 +494,14 @@ void LobbyGameSubstate::step(IMGUI& imgui, const ServerStatusData& status)
     }
 
     bool doEnterGame = false;
-    if (imgui.doSelectbox(GEN_ID, Vector2(25.0, 90.0), Vector2(375.0, 470.0), mOtherPlayerNames,
-                          mSelectedPlayer) == SBA_DBL_CLICK)
+    if (imgui.doSelectbox(GEN_ID, Vector2(40, 90), Vector2(390, 470), mOtherPlayerNames, mSelectedPlayer) ==
+        SBA_DBL_CLICK)
     {
         doEnterGame = true;
     }
 
     // info panel
-    imgui.doOverlay(GEN_ID, Vector2(425.0, 90.0), Vector2(775.0, 470.0));
+    imgui.doOverlay(GEN_ID, Vector2(410, 90), Vector2(760, 470));
 
     // info panel contents:
     //  * gamespeed
@@ -498,20 +509,20 @@ void LobbyGameSubstate::step(IMGUI& imgui, const ServerStatusData& status)
                  imgui.getText(TextManager::NET_SPEED) +
                      std::to_string(int(0.5 + 100.0 / 75.0 * status.mPossibleSpeeds.at(mSpeed))) + "%");
     //  * points
-    imgui.doText(GEN_ID, Vector2(435, 135), imgui.getText(TextManager::NET_POINTS) + std::to_string(mScore));
+    imgui.doText(GEN_ID, Vector2(435, 140), imgui.getText(TextManager::NET_POINTS) + std::to_string(mScore));
     //  * rulesfile
-    imgui.doText(GEN_ID, Vector2(435, 170), imgui.getText(TextManager::NET_RULES_TITLE));
+    imgui.doText(GEN_ID, Vector2(435, 180), imgui.getText(TextManager::NET_RULES_TITLE));
     std::string rulesstring = status.mPossibleRules.at(mRules) + imgui.getText(TextManager::NET_RULES_BY);
     rulesstring += status.mPossibleRulesAuthor.at(mRules);
     for (unsigned int i = 0; i < rulesstring.length(); i += 25)
     {
-        imgui.doText(GEN_ID, Vector2(445, 205 + i / 25 * 15), rulesstring.substr(i, 25), TF_SMALL_FONT);
+        imgui.doText(GEN_ID, Vector2(445, 224 + i / 25 * 15), rulesstring.substr(i, 25), TF_SMALL_FONT);
     }
 
     // open game button
     if (mIsHost)
     {
-        if (imgui.doButton(GEN_ID, Vector2(435, 395), imgui.getText(TextManager::NET_LEAVE)))
+        if (imgui.doButton(GEN_ID, Vector2(435, 430), imgui.getText(TextManager::NET_LEAVE), TF_NORMAL, 140))
         {
             RakNet::BitStream stream;
             stream.Write((unsigned char)ID_LOBBY);
@@ -519,9 +530,9 @@ void LobbyGameSubstate::step(IMGUI& imgui, const ServerStatusData& status)
             mClient->Send(&stream, LOW_PRIORITY, RELIABLE_ORDERED, 0);
         }
 
-        if (!no_players &&
-            (imgui.doButton(GEN_ID, Vector2(435, 430), imgui.getText(TextManager::MNU_LABEL_START)) ||
-             doEnterGame))
+        if (!no_players && (imgui.doButton(GEN_ID, Vector2(595, 430),
+                                           imgui.getText(TextManager::MNU_LABEL_START), TF_NORMAL, 140) ||
+                            doEnterGame))
         {
             // Start Game
             RakNet::BitStream stream;
@@ -534,12 +545,12 @@ void LobbyGameSubstate::step(IMGUI& imgui, const ServerStatusData& status)
 
         if (no_players)
         {
-            imgui.doText(GEN_ID, Vector2(435, 430), imgui.getText(TextManager::GAME_WAITING));
+            imgui.doText(GEN_ID, Vector2(435, 395), imgui.getText(TextManager::GAME_WAITING));
         }
     }
     else
     {
-        if (imgui.doButton(GEN_ID, Vector2(435, 430), imgui.getText(TextManager::NET_LEAVE)))
+        if (imgui.doButton(GEN_ID, Vector2(435, 430), imgui.getText(TextManager::NET_LEAVE), TF_NORMAL, 300))
         {
             RakNet::BitStream stream;
             stream.Write((unsigned char)ID_LOBBY);

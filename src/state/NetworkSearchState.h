@@ -54,10 +54,11 @@ class NetworkSearchState : public State
     const char* getStateName() const override;
 
   protected:
+    void stopSearch();
     std::vector<ServerInfo> mScannedServers;
     std::unique_ptr<RakClient> mPingClient;
     // set this to true to step pinging before we are finished
-    std::atomic<bool> mCancelPing;
+    std::atomic<bool> mCancelPing{false};
 
   private:
     virtual void doSearchServers() = 0;
@@ -65,12 +66,15 @@ class NetworkSearchState : public State
     typedef std::list<RakClient*> ClientList;
 
     ClientList mQueryClients;
-    RakClient* mDirectConnectClient;
+    RakClient* mDirectConnectClient = nullptr;
 
     std::future<void> mPingJob;
 
     unsigned mSelectedServer;
     bool mDisplayInfo;
+    bool mNamingServer = false;
+    std::string mServerName, mNotice;
+    unsigned mServerNamePosition = 0;
     bool mEnteringServer;
     bool mDisplayUpdateNotification;
 
@@ -87,7 +91,10 @@ class OnlineSearchState : public NetworkSearchState
 {
   public:
     OnlineSearchState();
-    ~OnlineSearchState() override = default;
+    ~OnlineSearchState() override
+    {
+        stopSearch();
+    }
     void doSearchServers() override;
     const char* getStateName() const override;
 };
@@ -99,7 +106,10 @@ class LANSearchState : public NetworkSearchState
 {
   public:
     LANSearchState();
-    ~LANSearchState() override = default;
+    ~LANSearchState() override
+    {
+        stopSearch();
+    }
     const char* getStateName() const override;
 
   private:

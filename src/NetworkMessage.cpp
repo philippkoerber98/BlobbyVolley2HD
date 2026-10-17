@@ -41,6 +41,8 @@ ServerInfo::ServerInfo(RakNet::BitStream& stream, const char* ip, uint16_t p)
     stream.Read(name, sizeof(name));
     stream.Read(waitingplayers);
     stream.Read(description, sizeof(description));
+    name[sizeof(name) - 1] = 0;
+    description[sizeof(description) - 1] = 0;
 }
 
 ServerInfo::ServerInfo(const IUserConfigReader& config)

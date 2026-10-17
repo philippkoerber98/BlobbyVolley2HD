@@ -42,6 +42,10 @@ class TextManager
     {
         // common labels
         LBL_OK,
+        LBL_CONNECT,
+        LBL_CLOSE,
+        LBL_BACK,
+        LBL_MAIN_MENU,
         LBL_CANCEL,
         LBL_YES,
         LBL_NO,

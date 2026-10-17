@@ -43,6 +43,7 @@ class ReplaySelectionState : public State
   private:
     std::vector<std::string> mReplayFiles;
     unsigned mSelectedReplay;
+    bool mPlayRequested = false;
     bool mShowReplayInfo;
     std::unique_ptr<IReplayLoader> mReplayLoader;
 
