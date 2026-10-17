@@ -119,6 +119,10 @@ std::vector<std::string> levelSoundCandidates(const std::string& level, const st
     {
         add(resolveLevel(level).directory);
     }
-    add("sounds");
+    // Level music is opt-in. Only effects and menu music have global defaults.
+    if (role != "level")
+    {
+        add("sounds");
+    }
     return result;
 }

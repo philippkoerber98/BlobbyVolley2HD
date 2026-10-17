@@ -27,12 +27,14 @@ Optional audio, with `.ogg` preferred over `.wav` for the same base name:
 | `chat` | Chat notification | Effects |
 | `pfiff` | Whistle | Effects |
 
-Missing or undecodable audio falls back to the same base name in global
-`data/sounds/` (packaged in `sounds.zip`). A valid WAV can also recover from a
-broken OGG in the same level. If no usable default exists, that role is silent.
+Missing or undecodable effects and victory sounds fall back to the same base
+name in global `data/sounds/` (packaged in `sounds.zip`). Level music has no
+global fallback: without a usable per-level track, the level has no background
+audio. A valid WAV can recover from a broken OGG in the same level.
 Existing default effects stay as WAV, without unnecessary lossy conversion.
-Default tracks are provided as `data/sounds/menu.ogg`, `level.ogg` and
-`victory.ogg`. Custom levels can override the level and victory tracks.
+Global tracks are `data/sounds/menu.ogg` and `victory.ogg`. The beach/coastal
+levels `beach`, `beacharena`, `berge`, `strand1`, `strand1-classic`, `strand2`,
+`strand3` and `tropen` each include their own `level.ogg`.
 Use Ogg Vorbis, not an arbitrary codec in an Ogg container.
 
 `menu.ogg` loops continuously and is shared by menus/options. Browsing level backgrounds,

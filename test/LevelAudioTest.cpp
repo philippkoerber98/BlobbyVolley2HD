@@ -187,8 +187,17 @@ void testLevelAudio(const std::string& outputDirectory)
         audio.selectLevel("custom:Broken Audio Test");
         SDL_Delay(230);
         audio.update();
-        requireAudio(audio.musicPath() == "sounds/level.ogg",
-                     "Broken level music did not use standard fallback");
+        requireAudio(audio.musicPath().empty() && !audio.musicPlaying(),
+                     "Broken level music must stay silent, ignoring global level music");
+        audio.selectLevel("mars.bmp");
+        SDL_Delay(230);
+        audio.update();
+        requireAudio(audio.musicPath().empty() && !audio.musicPlaying(),
+                     "A level without its own music used a global fallback");
+        requireAudio(audio.playSound(SoundManager::WHISTLE, 1) &&
+                         audio.lastEffectPath() == "sounds/pfiff.wav",
+                     "Silent level lost standard sound effects");
+        audio.selectLevel("custom:Broken Audio Test");
         requireAudio(audio.playSound(SoundManager::IMPACT, 1) && audio.lastEffectPath() == "sounds/bums.wav",
                      "Broken Ogg effect did not fall back to built-in WAV");
         audio.setScene(SoundManager::Scene::Match, true);

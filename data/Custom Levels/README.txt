@@ -14,8 +14,9 @@ My Level/
     pfiff.ogg        (optional; whistle)
 
 All sounds also accept WAV. Use Vorbis encoding for OGG files. OGG takes priority
-over WAV; WebP takes priority over PNG. Missing or broken sounds use the global
-defaults. If no usable default exists, that sound remains silent.
+over WAV; WebP takes priority over PNG. Missing or broken effects and victory sounds use the global
+defaults. Level music has no global fallback: without a usable level.ogg or
+level.wav, there is no background audio. Effects still play normally.
 The victory sound plays once while the level music continues.
 
 No configuration file is needed. Reopen the options to discover newly added
@@ -39,8 +40,9 @@ Mein Level/
 
 Alle Sounds dürfen auch WAV-Dateien sein. Verwende für OGG-Dateien den
 Vorbis-Codec. OGG wird vor WAV und WebP vor PNG bevorzugt. Fehlende oder defekte
-Sounds werden durch die globalen Standardsounds ersetzt. Gibt es keinen
-nutzbaren Standardsound, bleibt dieser Sound stumm.
+Effekte und Siegestöne werden durch globale Standardsounds ersetzt. Für
+Levelmusik gibt es keinen globalen Ersatz: Ohne nutzbare level.ogg oder
+level.wav bleibt der Hintergrund still. Effekte werden weiterhin abgespielt.
 Der Siegeston wird einmal abgespielt, während die Levelmusik weiterläuft.
 
 Eine Konfigurationsdatei ist nicht nötig. Öffne die Optionen erneut, damit neue
@@ -64,9 +66,10 @@ Moje úroveň/
     pfiff.ogg        (volitelné; písknutí)
 
 Všechny zvuky mohou být také ve formátu WAV. Pro soubory OGG použijte kodek
-Vorbis. OGG má přednost před WAV a WebP před PNG. Chybějící nebo poškozené zvuky
-se nahradí globálními výchozími zvuky. Pokud není dostupný použitelný výchozí
-zvuk, daný zvuk se nepřehraje.
+Vorbis. OGG má přednost před WAV a WebP před PNG. Chybějící nebo poškozené efekty a zvuky vítězství
+se nahradí globálními výchozími zvuky. Hudba úrovně nemá globální náhradu:
+bez použitelného level.ogg nebo level.wav se hudba ani prostředí nepřehrají.
+Zvukové efekty zůstávají aktivní.
 Zvuk vítězství se přehraje jednou a hudba úrovně přitom pokračuje.
 
 Konfigurační soubor není potřeba. Znovu otevřete nastavení, aby hra našla nově
@@ -91,9 +94,10 @@ Mi nivel/
     pfiff.ogg        (opcional; silbato)
 
 Todos los sonidos también admiten WAV. Usa el códec Vorbis para los archivos
-OGG. OGG tiene prioridad sobre WAV y WebP sobre PNG. Los sonidos que falten o
-estén dañados se sustituyen por los sonidos predeterminados globales. Si no
-existe un sonido predeterminado válido, ese sonido no se reproduce.
+OGG. OGG tiene prioridad sobre WAV y WebP sobre PNG. Los efectos y sonidos de victoria que falten o
+estén dañados usan los sonidos predeterminados globales. La música del nivel
+no tiene sustituto global: sin un level.ogg o level.wav válido no habrá audio
+de fondo. Los efectos seguirán sonando.
 El sonido de victoria se reproduce una vez mientras continúa la música del nivel.
 
 No se necesita ningún archivo de configuración. Vuelve a abrir las opciones
@@ -118,9 +122,10 @@ Mon niveau/
     pfiff.ogg        (facultatif ; coup de sifflet)
 
 Tous les sons acceptent aussi le format WAV. Utilisez le codec Vorbis pour les
-fichiers OGG. OGG est prioritaire sur WAV et WebP sur PNG. Les sons absents ou
-endommagés sont remplacés par les sons globaux par défaut. Si aucun son par
-défaut utilisable n'existe, le son concerné reste muet.
+fichiers OGG. OGG est prioritaire sur WAV et WebP sur PNG. Les effets et sons de victoire absents ou
+endommagés utilisent les sons globaux par défaut. La musique du niveau n'a pas
+de remplacement global : sans level.ogg ou level.wav utilisable, aucun son
+d'ambiance ne sera joué. Les effets restent actifs.
 Le son de victoire est joué une fois tandis que la musique du niveau continue.
 
 Aucun fichier de configuration n'est nécessaire. Rouvrez les options pour
@@ -145,9 +150,10 @@ Il mio livello/
     pfiff.ogg        (facoltativo; fischio)
 
 Tutti i suoni possono essere anche in formato WAV. Usa il codec Vorbis per i
-file OGG. OGG ha la precedenza su WAV e WebP su PNG. I suoni mancanti o danneggiati
-vengono sostituiti dai suoni globali predefiniti. Se non esiste un suono
-predefinito utilizzabile, quel suono non viene riprodotto.
+file OGG. OGG ha la precedenza su WAV e WebP su PNG. Gli effetti e i suoni di vittoria mancanti o danneggiati
+usano i suoni globali predefiniti. La musica del livello non ha un sostituto
+globale: senza un level.ogg o level.wav valido non ci sarà audio di sottofondo.
+Gli effetti continueranno a essere riprodotti.
 Il suono di vittoria viene riprodotto una volta mentre la musica del livello continua.
 
 Non serve alcun file di configurazione. Riapri le opzioni per rilevare le nuove
