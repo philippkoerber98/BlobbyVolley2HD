@@ -14,6 +14,9 @@ include_directories(.)
 
 set(BLOBBY_COMMON_SOURCES
     LevelCatalog.cpp LevelCatalog.h
+    server/Tournament.cpp server/Tournament.h
+    server/TournamentHost.cpp server/TournamentHost.h
+    TournamentProtocol.h
 	base64.cpp base64.h
 	BlobbyDebug.cpp BlobbyDebug.h
 	Clock.cpp Clock.h
@@ -78,6 +81,7 @@ set (BLOBBY_CLIENT_SOURCES ${BLOBBY_COMMON_SOURCES}
 	state/ReplayState.cpp state/ReplayState.h
 	state/ReplaySelectionState.cpp state/ReplaySelectionState.h
 	state/LobbyStates.cpp state/LobbyStates.h
+    state/TournamentState.cpp state/TournamentState.h
 	input_device/JoystickInput.cpp
 	input_device/JoystickPool.cpp input_device/JoystickPool.h
 	input_device/KeyboardInput.cpp
@@ -130,7 +134,7 @@ endif ()
 target_link_libraries(blobby ${BLOBBY_COMMON_LIBS} ${BLOBBY_AUDIO_LIBRARY} ${OPENGL_LIBRARIES})
 
 add_executable(assets-smoke-test EXCLUDE_FROM_ALL ../test/AssetsSmokeTest.cpp ../test/FrameTimingTest.cpp ${BLOBBY_CLIENT_SOURCES})
-target_sources(assets-smoke-test PRIVATE ../test/LevelAudioTest.cpp ../test/LANTest.cpp)
+target_sources(assets-smoke-test PRIVATE ../test/LevelAudioTest.cpp ../test/LANTest.cpp ../test/TournamentLANTest.cpp ../test/TournamentCapacityTest.cpp ../test/TournamentUITest.cpp ../test/TournamentClientTest.cpp)
 target_compile_definitions(assets-smoke-test PRIVATE BLOBBY_TEST_SOURCE_DIR="${PROJECT_SOURCE_DIR}/test")
 target_link_libraries(assets-smoke-test PRIVATE ${BLOBBY_COMMON_LIBS} ${BLOBBY_AUDIO_LIBRARY} ${OPENGL_LIBRARIES})
 

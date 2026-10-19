@@ -20,6 +20,8 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 /* header include */
 #include "NetworkMessage.h"
+#include "LevelCatalog.h"
+#include <algorithm>
 
 /* includes */
 #include <cassert>
@@ -110,6 +112,13 @@ void makeEnterServerPacket(RakNet::BitStream& stream, const PlayerIdentity& play
 
     // send color settings
     stream.Write(player.getStaticColor().toInt());
+    stream.Write(uint32_t(0x48444c31)); // HD catalog protocol version 1
+    stream.Write(builtInLevelChecksum());
+    stream.Write(player.getOscillating());
+    const auto& fullName = player.getName();
+    const unsigned char length = static_cast<unsigned char>(std::min(size_t(63), fullName.size()));
+    stream.Write(length);
+    stream.Write(fullName.data(), length);
 }
 
 bool operator==(const ServerInfo& lval, const ServerInfo& rval)

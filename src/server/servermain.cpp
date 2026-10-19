@@ -78,7 +78,7 @@ int SWLS_Games = 0;
 int SWLS_GameSteps = 0;
 int SWLS_RunningTime = 0;
 
-const int UPDATE_FREQUENCY = 10;
+const int UPDATE_FREQUENCY = 30;
 
 void main_loop(DedicatedServer& server);
 
@@ -101,7 +101,7 @@ int main(int argc, char** argv)
 
     setup_physfs(argv[0]);
 
-    int maxClients = 100;
+    int maxClients = 16;
     std::string rulesFile = DEFAULT_RULES_FILE;
     std::string gameSpeeds = "75";
 
@@ -114,9 +114,9 @@ int main(int argc, char** argv)
         gameSpeeds = config.getString("speeds", gameSpeeds);
 
         // bring that value into a sane range
-        if (maxClients <= 0 || maxClients > 150)
+        if (maxClients <= 0 || maxClients > 32)
         {
-            maxClients = 150;
+            maxClients = 16;
         }
     }
     catch (std::exception& e)
@@ -137,7 +137,8 @@ int main(int argc, char** argv)
     std::transform(speed_vec_str.begin(), speed_vec_str.end(), std::back_inserter(speed_vec),
                    [](const std::string& v) { return std::stof(v); });
 
-    DedicatedServer server(myinfo, rule_vec, speed_vec, maxClients);
+    DedicatedServer server(myinfo, rule_vec, speed_vec, maxClients, false,
+                           config.getString("tournament_password", ""), config.getString("level", "strand1.bmp"));
 
     syslog(LOG_NOTICE, "Blobby Volley 2 dedicated server version %i.%i started", BLOBBY_VERSION_MAJOR,
            BLOBBY_VERSION_MINOR);
@@ -300,10 +301,13 @@ void setup_physfs(char* argv0)
 #ifdef BLOBBY_DATA_DIR
     fs.addToSearchPath(BLOBBY_DATA_DIR);
     fs.addToSearchPath(fs.join(BLOBBY_DATA_DIR, "rules.zip"));
+    fs.addToSearchPath(fs.join(BLOBBY_DATA_DIR, "levels.zip"));
 #endif
     const auto data = fs.join(fs.getBaseDir(), "data");
     fs.addToSearchPath(data);
     fs.addToSearchPath(fs.join(data, "rules.zip"));
+    fs.addToSearchPath(fs.join(data, "levels.zip"));
+    fs.addToSearchPath(fs.getBaseDir());
 }
 
 std::string statistics()

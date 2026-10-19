@@ -20,6 +20,10 @@ void testSceneBlurAspect(const std::string& outputDirectory);
 void testWidescreen(const std::string& outputDirectory);
 void testBotModes(const std::string& outputDirectory);
 void testLAN();
+void testTournamentLAN(const std::string& directory);
+void testTournamentCapacity();
+void testTournamentClient(const std::string& directory);
+void testTournamentUI(const std::string& directory);
 void testHeldSliderInput();
 void testSecondaryMenus(const std::string& outputDirectory);
 void testLevelAudio(const std::string& outputDirectory);
@@ -93,8 +97,9 @@ int main(int argc, char** argv)
     try
     {
         SDL_setenv("SDL_AUDIODRIVER", "dummy", 1);
-        const bool hardware =
-            argc == 4 && (std::string(argv[3]) == "--hardware" || std::string(argv[3]) == "--menus-hardware");
+        const bool hardware = argc == 4 && (std::string(argv[3]) == "--hardware" ||
+                                            std::string(argv[3]) == "--menus-hardware" ||
+                                            std::string(argv[3]) == "--tournament-ui" || std::string(argv[3]) == "--local-ui-hardware");
         if (!hardware)
         {
             SDL_setenv("SDL_VIDEODRIVER", "dummy", 1);
@@ -111,13 +116,27 @@ int main(int argc, char** argv)
         FileSystem fs(argv[0]);
         fs.addToSearchPath(argv[1]);
         fs.addToSearchPath(fs.join(argv[1], ".."));
-        for (const char* archive : {"gfx", "sounds", "scripts", "rules"})
+        for (const char* archive : {"gfx", "sounds", "scripts", "rules", "levels"})
         {
             fs.addToSearchPath(std::string(argv[1]) + "/" + archive + ".zip");
         }
         if (argc == 4 && std::string(argv[3]) == "--audio-only")
         {
             testLevelAudio(argv[2]);
+            SDL_Quit();
+            return 0;
+        }
+        if (argc == 4 && std::string(argv[3]) == "--tournament-ui")
+        {
+            testTournamentUI(argv[2]);
+            SDL_Quit();
+            return 0;
+        }
+        if (argc == 4 && std::string(argv[3]) == "--tournament-only")
+        {
+            testTournamentLAN(argv[2]);
+            testTournamentCapacity();
+            testTournamentClient(argv[2]);
             SDL_Quit();
             return 0;
         }

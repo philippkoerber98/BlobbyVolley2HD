@@ -49,7 +49,8 @@ enum MessageType
     ID_RULES,
     ID_SERVER_STATUS,
     ID_LOBBY,
-    ID_TOURNAMENT
+    ID_TOURNAMENT,
+    ID_LEVEL_CATALOG
 };
 
 // General Information:

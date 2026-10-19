@@ -50,6 +50,18 @@ class NetworkPlayer : public ObjectCounter<NetworkPlayer>
     NetworkPlayer& operator=(const NetworkPlayer&) = delete;
 
     bool valid() const;
+    void setDisplayName(const std::string& value)
+    {
+        mIdentity.setName(value);
+    }
+    void setColor(Color value)
+    {
+        mIdentity.setStaticColor(value);
+    }
+    void setCycling(bool value)
+    {
+        mIdentity.setOscillating(value);
+    }
 
     // gets network ID of this player
     const PlayerID& getID() const;

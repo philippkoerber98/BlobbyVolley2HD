@@ -109,6 +109,7 @@ class DuelMatch : public ObjectCounter<DuelMatch>
     // Timing
     const std::string& getTimeString() const;
     void setMatchTimeMs(int milliseconds);
+    int getMatchTimeMs() const;
 
     bool getBallDown() const;
     bool getBallActive() const;

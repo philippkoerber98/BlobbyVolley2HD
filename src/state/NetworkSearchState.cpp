@@ -39,6 +39,8 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #include "tinyxml2.h"
 
 #include "FileRead.h"
+#include "FileSystem.h"
+#include "LevelCatalog.h"
 #include "FileWrite.h"
 #include "IMGUI.h"
 #include "WarmUI.h"
@@ -208,9 +210,11 @@ void NetworkSearchState::step_impl()
                 if (mHostedServer && std::string(info.hostname) == mHostedServer->hostname &&
                     info.port == mHostedServer->port)
                 {
-                    switchState(new LobbyState(info, dynamic_cast<OnlineSearchState*>(this) == nullptr
-                                                         ? PreviousState::LAN
-                                                         : PreviousState::ONLINE));
+                    switchState(new LobbyState(info,
+                                               dynamic_cast<OnlineSearchState*>(this) == nullptr
+                                                   ? PreviousState::LAN
+                                                   : PreviousState::ONLINE,
+                                               mHostTournament));
                     return;
                 }
                 break;
@@ -450,10 +454,18 @@ void NetworkSearchState::step_impl()
         imgui.doInactiveMode(true);
     }
 
-    if (imgui.doButton(GEN_ID, Vector2(40, 530), TextManager::NET_HOST_GAME, TF_NORMAL, 220))
+    const bool hostMatch =
+        imgui.doButton(GEN_ID, Vector2(40, 530), TextManager::NET_HOST_GAME, TF_NORMAL, 180);
+    const bool hostCup = imgui.doButton(GEN_ID, Vector2(232, 530),
+                                        translateUI(WarmUI::language(), "Host tournament"), TF_NORMAL, 220);
+    if (hostMatch || hostCup)
     {
+        mHostTournament = hostCup;
         UserConfig config;
         config.loadFile("config.xml");
+        mHostSlots = (std::max)(2, (std::min)(32, config.getInteger("lan_server_slots", 16)));
+        mHostRule = config.getString("lan_rules", "default.lua");
+        mHostSpeed = (std::max)(30, (std::min)(120, config.getInteger("lan_speed", 75)));
         mServerName = config.getString("lan_server_name", "Blobby Volley 2 HD");
         mServerNamePosition = unsigned(mServerName.size());
         mNamingServer = true;
@@ -463,10 +475,53 @@ void NetworkSearchState::step_impl()
     {
         imgui.doInactiveMode(false);
         imgui.doOverlay(GEN_ID, Vector2(0, 0), Vector2(800, 600), Color(0, 0, 0), .55f);
-        WarmUI::panel(imgui, 120, 190, 560, 210);
-        WarmUI::text(imgui, 144, 210, translateUI(WarmUI::language(), "Server name"), 26, 2);
-        imgui.doEditbox(GEN_ID, Vector2(144, 258), 31, mServerName, mServerNamePosition);
-        if (imgui.doButton(GEN_ID, Vector2(144, 342), TextManager::NET_HOST_GAME, TF_NORMAL, 220))
+        WarmUI::panel(imgui, 120, 110, 560, 405);
+        WarmUI::text(imgui, 144, 130, translateUI(WarmUI::language(), "Server name"), 26, 2);
+        imgui.doEditbox(GEN_ID, Vector2(144, 174), 31, mServerName, mServerNamePosition);
+        WarmUI::text(imgui, 144, 227,
+                     translateUI(WarmUI::language(), "Server slots") + ": " + std::to_string(mHostSlots), 20);
+        if (imgui.doButton(GEN_ID, Vector2(490, 220), "-", TF_NORMAL, 70))
+        {
+            mHostSlots = (std::max)(2, mHostSlots - 1);
+        }
+        if (imgui.doButton(GEN_ID, Vector2(586, 220), "+", TF_NORMAL, 70))
+        {
+            mHostSlots = (std::min)(32, mHostSlots + 1);
+        }
+        const auto levels = builtInLevels();
+        auto it = std::find_if(levels.begin(), levels.end(),
+                               [&](const LevelDefinition& l) { return l.id == mHostLevel; });
+        unsigned index = it == levels.end() ? 0u : unsigned(it - levels.begin());
+        WarmUI::text(imgui, 144, 268, translateUI(WarmUI::language(), "Level"), 20);
+        if (!levels.empty() &&
+            imgui.doButton(GEN_ID, Vector2(330, 262), levels[index].name + "  >", TF_NORMAL, 326))
+        {
+            mHostLevel = levels[(index + 1) % levels.size()].id;
+        }
+        auto rules = FileSystem::getSingleton().enumerateFiles("rules", ".lua", true);
+        auto rule = std::find(rules.begin(), rules.end(), mHostRule);
+        unsigned chosen = rule == rules.end() ? 0u : unsigned(rule - rules.begin());
+        WarmUI::text(imgui, 144, 311, translateUI(WarmUI::language(), "Rules"), 20);
+        if (!rules.empty() &&
+            imgui.doButton(GEN_ID, Vector2(330, 304), rules[chosen] + "  >", TF_NORMAL, 326))
+        {
+            mHostRule = rules[(chosen + 1) % rules.size()];
+        }
+        WarmUI::text(imgui, 144, 354, translateUI(WarmUI::language(), "Game speed"), 20);
+        if (imgui.doButton(GEN_ID, Vector2(330, 347), std::to_string(int(mHostSpeed * 100.f / 75)) + " %  >",
+                           TF_NORMAL, 326))
+        {
+            const int speeds[] = {30, 60, 75, 90, 120};
+            int i = 0;
+            while (i < 4 && speeds[i] != mHostSpeed)
+            {
+                ++i;
+            }
+            mHostSpeed = speeds[(i + 1) % 5];
+        }
+        WarmUI::text(imgui, 144, 397,
+                     translateUI(WarmUI::language(), "Custom levels are only available in local play."), 16);
+        if (imgui.doButton(GEN_ID, Vector2(144, 448), TextManager::NET_HOST_GAME, TF_NORMAL, 220))
         {
             if (mServerName.find_first_not_of(" \t\r\n") == std::string::npos)
             {
@@ -485,12 +540,15 @@ void NetworkSearchState::step_impl()
             UserConfig config;
             config.loadFile("config.xml");
             config.setString("lan_server_name", mServerName);
+            config.setInteger("lan_server_slots", mHostSlots);
+            config.setString("lan_rules", mHostRule);
+            config.setInteger("lan_speed", mHostSpeed);
             config.saveFile("config.xml");
             startHosting = true;
             mNamingServer = false;
             imgui.resetSelection();
         }
-        if (imgui.doButton(GEN_ID, Vector2(490, 342), TextManager::LBL_CANCEL, TF_NORMAL, 166))
+        if (imgui.doButton(GEN_ID, Vector2(490, 448), TextManager::LBL_CANCEL, TF_NORMAL, 166))
         {
             mNamingServer = false;
             imgui.resetSelection();
@@ -506,17 +564,19 @@ void NetworkSearchState::step_impl()
             hostConfig.loadPlayerIdentity(PlayerSide(hostConfig.getInteger("network_side")), true);
         ServerInfo hostInfo(identity.getName());
         std::strncpy(hostInfo.name, hostName.c_str(), sizeof(hostInfo.name) - 1);
-        const auto rule = hostConfig.getString("rules");
-        const auto speed = SpeedController::getMainInstance()->getGameSpeed();
-        auto server_func = [hostInfo, rule, speed]()
+        const auto rule = mHostRule;
+        const auto speed = float(mHostSpeed);
+        const int slots = mHostSlots;
+        auto level = mHostLevel;
+        auto server_func = [hostInfo, rule, speed, slots, level]()
         {
             try
             {
-                DedicatedServer server(hostInfo, {rule}, {speed}, 4, true);
-                SpeedController clock(10);
+                DedicatedServer server(hostInfo, {rule}, {speed}, slots, true, "", level);
+                SpeedController clock(30);
                 while (!gKillHostThread)
                 {
-                    server.allowNewPlayers(!server.hasActiveGame());
+                    server.allowNewPlayers(true);
                     server.processPackets();
                     server.updateGames();
                     clock.update();

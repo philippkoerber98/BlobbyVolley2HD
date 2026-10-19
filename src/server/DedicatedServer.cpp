@@ -19,6 +19,8 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 =============================================================================*/
 
 #include "DedicatedServer.h"
+#include "TournamentHost.h"
+#include "LevelCatalog.h"
 #include <stdexcept>
 
 #include <algorithm>
@@ -47,13 +49,23 @@ extern int SWLS_Games;
 #ifdef __ANDROID__
 extern "C"
 #endif
-    void syslog(int pri, const char* format, ...);
+    void
+    syslog(int pri, const char* format, ...);
 
 DedicatedServer::DedicatedServer(ServerInfo info, const std::vector<std::string>& rulefiles,
-                                 const std::vector<float>& gamespeeds, int max_clients, bool local_server)
+                                 const std::vector<float>& gamespeeds, int max_clients, bool local_server,
+                                 const std::string& organizerPassword, const std::string& level)
     : mServer(new ThreadSafeRakServer()), mAcceptNewPlayers(true), mPlayerHosted(local_server),
       mServerInfo(std::move(info))
 {
+    auto chosen = resolveLevel(level);
+    if (chosen.custom || chosen.id != level)
+    {
+        throw std::runtime_error("Choose a built-in level.");
+    }
+    mLevel = chosen.id;
+    builtInLevelChecksum();
+    max_clients = (std::max)(2, (std::min)(32, max_clients));
     if (!mServer->access([&](RakServer& srv) { return srv.Start(max_clients, 1, mServerInfo.port); }))
     {
         syslog(LOG_ERR, "Couldn't bind to port %i, exiting", mServerInfo.port);
@@ -79,11 +91,25 @@ DedicatedServer::DedicatedServer(ServerInfo info, const std::vector<std::string>
         mMatchMaker.addRuleOption(f);
     }
 
+    mTournamentRules = rulefiles.empty() ? DEFAULT_RULES_FILE : rulefiles.front();
+    mTournament.reset(new TournamentHost(*this, max_clients, organizerPassword));
+
     mServer->access([&](RakServer& srv) { srv.setUpdateCallback([this]() { queuePackets(); }); });
 }
 
 DedicatedServer::~DedicatedServer()
 {
+    mServer->access([](RakServer& srv) { srv.setUpdateCallback([]() {}); });
+    for (auto& game : mGameList)
+    {
+        game->stop();
+    }
+    mTournament.reset();
+    for (auto& player : mPlayerMap)
+    {
+        player.second->setGame(nullptr);
+    }
+    mGameList.clear();
     mServer->access([](RakServer& srv) { srv.Disconnect(50); });
 }
 
@@ -101,6 +127,7 @@ void DedicatedServer::queuePackets()
         case ID_CONNECTION_LOST:
         case ID_DISCONNECTION_NOTIFICATION:
         case ID_ENTER_SERVER:
+        case ID_TOURNAMENT:
         case ID_LOBBY:
         case ID_BLOBBY_SERVER_PRESENT:
         {
@@ -146,11 +173,15 @@ void DedicatedServer::queuePackets()
  */
 void DedicatedServer::processPackets()
 {
-    while (!mPacketQueue.empty())
+    for (;;)
     {
         packet_ptr packet;
         {
             std::lock_guard<std::mutex> lock(mPacketQueueMutex);
+            if (mPacketQueue.empty())
+            {
+                break;
+            }
             packet = mPacketQueue.front();
             mPacketQueue.pop_front();
         }
@@ -193,6 +224,7 @@ void DedicatedServer::processPackets()
         case ID_DISCONNECTION_NOTIFICATION:
         {
             mActiveConnections.erase(packet->playerId);
+            mTournament->disconnected(packet->playerId);
 
             auto player = mPlayerMap.find(packet->playerId);
             // delete the disconnecting player.
@@ -220,6 +252,7 @@ void DedicatedServer::processPackets()
             break;
         }
         case ID_ENTER_SERVER:
+        case ID_TOURNAMENT:
         case ID_LOBBY:
         case ID_BLOBBY_SERVER_PRESENT:
             try
@@ -242,10 +275,11 @@ void DedicatedServer::processPackets()
 
 void DedicatedServer::updateGames()
 {
+    mTournament->tick();
     // update new game creation for locally hosted games.
-    if (mPlayerHosted)
+    if (mPlayerHosted || mTournament->active())
     {
-        mMatchMaker.setAllowNewGames(mMatchMaker.getOpenGamesCount() == 0);
+        mMatchMaker.setAllowNewGames(!mTournament->active() && mMatchMaker.getOpenGamesCount() == 0);
     }
 
     // this loop ensures that all games that have finished (e.g. because one
@@ -384,7 +418,47 @@ void DedicatedServer::processBlobbyServerPresent(PlayerID source, RakNet::BitStr
 
 void DedicatedServer::processEnterServer(PlayerID source, RakNet::BitStream& data)
 {
+    if (mPlayerMap.count(source))
+    {
+        return;
+    }
+    if (data.GetNumberOfUnreadBits() < 24 * 8)
+    {
+        throw std::runtime_error("Incomplete player identity");
+    }
+    int side;
+    const auto offset = data.GetReadOffset();
+    if (!data.Read(side) || (side != LEFT_PLAYER && side != RIGHT_PLAYER))
+    {
+        throw std::runtime_error("Invalid player side");
+    }
+    data.ResetReadPointer();
+    data.IgnoreBits(offset);
     auto newplayer = std::make_shared<NetworkPlayer>(source, data);
+    uint32_t protocol = 0, checksum = 0;
+    bool cycling = false;
+    bool valid = data.Read(protocol) && data.Read(checksum) && data.Read(cycling) && protocol == 0x48444c31 &&
+                 checksum == builtInLevelChecksum();
+    unsigned char nameLength = 0;
+    char fullName[64] = {};
+    valid = valid && data.Read(nameLength) && nameLength > 0 && nameLength <= 63 &&
+            data.Read(fullName, nameLength);
+    if (valid)
+    {
+        newplayer->setDisplayName(std::string(fullName, nameLength));
+    }
+    RakNet::BitStream levelInfo;
+    levelInfo.Write((unsigned char)ID_LEVEL_CATALOG);
+    levelInfo.Write(valid);
+    levelInfo.Write(builtInLevelChecksum());
+    levelInfo.Write(static_cast<unsigned char>(mLevel.size()));
+    levelInfo.Write(mLevel.data(), int(mLevel.size()));
+    mServer->Send(levelInfo, HIGH_PRIORITY, RELIABLE_ORDERED, source);
+    if (!valid)
+    {
+        return;
+    }
+    newplayer->setCycling(cycling);
 
     // add to player map. protect with mutex
     {
@@ -420,8 +494,18 @@ void DedicatedServer::processSingleMessage(MessageType message_id, PlayerID sour
         processEnterServer(source, data);
         break;
     }
+    case ID_TOURNAMENT:
+    {
+        data.ResetReadPointer();
+        mTournament->packet(source, data);
+        break;
+    }
     case ID_LOBBY:
     {
+        if (mTournament->active())
+        {
+            break;
+        }
         if (!mMatchMaker.hasPlayer(source))
         {
             syslog(LOG_NOTICE, "Received Lobby packet (%d) from %s, who is not in the lobby. Ignoring.",
@@ -445,12 +529,20 @@ void DedicatedServer::processSingleMessage(MessageType message_id, PlayerID sour
 }
 
 void DedicatedServer::createGame(NetworkPlayer& left, NetworkPlayer& right, PlayerSide switchSide,
-                                 const std::string& rules, int scoreToWin, float gamespeed)
+                                 const std::string& rules, int scoreToWin, float gamespeed,
+                                 const DuelMatchState* checkpoint, int timeMs)
 {
     auto newgame =
         std::make_shared<NetworkGame>(mServer.get(), left, right, switchSide, rules, scoreToWin, gamespeed);
-    left.setGame(newgame);
-    right.setGame(newgame);
+    {
+        std::lock_guard<std::mutex> lock(mPlayerMapMutex);
+        left.setGame(newgame);
+        right.setGame(newgame);
+    }
+    if (checkpoint)
+    {
+        newgame->restoreState(*checkpoint, timeMs);
+    }
 
     SWLS_Games++;
 
@@ -458,6 +550,7 @@ void DedicatedServer::createGame(NetworkPlayer& left, NetworkPlayer& right, Play
     syslog(LOG_DEBUG, "Created game '%s' vs. '%s', rules: '%s'", left.getName().c_str(),
            right.getName().c_str(), rules.c_str());
     mGameList.push_back(newgame);
+    newgame->start();
 }
 
 bool DedicatedServer::isConnected(PlayerID player) const

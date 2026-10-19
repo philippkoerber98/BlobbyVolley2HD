@@ -21,12 +21,14 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #pragma once
 
 #include <list>
+#include <atomic>
 #include <memory>
 #include <mutex>
 #include <thread>
 
 #include "BlobbyDebug.h"
 #include "DuelMatch.h"
+#include "DuelMatchState.h"
 #include "Global.h"
 #include "SpeedController.h"
 #include "raknet/BitStream.h"
@@ -54,11 +56,21 @@ class NetworkGame : public ObjectCounter<NetworkGame>
                 PlayerSide switchedSide, std::string rules, int scoreToWin, float speed);
 
     ~NetworkGame();
+    void start();
 
     void injectPacket(const packet_ptr& packet);
 
     /// It returns whether both clients are still connected.
     bool isGameValid() const;
+    struct View
+    {
+        DuelMatchState state;
+        bool paused = true, started = false;
+        int timeMs = 0;
+    };
+    View view() const;
+    void stop();
+    void restoreState(const DuelMatchState& state, int timeMs = 0);
 
     // This function processes the queued network packets,
     // makes a physic step, checks the rules and broadcasts
@@ -104,7 +116,10 @@ class NetworkGame : public ObjectCounter<NetworkGame>
 
     const std::unique_ptr<ReplayRecorder> mRecorder;
 
-    bool mGameValid;
+    std::atomic<bool> mGameValid;
+    mutable std::mutex mStateMutex;
+    bool mResumeAfterHandshake = false;
+    int mRulesChecksum = 0;
 
     bool mRulesSent[MAX_PLAYERS];
     std::vector<char> mRulesString;

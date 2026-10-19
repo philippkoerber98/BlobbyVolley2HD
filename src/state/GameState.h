@@ -76,7 +76,7 @@ class GameState : public State
     /// does not display any buttons because they depend on the game type
     bool displayWinningPlayerScreen(PlayerSide winner);
     void resetCelebration();
-    int displayVictoryActions(bool rematch, bool replay = false);
+    int displayVictoryActions(bool rematch, bool replay = false, const std::string& returnLabel = "");
     bool beginDialog(const std::string& key, int count);
     WarmUI::Navigation mDialogNavigation;
     std::string mDialogKey;

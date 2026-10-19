@@ -73,7 +73,10 @@ class NetworkSearchState : public State
     unsigned mSelectedServer;
     bool mDisplayInfo;
     bool mNamingServer = false;
-    std::string mServerName, mNotice;
+    bool mHostTournament = false;
+    int mHostSlots = 16, mHostSpeed = 75;
+    std::string mHostRule = "default.lua";
+    std::string mServerName, mNotice, mHostLevel = "strand1.bmp";
     unsigned mServerNamePosition = 0;
     bool mEnteringServer;
     bool mDisplayUpdateNotification;

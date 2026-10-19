@@ -343,6 +343,11 @@ const std::string& DuelMatch::getTimeString() const
     return mLogic->getClock().getTimeString();
 }
 
+int DuelMatch::getMatchTimeMs() const
+{
+    return int(mLogic->getClock().getTime().count() * 1000);
+}
+
 void DuelMatch::setMatchTimeMs(int milliseconds)
 {
     mLogic->getClock().setTime(Clock::milliseconds(milliseconds));

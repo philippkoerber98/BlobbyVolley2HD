@@ -43,6 +43,9 @@ enum
     LOG_DEBUG
 };
 
+class TournamentHost;
+struct DuelMatchState;
+
 /*! \class DedicatedServer
     \brief manages a blobby server.
     \details Lets the players connect, matches games and processes them.
@@ -56,7 +59,8 @@ class DedicatedServer
     /// client
     /// \param is_local: Set to true, to indicate a locally hosted server intended for a single game.
     DedicatedServer(ServerInfo info, const std::vector<std::string>& rulefile,
-                    const std::vector<float>& speeds, int max_clients, bool is_local = false);
+                    const std::vector<float>& speeds, int max_clients, bool is_local = false,
+                    const std::string& organizerPassword = "", const std::string& level = "strand1.bmp");
     ~DedicatedServer();
 
     // server processing
@@ -81,10 +85,14 @@ class DedicatedServer
     void allowNewPlayers(bool allow);
 
   private:
+    friend class TournamentHost;
+    std::unique_ptr<TournamentHost> mTournament;
+    std::string mTournamentRules, mLevel;
     // creates a new game with those players
     // does not add the game to the active game list
     void createGame(NetworkPlayer& left, NetworkPlayer& right, PlayerSide switchSide,
-                    const std::string& rules, int scoreToWin, float gamespeed);
+                    const std::string& rules, int scoreToWin, float gamespeed,
+                    const DuelMatchState* checkpoint = nullptr, int timeMs = 0);
 
     // packet handling functions / utility functions
     /// This function encapsulates processing our custom packets from the server main loop.

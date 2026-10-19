@@ -484,7 +484,7 @@ bool GameState::displayWinningPlayerScreen(PlayerSide winner)
     return false;
 }
 
-int GameState::displayVictoryActions(bool rematch, bool replay)
+int GameState::displayVictoryActions(bool rematch, bool replay, const std::string& returnLabel)
 {
     using namespace WarmUI;
     auto& g = getIMGUI();
@@ -513,7 +513,8 @@ int GameState::displayVictoryActions(bool rematch, bool replay)
     }
     else
     {
-        if (mDialogNavigation.button(g, in, 0, 206, 501, 187, 34, tr("Hauptmen\xC3\xBC", "Main menu")))
+        if (mDialogNavigation.button(g, in, 0, 206, 501, 187, 34,
+                                     returnLabel.empty() ? tr("Hauptmen\xC3\xBC", "Main menu") : returnLabel))
         {
             result = 2;
         }

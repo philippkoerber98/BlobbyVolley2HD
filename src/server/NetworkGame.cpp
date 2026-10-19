@@ -82,13 +82,17 @@ NetworkGame::NetworkGame(ThreadSafeRakServer* server, NetworkPlayer& leftPlayer,
 
     rules = FileRead::makeLuaFilename(rules);
     FileRead file(std::string("rules/") + rules);
-    int checksum = file.calcChecksum(0);
+    mRulesChecksum = file.calcChecksum(0);
     mRulesString = file.readRawBytes(file.length());
+}
 
+void NetworkGame::start()
+{
+    // Publish player-to-match routing before any client can reply to this handshake.
     // writing rules checksum
     RakNet::BitStream stream;
     stream.Write((unsigned char)ID_RULES_CHECKSUM);
-    stream.Write(checksum);
+    stream.Write(mRulesChecksum);
     stream.Write(mMatch->getScoreToWin());
     /// \todo write file author and title, too; maybe add a version number in scripts, too.
     broadcastBitstream(stream);
@@ -110,7 +114,10 @@ NetworkGame::NetworkGame(ThreadSafeRakServer* server, NetworkPlayer& leftPlayer,
 NetworkGame::~NetworkGame()
 {
     mGameValid = false;
-    mGameThread.join();
+    if (mGameThread.joinable())
+    {
+        mGameThread.join();
+    }
 }
 
 void NetworkGame::injectPacket(const packet_ptr& packet)
@@ -153,11 +160,15 @@ void NetworkGame::broadcastBitstream(const RakNet::BitStream& stream)
 
 void NetworkGame::processPackets()
 {
-    while (!mPacketQueue.empty())
+    for (;;)
     {
         packet_ptr packet;
         {
             std::lock_guard<std::mutex> lock(mPacketQueueMutex);
+            if (mPacketQueue.empty())
+            {
+                break;
+            }
             packet = mPacketQueue.front();
             mPacketQueue.pop_front();
         }
@@ -169,6 +180,7 @@ void NetworkGame::processPackets()
 /// this function processes a single packet received for this network game
 void NetworkGame::processPacket(const packet_ptr& packet)
 {
+    std::lock_guard<std::mutex> stateLock(mStateMutex);
     switch (packet->data[0])
     {
     case ID_CONNECTION_LOST:
@@ -293,6 +305,11 @@ void NetworkGame::processPacket(const packet_ptr& packet)
 
         if (isGameStarted())
         {
+            if (mResumeAfterHandshake)
+            {
+                mMatch->unpause();
+                mResumeAfterHandshake = false;
+            }
             // buffer for playernames
             char name[16];
 
@@ -303,6 +320,11 @@ void NetworkGame::processPacket(const packet_ptr& packet)
             strncpy(name, mMatch->getPlayer(RIGHT_PLAYER).getName().c_str(), sizeof(name));
             leftStream.Write(name, sizeof(name));
             leftStream.Write(mMatch->getPlayer(RIGHT_PLAYER).getStaticColor().toInt());
+            leftStream.Write(mMatch->getMatchTimeMs());
+            leftStream.Write(mMatch->getPlayer(RIGHT_PLAYER).getOscillating());
+            const auto& rightName = mMatch->getPlayer(RIGHT_PLAYER).getName();
+            leftStream.Write(static_cast<unsigned char>(rightName.size()));
+            leftStream.Write(rightName.data(), int(rightName.size()));
 
             // writing data into rightStream
             RakNet::BitStream rightStream;
@@ -311,6 +333,11 @@ void NetworkGame::processPacket(const packet_ptr& packet)
             strncpy(name, mMatch->getPlayer(LEFT_PLAYER).getName().c_str(), sizeof(name));
             rightStream.Write(name, sizeof(name));
             rightStream.Write(mMatch->getPlayer(LEFT_PLAYER).getStaticColor().toInt());
+            rightStream.Write(mMatch->getMatchTimeMs());
+            rightStream.Write(mMatch->getPlayer(LEFT_PLAYER).getOscillating());
+            const auto& leftName = mMatch->getPlayer(LEFT_PLAYER).getName();
+            rightStream.Write(static_cast<unsigned char>(leftName.size()));
+            rightStream.Write(leftName.data(), int(leftName.size()));
 
             mServer->Send(leftStream, HIGH_PRIORITY, RELIABLE_ORDERED, mLeftPlayer);
             mServer->Send(rightStream, HIGH_PRIORITY, RELIABLE_ORDERED, mRightPlayer);
@@ -332,6 +359,7 @@ bool NetworkGame::isGameValid() const
 
 void NetworkGame::step()
 {
+    std::lock_guard<std::mutex> stateLock(mStateMutex);
     if (!isGameStarted())
     {
         return;
@@ -464,5 +492,29 @@ PlayerID NetworkGame::getPlayerID(PlayerSide side) const
         return mRightPlayer;
     }
 
-    assert(0);
+    throw std::logic_error("Invalid player side");
+}
+
+NetworkGame::View NetworkGame::view() const
+{
+    std::lock_guard<std::mutex> lock(mStateMutex);
+    View result;
+    result.state = mMatch->getState();
+    result.paused = mMatch->isPaused();
+    result.timeMs = mMatch->getMatchTimeMs();
+    result.started = mRulesSent[0] && mRulesSent[1];
+    return result;
+}
+void NetworkGame::stop()
+{
+    mGameValid = false;
+}
+
+void NetworkGame::restoreState(const DuelMatchState& state, int timeMs)
+{
+    std::lock_guard<std::mutex> lock(mStateMutex);
+    mMatch->setState(state);
+    mMatch->setMatchTimeMs(timeMs);
+    mMatch->pause();
+    mResumeAfterHandshake = true;
 }

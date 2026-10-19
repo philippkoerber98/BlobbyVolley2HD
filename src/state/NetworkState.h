@@ -27,6 +27,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #include <memory>
 #include <vector>
 
+struct TournamentConnection;
 class RakClient;
 class RakServer;
 class DuelMatch;
@@ -45,7 +46,8 @@ class NetworkGameState : public GameState
   public:
     /// create a NetworkGameState with connection to a certain server
     /// \param client A client which has an established connection to the server we want to start the game on.
-    NetworkGameState(std::shared_ptr<RakClient> client, int rule_checksum, int score_to_win);
+    NetworkGameState(std::shared_ptr<RakClient> client, int rule_checksum, int score_to_win,
+                     std::shared_ptr<TournamentConnection> tournament = nullptr);
 
     ~NetworkGameState() override;
     void step_impl() override;
@@ -75,6 +77,8 @@ class NetworkGameState : public GameState
     bool mWaitingForReplay;
 
     std::shared_ptr<RakClient> mClient;
+    std::shared_ptr<TournamentConnection> mTournament;
+    void returnToLobby();
     PlayerSide mOwnSide;
     PlayerSide mWinningPlayer;
 

@@ -59,7 +59,7 @@ class LobbySubstate
 class LobbyState : public State
 {
   public:
-    LobbyState(ServerInfo info, PreviousState previous);
+    LobbyState(ServerInfo info, PreviousState previous, bool tournament = false);
     ~LobbyState() override;
 
     void step_impl() override;
@@ -73,6 +73,9 @@ class LobbyState : public State
     PreviousState mPrevious;
 
     ConnectionState mLobbyState;
+    bool mOpenTournament = false;
+    bool mCatalogVerified = false;
+    std::string mLevelError;
 
     ServerStatusData mStatus;
     std::shared_ptr<LobbySubstate> mSubState;

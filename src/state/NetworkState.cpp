@@ -39,6 +39,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #include "LobbyStates.h"
 #include "LocalInputSource.h"
 #include "NetworkState.h"
+#include "TournamentState.h"
 #include "SoundManager.h"
 #include "SpeedController.h"
 #include "UserConfig.h"
@@ -48,19 +49,53 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 int CURRENT_NETWORK_LAG = -1;
 
 /* implementation */
-NetworkGameState::NetworkGameState(std::shared_ptr<RakClient> client, int rule_checksum, int score_to_win)
+NetworkGameState::NetworkGameState(std::shared_ptr<RakClient> client, int rule_checksum, int score_to_win,
+                                   std::shared_ptr<TournamentConnection> tournament)
     : GameState(new DuelMatch(true, DEFAULT_RULES_FILE, score_to_win)), mNetworkState(WAITING_FOR_OPPONENT),
-      mWaitingForReplay(false), mClient(std::move(client)), mWinningPlayer(NO_PLAYER),
-      mSelectedChatmessage(0), mChatCursorPosition(0), mRulesChecksum(rule_checksum)
+      mWaitingForReplay(false), mClient(std::move(client)), mTournament(std::move(tournament)),
+      mWinningPlayer(NO_PLAYER), mSelectedChatmessage(0), mChatCursorPosition(0),
+      mRulesChecksum(rule_checksum)
 {
+    if (mTournament)
+    {
+        for (const auto& m : mTournament->cup.matches)
+        {
+            if (m.status == tournament::MatchStatus::Playing &&
+                (m.a == mTournament->own || m.b == mTournament->own))
+            {
+                mTournament->activeMatch = m.id;
+            }
+        }
+    }
 }
 
 void NetworkGameState::init()
 {
     std::shared_ptr<IUserConfigReader> config = IUserConfigReader::createUserConfigReader("config.xml");
     mOwnSide = (PlayerSide)config->getInteger("network_side");
-    mUseRemoteColor = config->getBool("use_remote_color");
-    mLocalInput.reset(new LocalInputSource(getInputMgr().beginGame(mOwnSide)));
+    mUseRemoteColor = true;
+    UserConfig bindings;
+    bindings.loadFile("inputconfig.xml");
+    const std::string source = config->getInteger("network_input", 0) ? "right_blobby_" : "left_blobby_";
+    const std::string target = mOwnSide == LEFT_PLAYER ? "left_blobby_" : "right_blobby_";
+    const UserConfig original = bindings;
+    for (const char* key : {"device", "keyboard_left", "keyboard_right", "keyboard_jump", "controller_slot",
+                            "controller_deadzone", "controller_jump", "joystick_left", "joystick_right",
+                            "joystick_jump", "mouse_jumpbutton", "mouse_sensitivity"})
+    {
+        const auto value = original.getString(source + key);
+        if (!value.empty())
+        {
+            bindings.setString(target + key, value);
+        }
+    }
+    const int preset = config->getInteger("network_input", 0);
+    bindings.setInteger(target + "controller_slot", original.getInteger(source + "controller_slot", preset));
+    bindings.setInteger(target + "controller_deadzone",
+                        original.getInteger(source + "controller_deadzone", 10000));
+    bindings.setInteger(target + "controller_jump",
+                        original.getInteger(source + "controller_jump", SDL_CONTROLLER_BUTTON_A));
+    mLocalInput.reset(new LocalInputSource(getInputMgr().beginGame(mOwnSide, &bindings)));
 
     // game is not started until two players are connected
     mMatch->pause();
@@ -111,7 +146,10 @@ void NetworkGameState::init()
 NetworkGameState::~NetworkGameState()
 {
     CURRENT_NETWORK_LAG = -1;
-    mClient->Disconnect(50);
+    if (!mTournament)
+    {
+        mClient->Disconnect(50);
+    }
 }
 
 void NetworkGameState::step_impl()
@@ -121,6 +159,28 @@ void NetworkGameState::step_impl()
     packet_ptr packet;
     while (nullptr != (packet = mClient->Receive()))
     {
+        if (mTournament && packet->data[0] == ID_TOURNAMENT)
+        {
+            mTournament->receive(packet);
+            if (mTournament->activeMatch >= 0)
+            {
+                const auto& match = mTournament->cup.match(mTournament->activeMatch);
+                if (match.status == tournament::MatchStatus::Interrupted && mNetworkState != PLAYER_WON)
+                {
+                    mNetworkState = OPPONENT_DISCONNECTED;
+                    mMatch->pause();
+                }
+                if (match.status == tournament::MatchStatus::Finished && match.forfeit)
+                {
+                    mNetworkState = PLAYER_WON;
+                    mWinningPlayer = match.winner == mTournament->own
+                                         ? mOwnSide
+                                         : (mOwnSide == LEFT_PLAYER ? RIGHT_PLAYER : LEFT_PLAYER);
+                    mMatch->pause();
+                }
+            }
+            continue;
+        }
         switch (packet->data[0])
         {
         case ID_GAME_UPDATE:
@@ -222,8 +282,28 @@ void NetworkGameState::step_impl()
             int temp;
             stream.Read(temp);
             auto ncolor = Color(temp);
+            int matchTime = 0;
+            if (stream.GetNumberOfUnreadBits() >= 32 && stream.Read(matchTime))
+            {
+                mMatch->setMatchTimeMs((std::max)(0, matchTime));
+            }
 
-            mRemotePlayer->setName(charName);
+            bool cycling = false;
+            if (stream.Read(cycling))
+            {
+                mRemotePlayer->setOscillating(cycling);
+            }
+            unsigned char length = 0;
+            char fullName[64] = {};
+            if (stream.Read(length) && length > 0 && length < sizeof(fullName) &&
+                stream.Read(fullName, length))
+            {
+                mRemotePlayer->setName(std::string(fullName, length));
+            }
+            else
+            {
+                mRemotePlayer->setName(charName);
+            }
 
             setDefaultReplayName(mLocalPlayer->getName(), mRemotePlayer->getName());
 
@@ -372,7 +452,7 @@ void NetworkGameState::step_impl()
         }
         else
         {
-            switchState(new MainMenuState);
+            returnToLobby();
         }
     }
     else if (is_exiting() && mSaveReplay)
@@ -423,26 +503,39 @@ void NetworkGameState::step_impl()
         case OPPONENT_DISCONNECTED:
         {
             imgui.doCursor();
+            if (mTournament)
+            {
+                imgui.useMenuStyle();
+                WarmUI::panel(imgui, 150, 220, 500, 150);
+                WarmUI::text(imgui, 170, 242,
+                             translateUI(WarmUI::language(), "Match interrupted. Return to the tournament."),
+                             20);
+                if (imgui.doButton(GEN_ID, Vector2(230, 310),
+                                   translateUI(WarmUI::language(), "Tournament overview"), TF_NORMAL, 340))
+                {
+                    returnToLobby();
+                }
+                break;
+            }
 
-            displayQueryPrompt(
-                200, TextManager::GAME_OPP_LEFT,
-                std::make_tuple(TextManager::LBL_MAIN_MENU, [&]() { switchState(new MainMenuState); }),
-                std::make_tuple(TextManager::RP_SAVE,
-                                [&]()
-                                {
-                                    mSaveReplay = true;
-                                    imgui.resetSelection();
-                                }),
-                std::make_tuple(TextManager::NET_STAY_ON_SERVER,
-                                [&]()
-                                {
-                                    // Send a blobby server connection request
-                                    RakNet::BitStream stream;
-                                    stream.Write((unsigned char)ID_BLOBBY_SERVER_PRESENT);
-                                    stream.Write(BLOBBY_VERSION_MAJOR);
-                                    stream.Write(BLOBBY_VERSION_MINOR);
-                                    mClient->Send(&stream, LOW_PRIORITY, RELIABLE_ORDERED, 0);
-                                }));
+            displayQueryPrompt(200, TextManager::GAME_OPP_LEFT,
+                               std::make_tuple(TextManager::LBL_MAIN_MENU, [&]() { returnToLobby(); }),
+                               std::make_tuple(TextManager::RP_SAVE,
+                                               [&]()
+                                               {
+                                                   mSaveReplay = true;
+                                                   imgui.resetSelection();
+                                               }),
+                               std::make_tuple(TextManager::NET_STAY_ON_SERVER,
+                                               [&]()
+                                               {
+                                                   // Send a blobby server connection request
+                                                   RakNet::BitStream stream;
+                                                   stream.Write((unsigned char)ID_BLOBBY_SERVER_PRESENT);
+                                                   stream.Write(BLOBBY_VERSION_MAJOR);
+                                                   stream.Write(BLOBBY_VERSION_MINOR);
+                                                   mClient->Send(&stream, LOW_PRIORITY, RELIABLE_ORDERED, 0);
+                                               }));
             break;
         }
         case DISCONNECTED:
@@ -453,7 +546,7 @@ void NetworkGameState::step_impl()
             imgui.doText(GEN_ID, Vector2(120.0, 250.0), TextManager::NET_DISCONNECT);
             if (imgui.doButton(GEN_ID, Vector2(120, 320), TextManager::LBL_MAIN_MENU, TF_NORMAL, 180))
             {
-                switchState(new MainMenuState);
+                returnToLobby();
             }
             if (imgui.doButton(GEN_ID, Vector2(320, 320), TextManager::RP_SAVE, TF_NORMAL, 220))
             {
@@ -470,7 +563,7 @@ void NetworkGameState::step_impl()
             imgui.doText(GEN_ID, Vector2(200.0, 250.0), TextManager::NET_SERVER_FULL);
             if (imgui.doButton(GEN_ID, Vector2(300, 310), TextManager::LBL_MAIN_MENU, TF_NORMAL, 200))
             {
-                switchState(new MainMenuState);
+                returnToLobby();
             }
             break;
         }
@@ -498,10 +591,11 @@ void NetworkGameState::step_impl()
         {
             mMatch->updateEvents(); // so the last whistle will be sounded
             displayWinningPlayerScreen(mWinningPlayer);
-            const int action = displayVictoryActions(false);
+            const int action = displayVictoryActions(
+                false, false, mTournament ? translateUI(WarmUI::language(), "Tournament overview") : "");
             if (action == 2)
             {
-                switchState(new MainMenuState());
+                returnToLobby();
             }
             if (action == 3)
             {
@@ -514,22 +608,21 @@ void NetworkGameState::step_impl()
         case PAUSING:
         {
             // Query
-            displayQueryPrompt(
-                20, TextManager::GAME_PAUSED,
-                std::make_tuple(TextManager::LBL_CONTINUE,
-                                [&]()
-                                {
-                                    RakNet::BitStream stream;
-                                    stream.Write((unsigned char)ID_UNPAUSE);
-                                    mClient->Send(&stream, HIGH_PRIORITY, RELIABLE_ORDERED, 0);
-                                }),
-                std::make_tuple(TextManager::GAME_QUIT, [&]() { switchState(new MainMenuState); }),
-                std::make_tuple(TextManager::RP_SAVE,
-                                [&]()
-                                {
-                                    mSaveReplay = true;
-                                    imgui.resetSelection();
-                                }));
+            displayQueryPrompt(20, TextManager::GAME_PAUSED,
+                               std::make_tuple(TextManager::LBL_CONTINUE,
+                                               [&]()
+                                               {
+                                                   RakNet::BitStream stream;
+                                                   stream.Write((unsigned char)ID_UNPAUSE);
+                                                   mClient->Send(&stream, HIGH_PRIORITY, RELIABLE_ORDERED, 0);
+                                               }),
+                               std::make_tuple(TextManager::GAME_QUIT, [&]() { returnToLobby(); }),
+                               std::make_tuple(TextManager::RP_SAVE,
+                                               [&]()
+                                               {
+                                                   mSaveReplay = true;
+                                                   imgui.resetSelection();
+                                               }));
 
             // Chat
             imgui.doChatbox(GEN_ID, Vector2(10, 240), Vector2(790, 500), mChatlog, mSelectedChatmessage,
@@ -578,3 +671,15 @@ int SWLS_Connections;
 int SWLS_Games;
 int SWLS_GameSteps;
 int SWLS_ServerEntered;
+
+void NetworkGameState::returnToLobby()
+{
+    if (mTournament)
+    {
+        switchState(new TournamentState(mTournament));
+    }
+    else
+    {
+        switchState(new MainMenuState);
+    }
+}

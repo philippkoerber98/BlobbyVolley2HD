@@ -20,6 +20,10 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 /* header include */
 #include "LobbyStates.h"
+#include "TournamentState.h"
+#include "LevelCatalog.h"
+#include "BlobbyApp.h"
+#include "SoundManager.h"
 
 /* includes */
 #include <algorithm>
@@ -42,8 +46,9 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 LobbySubstate::~LobbySubstate() = default;
 
-LobbyState::LobbyState(ServerInfo info, PreviousState previous)
-    : mInfo(std::move(info)), mPrevious(previous), mLobbyState(ConnectionState::CONNECTING)
+LobbyState::LobbyState(ServerInfo info, PreviousState previous, bool tournament)
+    : mInfo(std::move(info)), mPrevious(previous), mOpenTournament(tournament),
+      mLobbyState(ConnectionState::CONNECTING)
 {
 }
 
@@ -98,6 +103,37 @@ void LobbyState::step_impl()
             mSubState = std::make_shared<LobbyMainSubstate>(mClient, 0, 0, 3);
             break;
         }
+        case ID_LEVEL_CATALOG:
+        {
+            RakNet::BitStream stream(packet->data, packet->length, false);
+            stream.IgnoreBytes(1);
+            bool valid = false;
+            uint32_t checksum = 0;
+            if (!stream.Read(valid) || !stream.Read(checksum))
+            {
+                break;
+            }
+            unsigned char length = 0;
+            char name[128] = {};
+            if (!stream.Read(length) || length == 0 || length >= sizeof(name) || !stream.Read(name, length))
+            {
+                break;
+            }
+            std::string level(name, length);
+            auto selected = resolveLevel(level);
+            mCatalogVerified =
+                valid && checksum == builtInLevelChecksum() && !selected.custom && selected.id == level;
+            if (!mCatalogVerified)
+            {
+                mLevelError = "Built-in levels differ. Install the same game version as the server.";
+                mLobbyState = ConnectionState::CONNECTION_FAILED;
+                break;
+            }
+            getApp().getRenderManager().setBackground("backgrounds/" + level);
+            getApp().getSoundManager().selectLevel(level);
+            break;
+        }
+        case ID_NO_FREE_INCOMING_CONNECTIONS:
         case ID_CONNECTION_ATTEMPT_FAILED:
         {
             mLobbyState = ConnectionState::CONNECTION_FAILED;
@@ -206,6 +242,12 @@ void LobbyState::step_impl()
         break;
         case ID_RULES_CHECKSUM: // this packet is sent when a game was created, so we probably are joining a
                                 // game here.
+            if (!mCatalogVerified)
+            {
+                mLevelError = "Built-in levels differ. Install the same game version as the server.";
+                mLobbyState = ConnectionState::CONNECTION_FAILED;
+                break;
+            }
             // this is only a valid request if we are in the lobby game substate
             assert(dynamic_cast<LobbyGameSubstate*>(mSubState.get()) != nullptr);
             {
@@ -232,6 +274,10 @@ void LobbyState::step_impl()
         imgui, 40, 578,
         translateUI(WarmUI::language(), "Up/down: list    Left/right: actions    A: select    B: back"), 15);
 
+    if (!mLevelError.empty())
+    {
+        WarmUI::text(imgui, 40, 490, translateUI(WarmUI::language(), mLevelError), 17, 2);
+    }
     // server name
 
     // server description
@@ -266,7 +312,19 @@ void LobbyState::step_impl()
             imgui.doText(GEN_ID, Vector2(40, 72 + i / 63 * 15), description.substr(i, 63), TF_SMALL_FONT);
         }
 
-        mSubState->step(imgui, mStatus);
+        if (mCatalogVerified)
+        {
+            mSubState->step(imgui, mStatus);
+        }
+    }
+
+    if (mPrevious != PreviousState::ONLINE && mCatalogVerified && mLobbyState == ConnectionState::CONNECTED &&
+        (mOpenTournament ||
+         imgui.doButton(GEN_ID, Vector2(40, 530), translateUI(WarmUI::language(), "LAN tournament"),
+                        TF_NORMAL, 240)))
+    {
+        switchState(new TournamentState(std::make_shared<TournamentConnection>(mClient, mInfo), true));
+        return;
     }
 
     // back button
