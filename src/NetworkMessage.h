@@ -48,7 +48,8 @@ enum MessageType
     ID_RULES_CHECKSUM,
     ID_RULES,
     ID_SERVER_STATUS,
-    ID_LOBBY
+    ID_LOBBY,
+    ID_TOURNAMENT
 };
 
 // General Information:

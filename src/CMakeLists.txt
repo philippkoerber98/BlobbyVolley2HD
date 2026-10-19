@@ -198,3 +198,6 @@ if(SDL2_VERSION VERSION_GREATER_EQUAL "2.0.14")
 		input_device/JoystickPool.cpp BlobbyDebug.cpp)
 	target_link_libraries(controller-test PRIVATE SDL2::SDL2main SDL2::SDL2)
 endif()
+
+add_executable(tournament-test EXCLUDE_FROM_ALL ../test/TournamentTest.cpp server/Tournament.cpp BlobbyDebug.cpp)
+target_link_libraries(tournament-test PRIVATE tinyxml2::tinyxml2 raknet::raknet)
