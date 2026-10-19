@@ -4,6 +4,9 @@ function(add_runtime_archive directory extension)
     if(directory STREQUAL "gfx")
         file(GLOB archive_sources CONFIGURE_DEPENDS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
             gfx/*.png gfx/*.webp gfx/*.ttf gfx/*.txt)
+    elseif(directory STREQUAL "Levels")
+        file(GLOB_RECURSE archive_sources CONFIGURE_DEPENDS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
+            Levels/*.webp Levels/*.png Levels/*.ogg Levels/*.wav)
     elseif(directory STREQUAL "sounds")
         file(GLOB_RECURSE archive_sources CONFIGURE_DEPENDS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
             sounds/*.wav sounds/*.ogg)
@@ -22,20 +25,22 @@ function(add_runtime_archive directory extension)
         endif()
     endforeach()
 
-    set(archive "${CMAKE_CURRENT_BINARY_DIR}/${directory}.zip")
+    string(TOLOWER "${directory}" archive_name)
+    set(archive "${CMAKE_CURRENT_BINARY_DIR}/${archive_name}.zip")
     add_custom_command(
         OUTPUT "${archive}"
         COMMAND ${CMAKE_COMMAND} -E tar cf "${archive}" --format=zip ${archive_sources}
         DEPENDS ${archive_sources}
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
         VERBATIM)
-    add_custom_target(${directory}_zip ALL DEPENDS "${archive}")
+    add_custom_target(${archive_name}_zip ALL DEPENDS "${archive}")
 endfunction()
 
 add_runtime_archive(gfx webp)
 add_runtime_archive(sounds wav)
 add_runtime_archive(scripts lua)
 add_runtime_archive(rules lua)
+add_runtime_archive(Levels webp)
 
 set(install_files
 	${CMAKE_CURRENT_SOURCE_DIR}/ui-translations.xml
@@ -43,6 +48,7 @@ set(install_files
 	${CMAKE_CURRENT_BINARY_DIR}/sounds.zip
 	${CMAKE_CURRENT_BINARY_DIR}/scripts.zip
 	${CMAKE_CURRENT_BINARY_DIR}/rules.zip
+	${CMAKE_CURRENT_BINARY_DIR}/levels.zip
 	${CMAKE_CURRENT_SOURCE_DIR}/api.lua
 	${CMAKE_CURRENT_SOURCE_DIR}/bot_api.lua
 	${CMAKE_CURRENT_SOURCE_DIR}/rules_api.lua
@@ -68,10 +74,9 @@ set(data_files ${install_files} PARENT_SCOPE)
 
 # Level folders remain editable beside the Windows executable.
 if(WIN32)
-    install(DIRECTORY Levels "Custom Levels" DESTINATION .)
+    install(DIRECTORY "Custom Levels" DESTINATION .)
 elseif(APPLE AND BUILD_MACOS_BUNDLE)
-    install(DIRECTORY Levels DESTINATION blobby.app/Contents/Resources)
     install(DIRECTORY "Custom Levels" DESTINATION .)
 else()
-    install(DIRECTORY Levels "Custom Levels" DESTINATION share/blobby)
+    install(DIRECTORY "Custom Levels" DESTINATION share/blobby)
 endif()

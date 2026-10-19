@@ -1,5 +1,7 @@
 #include "LevelCatalog.h"
 #include "FileSystem.h"
+#include "FileRead.h"
+#include <boost/crc.hpp>
 #include <algorithm>
 #include <cctype>
 #include <stdexcept>
@@ -140,4 +142,64 @@ std::vector<std::string> levelBallCandidates(const std::string& level)
         }
     }
     return result;
+}
+
+std::vector<LevelDefinition> builtInLevels()
+{
+    auto result = availableLevels();
+    result.erase(
+        std::remove_if(result.begin(), result.end(), [](const LevelDefinition& l) { return l.custom; }),
+        result.end());
+    return result;
+}
+uint32_t builtInLevelChecksum()
+{
+    // Hash names and effective asset bytes, not ZIP metadata or compression. This also
+    // detects loose-file overrides while accepting the same catalog on another OS.
+    static const uint32_t checksum = []()
+    {
+        boost::crc_32_type crc;
+        auto levels = builtInLevels();
+        if (levels.empty())
+        {
+            throw std::runtime_error("Built-in levels are missing. Reinstall levels.zip.");
+        }
+        for (const auto& level : levels)
+        {
+            auto files = FileSystem::getSingleton().enumerateFiles(level.directory, "", true);
+            std::sort(files.begin(), files.end());
+            for (const auto& name : files)
+            {
+                const auto path = level.directory + "/" + name;
+                if (FileSystem::getSingleton().isDirectory(path))
+                {
+                    continue;
+                }
+                const auto ext = lower(name.substr(name.find_last_of('.') + 1));
+                if (ext != "webp" && ext != "png" && ext != "ogg" && ext != "wav")
+                {
+                    continue;
+                }
+                if (ext == "png" &&
+                    FileSystem::getSingleton().exists(path.substr(0, path.size() - 4) + ".webp"))
+                {
+                    continue;
+                }
+                crc.process_bytes(path.data(), path.size());
+                const char zero = 0;
+                crc.process_byte(zero);
+                FileRead f(path);
+                char buffer[65536];
+                while (f.tell() < f.length())
+                {
+                    auto count = std::min(size_t(sizeof(buffer)), size_t(f.length() - f.tell()));
+                    f.readRawBytes(buffer, count);
+                    crc.process_bytes(buffer, count);
+                }
+                crc.process_byte(zero);
+            }
+        }
+        return crc.checksum();
+    }();
+    return checksum;
 }

@@ -203,3 +203,17 @@ cartelle. È consigliato uno sfondo in formato 16:9; il formato classico 4:3
 ritaglia i lati. Il palo della rete deve rimanere al centro. Copia uno sfondo da
 "Levels" come riferimento.
 "menu.ogg" appartiene ai suoni globali, non alle cartelle dei singoli livelli.
+
+--- Availability / Verfügbarkeit ---
+EN: Custom levels are only available in local play. LAN and online use the host's
+    built-in level from data/levels.zip. All players need the same game version.
+DE: Eigene Levels sind nur im lokalen Spiel verfügbar. LAN und Online verwenden
+    das mitgelieferte Level des Hosts aus data/levels.zip. Gleiche Spielversion nötig.
+CS: Vlastní úrovně jsou pouze pro místní hru. LAN a online používají vestavěnou
+    úroveň hostitele z data/levels.zip. Všichni potřebují stejnou verzi hry.
+ES: Los niveles propios son solo para partidas locales. LAN y online usan el nivel
+    incluido del anfitrión en data/levels.zip. Todos necesitan la misma versión.
+FR: Les niveaux personnalisés sont réservés au jeu local. LAN et en ligne utilisent
+    le niveau fourni de l’hôte dans data/levels.zip. Même version requise pour tous.
+IT: I livelli personalizzati sono solo per il gioco locale. LAN e online usano il
+    livello incluso dell’host in data/levels.zip. Tutti devono avere la stessa versione.

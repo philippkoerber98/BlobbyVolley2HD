@@ -73,10 +73,10 @@ New-Item -ItemType Directory -Force $dataDirectory, $licenseDirectory | Out-Null
 foreach ($name in @('blobby.exe', 'blobby-server.exe')) {
     Copy-Item -LiteralPath (Join-Path $binaryDirectory $name) -Destination $package
 }
-foreach ($name in @('gfx.zip', 'sounds.zip', 'scripts.zip', 'rules.zip')) {
+foreach ($name in @('gfx.zip', 'sounds.zip', 'scripts.zip', 'rules.zip', 'levels.zip')) {
     Copy-Item -LiteralPath (Join-Path $projectRoot "out/build/data/$name") -Destination $dataDirectory
 }
-foreach ($folder in @('Levels', 'Custom Levels')) {
+foreach ($folder in @('Custom Levels')) {
     Copy-Item -LiteralPath (Join-Path $projectRoot "data/$folder") -Destination $package -Recurse
 }
 foreach ($file in Get-ChildItem -LiteralPath (Join-Path $projectRoot 'data') -File) {
@@ -114,6 +114,10 @@ Copy-Item -LiteralPath (Join-Path $projectRoot 'data/gfx/menu-font-license.txt')
     'Graphics archives contain artwork and the runtime Nunito TTF only.',
     'DE: Eigene Level als Unterordner in Custom Levels ablegen; siehe README dort.',
     'EN: Add your own level folders to Custom Levels; see its README.',
+    'DE: Lokales Spiel: Einzelmatch oder Turnier mit Menschen und Bots. Profile separat speichern.',
+    'EN: Local game: single match or tournament with humans and bots. Save profiles separately.',
+    'DE: LAN/Online verwenden nur mitgelieferte Levels aus data/levels.zip; gleiche Version erforderlich.',
+    'EN: LAN/online use built-in levels from data/levels.zip only; matching versions are required.',
     '',
     'The game license is in COPYING. Third-party notices are in licenses/.',
     'When distributing a binary, make its corresponding GPL source available.'

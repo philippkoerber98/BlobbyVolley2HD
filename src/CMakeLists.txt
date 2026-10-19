@@ -13,6 +13,7 @@ endif()
 include_directories(.)
 
 set(BLOBBY_COMMON_SOURCES
+    LevelCatalog.cpp LevelCatalog.h
 	base64.cpp base64.h
 	BlobbyDebug.cpp BlobbyDebug.h
 	Clock.cpp Clock.h
@@ -46,7 +47,6 @@ set(BLOBBY_COMMON_SOURCES
 
 set (BLOBBY_CLIENT_SOURCES ${BLOBBY_COMMON_SOURCES}
 	ApplicationLoop.cpp ApplicationLoop.h
-	LevelCatalog.cpp LevelCatalog.h
 	Blood.cpp Blood.h
 	TextManager.cpp TextManager.h
 	IMGUI.cpp IMGUI.h

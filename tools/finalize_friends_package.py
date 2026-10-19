@@ -37,13 +37,18 @@ def validate_artwork(package, kind):
 
 
 def validate_levels(package):
-    expected = {p.relative_to(ROOT / "data/Levels") for p in (ROOT / "data/Levels").rglob("*") if p.is_file()}
-    actual = {p.relative_to(package / "Levels") for p in (package / "Levels").rglob("*") if p.is_file()}
-    if expected != actual:
-        raise ValueError("Packaged Levels differ from source folders")
-    for path in expected:
-        if (package / "Levels" / path).read_bytes() != (ROOT / "data/Levels" / path).read_bytes():
-            raise ValueError(f"Packaged level differs: {path}")
+    expected = {p.relative_to(ROOT / "data").as_posix(): p for p in (ROOT / "data/Levels").rglob("*")
+                if p.is_file() and p.suffix in {".webp", ".png", ".ogg", ".wav"}
+                and not (p.suffix == ".png" and p.with_suffix(".webp").exists())}
+    with ZipFile(package / "data/levels.zip") as archive:
+        actual = {n for n in archive.namelist() if not n.endswith("/")}
+        if actual != set(expected):
+            raise ValueError("Packaged level catalog differs from source")
+        for name, source in expected.items():
+            if archive.read(name) != source.read_bytes():
+                raise ValueError(f"Changed level asset: {name}")
+    if (package / "Levels").exists():
+        raise ValueError("Loose built-in levels must not be packaged")
     if not (package / "Custom Levels/README.txt").is_file():
         raise ValueError("Missing Custom Levels instructions")
     if (package / "data/backgrounds.zip").exists():
