@@ -112,8 +112,8 @@ uses port 1234 by default.
 
 ## Level folders and audio
 
-Built-in courts live in `data/Levels/<name>/` and are installed as `Levels/`
-beside the Windows executable. Add your own folders to `Custom Levels/`.
+Built-in courts live in `data/Levels/<name>/` in source and are packaged into
+`data/levels.zip`. Add your own local-only folders to `Custom Levels/`.
 Only `background.webp` (or `background.png`) is required. Optional `level.ogg`,
 `victory.ogg`, `bums.ogg`, `chat.ogg` and `pfiff.ogg` override that level's sounds;
 WAV works too. Effects and victory sounds fall back to the global sounds; level
@@ -123,3 +123,24 @@ ball. Use a square transparent image with a centered ball, ideally 512 x 512 or
 larger. Ball size and physics remain unchanged.
 No per-level configuration files are needed. Reopen options to discover new levels.
 See [custom levels and audio](doc/CUSTOM-LEVELS.md) for details.
+
+## LAN tournaments
+
+Host a tournament directly from the LAN browser or use the dedicated server.
+Configure up to 32 shared player/spectator slots, round robin, knockout or groups
+with knockout, and parallel matches. Results, standings and live spectating are
+managed by the server. See [LAN tournaments](doc/LAN-TOURNAMENTS.md) for setup,
+organizer access, reconnect/save behavior and test limitations.
+
+### Local play and built-in levels
+
+Choose **Local game** for a single match or a tournament with 2–32 participants,
+including mixed humans and bots. Participants take turns sharing the two input
+seats. Profiles preserve names, colours and colour cycling. General PC settings
+are separate from match rules, participants and level selection.
+
+Built-in levels ship in `data/levels.zip`. Do not unpack or replace its contents;
+restore this file from the same release if damaged. `Custom Levels` remains editable
+and is available for local play only. LAN/online use the host's built-in level and
+require matching level assets. All peers must run the same version. See
+[Local play and profiles](doc/LOCAL-PLAY.md) for details.

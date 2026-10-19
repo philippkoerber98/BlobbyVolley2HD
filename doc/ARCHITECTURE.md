@@ -17,6 +17,21 @@
 - `ScriptedInputSource.*`, `IScriptableComponent.*`, and `data/scripts/wide`: bot behavior and Lua API.
 - `replays/`, `server/`, and `blobnet/`: replay and multiplayer protocols. Preserve serialization when refactoring.
 
+## LAN tournaments
+
+- `server/Tournament.*`: pure competition model, formats, brackets, standings,
+  preview, results and versioned public/private snapshots.
+- `server/TournamentHost.*`: authoritative coordination on the server thread,
+  organizer authorization, identity, readiness, scheduling, persistence and live viewers.
+- `TournamentProtocol.h`: bounded additive tournament messages; existing match
+  and replay state serialization is unchanged.
+- `state/TournamentState.*`: shared client connection, tournament tabs and passive
+  spectator presentation. Network matches retain the connection when returning.
+- `NetworkGame::view()`: locked read-only match inspection for the coordinator;
+  its atomics/mutex also protect shutdown and checkpoint restoration.
+
+See [LAN tournaments](LAN-TOURNAMENTS.md) for behavior and verification.
+
 ## Presentation
 
 - `RenderManager.*`: shared surface operations and renderer interface.
@@ -31,6 +46,16 @@
 - `SoundManager.*`: SDL2_mixer Vorbis/WAV effects, streamed music, audio buses and scene transitions.
 - `IMGUI.*` / `WarmUI.h`: buffered widgets, styling, and presentation helpers.
 
+## Local sessions and player profiles
+
+- `LocalSession.*`: persistent player profiles, isolated match settings, local
+  competition progression and alternating tournament saves.
+- `state/LocalSetupState.*`: local setup, entrant editor, bracket/tables,
+  network profile selection and shared-device match handoff.
+- `SpectatorOrder.h`: deterministic alphabetical spectator presentation.
+
+See [Local play](LOCAL-PLAY.md) for storage, UI and archive/network behavior.
+
 ## Menus
 
 - `state/State.*`: state transitions and the main menu.
@@ -38,7 +63,7 @@
 - `state/TabbedOptionsState.cpp`: entry points for the current options state.
 - `state/OptionsMenu.*`: private options session, input capture, and immediate settings updates.
 - `state/OptionsWidgets.cpp`: shared rows, buttons, sliders, and navigation.
-- `state/OptionsTabs.cpp`: Game, Players, Controls, Graphics, and Audio tabs.
+- `state/OptionsTabs.cpp`: General, Controls, Graphics, and Audio tabs.
 - `UITranslations.*` / `data/ui-translations.xml`: the six-language UI catalog.
 
 The old graphics/input/misc options states are retired. Tests must use `OptionState`.
@@ -46,8 +71,8 @@ Options apply completed edits immediately; changing render FPS must not change m
 
 ## Assets and compatibility names
 
-Graphics are packaged from `data/gfx`; level images and optional audio remain
-in editable `Levels/` and `Custom Levels/` folders.
+Graphics are packaged from `data/gfx`; shipped level images and audio are packaged
+in `data/levels.zip`. Only `Custom Levels/` is installed as editable folders.
 Some source calls and saved preferences use historical names such as `gfx/titel.bmp`
 or `strand1.bmp`. These are logical identifiers resolved to HD files; they do not
 require physical BMP copies. `metrics.txt` stores logical sprite dimensions.
