@@ -68,10 +68,8 @@ struct OptionState::Menu
     void section(float y, const std::string& label, float x = 40);
 
     void captureInput(Capture kind, const std::string& key);
-    void nameRow(float x, float y, int player);
 
     void game();
-    void players();
     void controls();
     void graphics();
     void audio();

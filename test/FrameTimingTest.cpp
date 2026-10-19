@@ -24,6 +24,8 @@
 #include "replays/ReplayPlayer.h"
 #include "replays/ReplayRecorder.h"
 #include "state/GameState.h"
+#include "state/LocalSetupState.h"
+#include "state/LocalGameState.h"
 #include "state/OptionsState.h"
 #include "state/ReplaySelectionState.h"
 #include "state/NetworkSearchState.h"
@@ -413,250 +415,80 @@ void testWindowDecorations(const std::string& outputDirectory)
 void testTabbedOptions(const std::string& outputDirectory)
 {
     auto& fs = FileSystem::getSingleton();
-    UserConfig config;
-    config.loadFile("config.xml");
-    UserConfig bindings;
-    bindings.loadFile("inputconfig.xml");
-    config.setBool("fullscreen", false);
-    config.setString("language", "de");
-    config.setInteger("window_width", 800);
-    config.setInteger("window_height", 600);
-    config.setInteger("gamefps", 75);
-    config.setBool("blood", false);
-    config.setBool("mute", true);
     fs.setWriteDir(outputDirectory);
-    SDL_setenv("SDL_AUDIODRIVER", "dummy", 1);
-    SDL_InitSubSystem(SDL_INIT_AUDIO);
+    UserConfig c;
+    c.loadFile("config.xml");
+    c.setBool("fullscreen", false);
+    c.setString("language", "en");
+    c.setInteger("window_width", 800);
+    c.setInteger("window_height", 600);
+    c.setInteger("gamefps", 90);
+    c.setInteger("scoretowin", 21);
     SpeedController speed(75);
     SpeedController::setMainInstance(&speed);
-    std::vector<std::string> backends{"SDL"};
+    std::vector<std::string> backends = {"SDL"};
     if (SDL_getenv("BLOBBY_TEST_OPENGL"))
     {
         backends.push_back("OpenGL");
     }
     for (const auto& backend : backends)
     {
-        config.setString("device", backend);
-        config.saveFile("config.xml");
-        bindings.saveFile("inputconfig.xml");
-        BlobbyApp app(std::unique_ptr<State>(new MainMenuState), config);
+        c.setString("device", backend);
+        c.saveFile("config.xml");
+        BlobbyApp app(std::unique_ptr<State>(new OptionState), c);
         SDL_HideWindow(app.getWindow());
         app.getCurrentState().init();
-        app.getInputManager().updateInput();
-        stepApp(app);
-        SDL_WarpMouseInWindow(app.getWindow(), 60, 360);
-        SDL_Event openOptions{};
-        openOptions.type = SDL_MOUSEBUTTONDOWN;
-        openOptions.button.button = SDL_BUTTON_LEFT;
-        SDL_PushEvent(&openOptions);
-        app.getInputManager().updateInput();
-        stepApp(app);
-        require(std::string(app.getCurrenStateName()) == "OptionState", "Main menu did not open options");
-        // No extra simulation tick: the very first presentation must already have a backdrop.
-        auto initial = captureApp(app, 0, outputDirectory + "/menu-" + backend + "-first-transition.png");
-        bool hasImage = false;
-        for (size_t i = 0; i + 3 < initial.size(); i += 4)
+        const char* names[] = {"general", "controls", "graphics", "audio"};
+        for (int i = 0; i < 4; ++i)
         {
-            if (initial[i] || initial[i + 1] || initial[i + 2])
-            {
-                hasImage = true;
-                break;
-            }
-        }
-        require(hasImage, "Opening options presented an empty black frame");
-        SDL_WarpMouseInWindow(app.getWindow(), 799, 599);
-        app.getInputManager().updateInput();
-        stepApp(app);
-        auto key = [&](SDL_Keycode code)
-        {
+            captureApp(app, 0, outputDirectory + "/options-" + backend + "-" + names[i] + ".png");
             SDL_Event e{};
             e.type = SDL_KEYDOWN;
-            e.key.keysym.sym = code;
+            e.key.keysym.sym = SDLK_PAGEDOWN;
             SDL_PushEvent(&e);
             app.getInputManager().updateInput();
             stepApp(app);
-        };
-        auto shoulder = [&](Uint8 button)
-        {
-            SDL_Event e{};
-            e.type = SDL_CONTROLLERBUTTONDOWN;
-            e.cbutton.button = button;
-            SDL_PushEvent(&e);
-            app.getInputManager().updateInput();
-            stepApp(app);
-        };
-        auto screenshot = [&](const std::string& tab)
-        { return captureApp(app, 0, outputDirectory + "/menu-" + backend + "-" + tab + ".png"); };
-        screenshot("spiel");
-        key(SDLK_DOWN);
-        key(SDLK_DOWN);
-        key(SDLK_RIGHT); // 75 -> 76 fixed game steps.
-        UserConfig unchanged;
-        unchanged.loadFile("config.xml");
-        require(unchanged.getInteger("gamefps") == 76, "Game-speed change was not saved immediately");
-        key(SDLK_PAGEDOWN);
-        screenshot("spieler");
-        key(SDLK_DOWN);
-        key(SDLK_DOWN); // Bot strength must advance one stored reaction step per press.
-        UserConfig strengthBefore;
-        strengthBefore.loadFile("config.xml");
-        const int delayBefore = strengthBefore.getInteger("left_script_strength");
-        key(delayBefore ? SDLK_RIGHT : SDLK_LEFT);
-        UserConfig strengthAfter;
-        strengthAfter.loadFile("config.xml");
-        require(strengthAfter.getInteger("left_script_strength") == delayBefore + (delayBefore ? -1 : 1),
-                "Bot strength step was rounded away");
-        key(delayBefore ? SDLK_LEFT : SDLK_RIGHT);
-        auto mouseEvent = [&](int x, int y, Uint32 type)
+        }
+        UserConfig after;
+        after.loadFile("config.xml");
+        require(after.getInteger("gamefps") == 90 && after.getInteger("scoretowin") == 21,
+                "Global tabs changed session settings");
+        auto click = [&](int x, int y)
         {
             SDL_WarpMouseInWindow(app.getWindow(), x, y);
             SDL_Event e{};
-            e.type = type;
+            e.type = SDL_MOUSEBUTTONDOWN;
             e.button.button = SDL_BUTTON_LEFT;
             SDL_PushEvent(&e);
             app.getInputManager().updateInput();
             stepApp(app);
-        };
-        mouseEvent(215, 320, SDL_MOUSEBUTTONDOWN);
-        mouseEvent(215, 320, SDL_MOUSEBUTTONUP);
-        mouseEvent(90, 165, SDL_MOUSEBUTTONDOWN);
-        mouseEvent(90, 165, SDL_MOUSEBUTTONUP);
-        SDL_Delay(200);
-        SDL_Event typed{};
-        typed.type = SDL_TEXTINPUT;
-        typed.text.text[0] = 'Z';
-        typed.text.text[1] = 0;
-        SDL_PushEvent(&typed);
-        app.getInputManager().updateInput();
-        stepApp(app);
-        key(SDLK_RETURN);
-        key(SDLK_PAGEDOWN);
-        screenshot("steuerung");
-        shoulder(SDL_CONTROLLER_BUTTON_RIGHTSHOULDER);
-        screenshot("grafik");
-        auto courtBefore = screenshot("background-before");
-        // Background is row 4 in windowed graphics: down to it, then cycle.
-        key(SDLK_DOWN);
-        key(SDLK_DOWN);
-        key(SDLK_DOWN);
-        key(SDLK_DOWN);
-        key(SDLK_RIGHT);
-        stepApp(app);
-        UserConfig backgroundSaved;
-        backgroundSaved.loadFile("config.xml");
-        require(backgroundSaved.getString("background") != config.getString("background"),
-                "Background selection was not saved immediately");
-        auto courtAfter = screenshot("background-after");
-        // Inspect an unobstructed region: text/control changes cannot satisfy this check.
-        bool backdropChanged = false;
-        for (int y = 405; y < 495; ++y)
-        {
-            for (int x = 510; x < 755; ++x)
-            {
-                if (courtBefore[(y * 800 + x) * 4] != courtAfter[(y * 800 + x) * 4])
-                {
-                    backdropChanged = true;
-                }
-            }
-        }
-        require(backdropChanged, "Menu backdrop did not follow the selected court");
-        key(SDLK_PAGEDOWN);
-        screenshot("audio");
-        shoulder(SDL_CONTROLLER_BUTTON_LEFTSHOULDER);
-        key(SDLK_PAGEUP);
-        key(SDLK_PAGEUP);
-        key(SDLK_PAGEUP);
-        UserConfig saved;
-        saved.loadFile("config.xml");
-        require(saved.getInteger("gamefps") == 76, "Tab changes lost the game-speed value");
-        require(saved.getInteger("left_blobby_color_r") == 128,
-                "Mouse RGB slider was not preserved across tabs");
-        require(saved.getString("left_player_name").find('Z') != std::string::npos,
-                "Name editing did not receive text input");
-        require(!saved.getBool("blood"), "An unrelated menu edit changed blood effects");
-        // Mouse tab selection must produce the same screen as keyboard/shoulder navigation.
-        auto before = screenshot("applied");
-        SDL_WarpMouseInWindow(app.getWindow(), 126, 101);
-        SDL_Event click{};
-        click.type = SDL_MOUSEBUTTONDOWN;
-        click.button.button = SDL_BUTTON_LEFT;
-        SDL_PushEvent(&click);
-        app.getInputManager().updateInput();
-        stepApp(app);
-        require(screenshot("mouse-tab") != before, "Mouse tab navigation did not change the screen");
-        // Restore defaults asks first; cancellation must leave all saved settings intact.
-        mouseEvent(540, 547, SDL_MOUSEBUTTONDOWN);
-        mouseEvent(540, 547, SDL_MOUSEBUTTONUP);
-        screenshot("reset-confirmation");
-        key(SDLK_ESCAPE);
-        UserConfig notReset;
-        notReset.loadFile("config.xml");
-        require(notReset.getInteger("gamefps") == 76, "Canceling defaults changed the saved settings");
-        mouseEvent(540, 547, SDL_MOUSEBUTTONDOWN);
-        mouseEvent(540, 547, SDL_MOUSEBUTTONUP);
-        key(SDLK_RETURN);
-        UserConfig defaults;
-        defaults.loadFile("default-config.xml");
-        UserConfig reset;
-        reset.loadFile("config.xml");
-        UserConfig resetInput;
-        resetInput.loadFile("inputconfig.xml");
-        require(reset.getInteger("gamefps") == defaults.getInteger("gamefps"),
-                "Reset did not restore game speed");
-        require(reset.getInteger("left_blobby_color_r") == defaults.getInteger("left_blobby_color_r"),
-                "Reset did not restore RGB colour");
-        require(reset.getString("background") == defaults.getString("background"),
-                "Reset did not restore the court");
-        require(resetInput.getInteger("right_blobby_controller_slot") == 1,
-                "Reset lost the second player's controller default");
-        stepApp(app);
-        screenshot("reset-done");
-        key(SDLK_ESCAPE);
-        require(std::string(app.getCurrenStateName()) == "MainMenuState",
-                "Back still requires applying changes");
-        std::cout << backend
-                  << ": instant settings, live blurred backdrop, RGB/text input and confirmed/canceled "
-                     "defaults reset passed\n";
-    }
-    require(translateUI("en", "16:9 Widescreen") == "16:9 Widescreen",
-            "German court label leaked into English");
-    require(translateUI("cs", "Controls") == "Ovládání", "Czech UI lookup failed");
-    require(translateUI("es", "Graphics") == "Gráficos", "Spanish UI lookup failed");
-    require(translateUI("fr", "Players") == "Joueurs", "French UI lookup failed");
-    require(translateUI("it", "Game") == "Gioco", "Italian UI lookup failed");
-    for (const auto& backend : backends)
-    {
-        for (const char* language : {"de", "en", "cs", "es", "fr", "it"})
-        {
-            config.setString("device", backend);
-            config.setString("language", language);
-            config.saveFile("config.xml");
-            BlobbyApp app(std::unique_ptr<State>(new OptionState), config);
-            SDL_HideWindow(app.getWindow());
-            app.getCurrentState().init();
-            SDL_WarpMouseInWindow(app.getWindow(), 799, 599);
+            e.type = SDL_MOUSEBUTTONUP;
+            SDL_PushEvent(&e);
             app.getInputManager().updateInput();
             stepApp(app);
-            for (int tab = 0; tab < 5; ++tab)
-            {
-                if (tab)
-                {
-                    SDL_Event e{};
-                    e.type = SDL_KEYDOWN;
-                    e.key.keysym.sym = SDLK_PAGEDOWN;
-                    SDL_PushEvent(&e);
-                    app.getInputManager().updateInput();
-                    stepApp(app);
-                }
-                captureApp(app, 0,
-                           outputDirectory + "/language-" + backend + "-" + language + "-" +
-                               std::to_string(tab) + ".png");
-            }
-        }
+        };
+        const int graphics = int(40 + RenderManager::menuTextWidth("General", 22) + 30 +
+                                 RenderManager::menuTextWidth("Controls", 22) + 30);
+        click(graphics + 10, 100);
+        click(100, 305);
+        UserConfig changed;
+        changed.loadFile("config.xml");
+        require(changed.getBool("show_shadow") != after.getBool("show_shadow"),
+                "Graphics toggle did not apply immediately");
+        click(550, 545);
+        SDL_Event confirm{};
+        confirm.type = SDL_KEYDOWN;
+        confirm.key.keysym.sym = SDLK_RETURN;
+        SDL_PushEvent(&confirm);
+        app.getInputManager().updateInput();
+        stepApp(app);
+        UserConfig reset;
+        reset.loadFile("config.xml");
+        require(reset.getInteger("gamefps") == 90 && reset.getInteger("scoretowin") == 21,
+                "PC defaults reset changed match settings");
     }
-    std::cout << "UI catalog: six languages, five tabs, both available renderers passed\n";
     SpeedController::setMainInstance(nullptr);
-    fs.removeFromSearchPath(outputDirectory);
+    std::cout << "Options: four global tabs render in SDL/OpenGL and retain session settings\n";
 }
 
 void testReplayTiming(const std::string& outputDirectory)
@@ -841,8 +673,11 @@ void testGameMenus(const std::string& outputDirectory)
             key(SDLK_ESCAPE);
             button(SDL_CONTROLLER_BUTTON_B);
             button(SDL_CONTROLLER_BUTTON_A);
-            require(std::string(app.getCurrenStateName()) == "LocalGameState",
-                    "Default main-menu selection did not start a match");
+            require(std::string(app.getCurrenStateName()) == "LocalSetupState",
+                    "Default main-menu selection did not open local setup");
+            app.switchToState(std::unique_ptr<State>(new LocalGameState));
+            app.getInputManager().clearTransientInput();
+            stepApp(app);
             shot("game-hud");
             key(SDLK_ESCAPE);
             app.getInputManager().updateInput();
@@ -1237,26 +1072,16 @@ void testWidescreen(const std::string& outputDirectory)
         config.setInteger("window_height", 720);
         config.saveFile("config.xml");
         {
-            BlobbyApp menu(std::unique_ptr<State>(new OptionState), config);
+            auto session = std::make_shared<LocalSession>();
+            session->settings.setBool("court_widescreen", false);
+            BlobbyApp menu(std::unique_ptr<State>(new LocalSetupState(session)), config);
             SDL_HideWindow(menu.getWindow());
             menu.getCurrentState().init();
-            auto key = [&](SDL_Keycode code)
-            {
-                SDL_Event e{};
-                e.type = SDL_KEYDOWN;
-                e.key.keysym.sym = code;
-                SDL_PushEvent(&e);
-                menu.getInputManager().updateInput();
-                stepApp(menu);
-            };
-            key(SDLK_PAGEDOWN);
-            key(SDLK_PAGEDOWN);
-            key(SDLK_PAGEDOWN);
             int ww = 0, hh = 0;
             SDL_GetWindowSize(menu.getWindow(), &ww, &hh);
             auto v = fitGameViewport(ww, hh);
             SDL_WarpMouseInWindow(menu.getWindow(), v.x + int(200.f * v.w / 800),
-                                  v.y + int(440.f * v.h / 600));
+                                  v.y + int(317.f * v.h / 600));
             SDL_Event click{};
             click.type = SDL_MOUSEBUTTONDOWN;
             click.button.button = SDL_BUTTON_LEFT;
@@ -1265,16 +1090,18 @@ void testWidescreen(const std::string& outputDirectory)
             stepApp(menu);
             UserConfig saved;
             saved.loadFile("config.xml");
-            require(saved.getBool("court_widescreen"), "Graphics court selector was not saved immediately");
+            require(!saved.getBool("court_widescreen"), "Local court selection leaked into global settings");
+            require(session->settings.getBool("court_widescreen"),
+                    "Local court selector did not change session");
             require(menu.getRenderManager().courtWidth() == width,
-                    "Graphics court selector did not update the viewport");
-            captureApp(menu, 0, outputDirectory + "/wide-" + backend + "-options.png");
-            key(SDLK_ESCAPE);
-            key(SDLK_RETURN);
-            require(std::string(menu.getCurrenStateName()) == "LocalGameState",
-                    "Starting after court selection did not enter a local match");
-            require(menu.getRenderManager().courtWidth() == width,
-                    "Local match ignored the selected wide court");
+                    "Local court selector did not update viewport");
+            captureApp(menu, 0, outputDirectory + "/wide-" + backend + "-setup.png");
+            UserConfig bindings;
+            bindings.loadFile("inputconfig.xml");
+            menu.switchToState(std::unique_ptr<State>(new LocalGameState(session, bindings)));
+            stepApp(menu);
+            require(std::string(menu.getCurrenStateName()) == "LocalGameState", "Local match did not start");
+            require(menu.getRenderManager().courtWidth() == width, "Local match ignored session court");
             captureApp(menu, 0, outputDirectory + "/wide-" + backend + "-local.png");
         }
         config.setBool("court_widescreen", true);

@@ -9,6 +9,8 @@
 #include <iostream>
 #include <stdexcept>
 
+void testLocalSession(const std::string& directory);
+void testLocalSetupUI(const std::string& directory);
 void testFrameTiming();
 void testPresentation(const std::string& outputDirectory);
 void testReplayTiming(const std::string& outputDirectory);
@@ -119,6 +121,10 @@ int main(int argc, char** argv)
         for (const char* archive : {"gfx", "sounds", "scripts", "rules", "levels"})
         {
             fs.addToSearchPath(std::string(argv[1]) + "/" + archive + ".zip");
+        }
+        if (argc == 4 && (std::string(argv[3]) == "--local-session" || std::string(argv[3]) == "--local-ui-hardware"))
+        {
+            testLocalSession(argv[2]);testLocalSetupUI(argv[2]);SDL_Quit();return 0;
         }
         if (argc == 4 && std::string(argv[3]) == "--audio-only")
         {

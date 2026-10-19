@@ -52,7 +52,7 @@ bool OptionState::Menu::hit(float x, float y, float w, float h) const
 
 void OptionState::Menu::category(int next)
 {
-    tab = wrap(next, 5);
+    tab = wrap(next, 4);
     focus = 0;
     previousCount = 0;
     dragging = -1;

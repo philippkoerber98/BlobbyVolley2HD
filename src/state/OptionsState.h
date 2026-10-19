@@ -22,6 +22,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 #include "State.h"
 #include <memory>
+#include <functional>
 
 /*! \class OptionState
     \brief State for managing the main options menu
@@ -30,12 +31,15 @@ class OptionState : public State
 {
   public:
     OptionState();
+    OptionState(std::function<State*()> returnTo, int initialTab);
     ~OptionState() override;
     void step_impl() override;
     void init() override;
     const char* getStateName() const override;
 
   private:
+    std::function<State*()> mReturnTo;
+    int mInitialTab = 0;
     struct Menu;
     std::unique_ptr<Menu> mMenu;
 };

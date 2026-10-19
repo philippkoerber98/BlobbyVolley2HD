@@ -36,101 +36,21 @@ std::string inputPrefix(int player)
 // One settings session owns every tab. Completed edits are applied immediately.
 void OptionState::Menu::game()
 {
-    section(128, tr("GAME RULES"));
-    choice(148, tr("Rules"), config, "rules", rules, rules, tr("Rules for the next match."));
-    integer(188, tr("Points to win"), config, "scoretowin", 1, 99, 15, tr("Points needed to win."));
-    int speed = std::max(30, std::min(120, config.getInteger("gamefps", 75)));
-    float value = (speed - 30) / 90.f;
-    if (slider(40, 228, 350, tr("Game speed"), value,
-               std::to_string(int(std::lround(speed * 100.f / 75))) + " %",
-               tr("100% is the original game speed. Rendering FPS does not affect it."), accent, 1.f / 90))
-    {
-        config.setInteger("gamefps", int(std::lround(value * 90 + 30)));
-    }
-    const int speeds[] = {30, 60, 75, 90, 120};
-    const char* labels[] = {"Very slow", "Slow", "Normal", "Fast", "Very fast"};
-    for (int i = 0; i < 5; ++i)
-    {
-        if (button(40 + i * 71, 276, 66, tr(labels[i]), config.getInteger("gamefps", 75) == speeds[i]))
-        {
-            config.setInteger("gamefps", speeds[i]);
-            dirty = true;
-        }
-    }
-    section(322, tr("GENERAL"));
+    section(128, tr("GENERAL"));
     std::vector<std::string> languages, names;
     for (auto& lang : TextManager::languageNames())
     {
         languages.push_back(lang.first);
         names.push_back(lang.second);
     }
-    choice(342, tr("Language"), config, "language", languages, names,
+    choice(148, tr("Language"), config, "language", languages, names,
            tr("The menu language changes immediately."));
-    choice(382, tr("Network side"), config, "network_side", {"0", "1"}, {tr("Left"), tr("Right")},
-           tr("Preferred side in network matches."));
-    toggle(422, tr("Show FPS"), config, "showfps", tr("Display the current rendering FPS."));
-    toggle(462, tr("Blood"), config, "blood", tr("Enable or disable blood particles."));
+    section(220, tr("Local game"));
+    row(244, tr("Rules"), tr("Game setup"),
+        tr("Rules and participants are configured before starting a game."));
+    row(284, tr("Profile"), tr("Main menu"), tr("Names and blob colours belong to saved profiles."));
 }
-void OptionState::Menu::players()
-{
-    for (int player = 0; player < 2; ++player)
-    {
-        float x = 40 + player * 370;
-        std::string pre = sidePrefix(player);
-        section(128, tr("PLAYER ") + std::to_string(player + 1), x);
-        nameRow(x, 148, player);
-        std::string script =
-            config.getBool(pre + "player_human", true) ? "Human" : config.getString(pre + "script_name");
-        auto it = std::find(scripts.begin(), scripts.end(), script);
-        int index = it == scripts.end() ? 0 : int(it - scripts.begin());
-        if (int delta =
-                row(188, tr("Player type"), index ? scripts[index] : tr("Human"),
-                    tr("Each bot uses its widescreen variant in 16:9. Original 4:3 scripts stay unchanged."),
-                    x, 350))
-        {
-            index = wrap(index + delta, int(scripts.size()));
-            config.setBool(pre + "player_human", index == 0);
-            if (index)
-            {
-                config.setString(pre + "script_name", scripts[index]);
-            }
-            dirty = true;
-        }
 
-        int delay = config.getInteger(pre + "script_strength");
-        float strength = 1 - std::max(0, std::min(25, delay)) / 25.f;
-        if (slider(x, 228, 350, tr("Bot strength"), strength,
-                   std::to_string(int(std::lround(strength * 100))) + " %",
-                   tr("Reaction strength of the selected bot."), accent, 1.f / 25, 42))
-        {
-            config.setInteger(pre + "script_strength", int(std::lround((1 - strength) * 25)));
-        }
-        const char* channels[] = {"r", "g", "b"};
-
-        const char* english[] = {"Red", "Green", "Blue"};
-        Color colors[] = {Color(238, 124, 121), Color(173, 228, 106), Color(115, 197, 242)};
-        for (int j = 0; j < 3; ++j)
-        {
-            auto key = pre + "blobby_color_" + channels[j];
-            int c = config.getInteger(key, player ? 255 : 128);
-            float v = c / 255.f;
-            if (slider(x, 278 + j * 48, 350, tr(english[j]), v, std::to_string(c),
-                       tr("Blob RGB colour. The preview updates immediately."), colors[j], 1.f / 255, 42))
-            {
-                config.setInteger(key, int(std::lround(v * 255)));
-            }
-        }
-        toggle(424, tr("Colour cycling"), config, pre + "blobby_oscillate",
-               tr("Cycle the blob colour automatically."), x, 350);
-        Color col(config.getInteger(pre + "blobby_color_r"), config.getInteger(pre + "blobby_color_g"),
-                  config.getInteger(pre + "blobby_color_b"));
-        if (config.getBool(pre + "blobby_oscillate"))
-        {
-            col = owner.getApp().getRenderManager().getOscillationColor();
-        }
-        gui().doBlob(gui().getNextId(), Vector2(x + 175, 496), col, .5f);
-    }
-}
 void OptionState::Menu::controls()
 {
     section(128, tr("DEVICES"));
@@ -139,7 +59,7 @@ void OptionState::Menu::controls()
     for (int i = 0; i < 2; ++i)
     {
         const std::string key = inputPrefix(i) + "device", old = input.getString(key);
-        choice(148 + i * 40, tr("Player device ") + std::to_string(i + 1), input, key, devices, names,
+        choice(148 + i * 40, tr("Device preset ") + std::to_string(i + 1), input, key, devices, names,
                tr("Select each player's input device independently."));
         if (input.getString(key) == "mouse" && input.getString(inputPrefix(1 - i) + "device") == "mouse")
         {
@@ -147,7 +67,7 @@ void OptionState::Menu::controls()
             notice = tr("Only one player can use the mouse.");
         }
     }
-    if (row(228, tr("Bindings for"), tr("Player ") + std::to_string(inputPlayer + 1),
+    if (row(228, tr("Bindings for"), tr("Preset ") + std::to_string(inputPlayer + 1),
             tr("Edit this player's bindings.")))
     {
         inputPlayer = 1 - inputPlayer;
@@ -155,7 +75,7 @@ void OptionState::Menu::controls()
     const std::string prefix = inputPrefix(inputPlayer), device = input.getString(prefix + "device");
     if (device == "gamepad")
     {
-        integer(268, tr("Controller"), input, prefix + "controller_slot", 0, 7, inputPlayer,
+        integer(268, tr("Controller"), input, prefix + "controller_slot", 0, 1, inputPlayer,
                 tr("Controller slot: 0 is the first controller."));
         const int jumps[] = {SDL_CONTROLLER_BUTTON_A, SDL_CONTROLLER_BUTTON_X, SDL_CONTROLLER_BUTTON_Y};
         const char* names[] = {"A", "X", "Y"};
@@ -271,63 +191,14 @@ void OptionState::Menu::graphics()
     }
     section(272, tr("RENDERING"));
     toggle(292, tr("Shadows"), config, "show_shadow", tr("Display ball and blob shadows."));
-    const std::map<std::string, std::string> backgroundTitles = {{"aurora.bmp", "Aurora"},
-                                                                 {"beach.bmp", "Rocky beach"},
-                                                                 {"beacharena.bmp", "Beach arena"},
-                                                                 {"berge.bmp", "Mountain coast"},
-                                                                 {"berge2.bmp", "Alpine lake"},
-                                                                 {"burg.bmp", "Castle"},
-                                                                 {"landhaus.bmp", "Country house"},
-                                                                 {"mars.bmp", "Mars"},
-                                                                 {"mars2.bmp", "Mars colony"},
-                                                                 {"mond.bmp", "Moon"},
-                                                                 {"oase.bmp", "Oasis"},
-                                                                 {"saturn.bmp", "Saturn"},
-                                                                 {"schnee.bmp", "Snow"},
-                                                                 {"sportanlage.bmp", "Sports hall"},
-                                                                 {"steppe.bmp", "Meadow"},
-                                                                 {"strand1-classic.bmp", "Classic beach"},
-                                                                 {"strand1.bmp", "Beach 1"},
-                                                                 {"strand2.bmp", "Beach 2"},
-                                                                 {"strand3.bmp", "Beach 3"},
-                                                                 {"street.bmp", "Road"},
-                                                                 {"tempel.bmp", "Temple"},
-                                                                 {"tropen.bmp", "Tropical resort"},
-                                                                 {"volleyfeld.bmp", "Volleyball court"},
-                                                                 {"woizn.bmp", "Wheat field"},
-                                                                 {"wolken.bmp", "Clouds"}};
-    std::vector<std::string> backgroundLabels;
-    for (const auto& name : backgrounds)
-    {
-        auto title = backgroundTitles.find(name);
-        backgroundLabels.push_back(title == backgroundTitles.end()
-                                       ? (name.compare(0, 7, "custom:") == 0
-                                              ? name.substr(7) + " (" + tr("Custom") + ")"
-                                              : name.substr(0, name.size() - 4))
-                                       : translateUI(config.getString("language"), title->second));
-    }
-    choice(332, tr("Level"), config, "background", backgrounds, backgroundLabels,
-           tr("Select a level with its background and sounds."));
+    toggle(332, tr("Blood"), config, "blood", tr("Enable or disable blood particles."));
+    toggle(372, tr("Show FPS"), config, "showfps", tr("Display the current rendering FPS."));
 #if HAVE_LIBGL
-    choice(372, tr("Renderer"), config, "device", {"OpenGL", "SDL"}, {"OpenGL", "SDL"},
+    choice(412, tr("Renderer"), config, "device", {"OpenGL", "SDL"}, {"OpenGL", "SDL"},
            tr("The renderer switches immediately."));
 #endif
-    if (row(412, tr("Court"),
-            config.getBool("court_widescreen", false) ? tr("16:9 Widescreen") : tr("4:3 Classic"),
-            tr("4:3: classic view and court. 16:9: wider court and longer runs, 20% faster running. "
-               "Network stays 4:3. From next match.")))
-    {
-        config.setBool("court_widescreen", !config.getBool("court_widescreen", false));
-        if (!config.getBool("fullscreen"))
-        {
-            config.setInteger(
-                "window_width",
-                int(std::lround(config.getInteger("window_height", 600) *
-                                (config.getBool("court_widescreen") ? 16.f / 9.f : 4.f / 3.f))));
-        }
-        dirty = true;
-    }
 }
+
 void OptionState::Menu::audio()
 {
     section(128, tr("VOLUME"));

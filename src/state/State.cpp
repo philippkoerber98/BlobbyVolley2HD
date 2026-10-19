@@ -27,6 +27,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #include <cstdio>
 
 #include "LocalGameState.h"
+#include "LocalSetupState.h"
 #include "NetworkSearchState.h"
 #include "NetworkState.h"
 #include "OptionsState.h"
@@ -104,6 +105,7 @@ struct MainMenuState::Menu
     WarmUI::Navigation navigation, confirm;
     bool quitting = false;
     UserConfig config;
+    PlayerProfiles profiles;
     Menu()
     {
         config.loadFile("config.xml");
@@ -136,16 +138,28 @@ void MainMenuState::draw(bool interactive)
     g.doImage(GEN_ID, Vector2(400, 300), "menu-backgrounds/" + config->getString("background"),
               Vector2(800, 600));
     g.doOverlay(GEN_ID, Vector2(0, 0), Vector2(800, 600));
-    g.doImage(GEN_ID, Vector2(211, 111), "gfx/titel.bmp", Vector2(350, 202));
-    m.navigation.begin(in, 7, interactive && !m.quitting);
-    const char* labelsDE[] = {"Spiel starten", "Online spielen", "Im LAN spielen", "Optionen",
-                              "Replays",       "Mitwirkende",    "Beenden"};
-    const char* labelsEN[] = {"Start match", "Play online", "Play on LAN", "Options",
-                              "Replays",     "Credits",     "Quit"};
+    g.doImage(GEN_ID, Vector2(700, 43), "gfx/titel.bmp", Vector2(120, 69));
+    text(g, 40, 35, tr("Dein Spiel. Dein Strand.", "Your game. Your beach."), 34, 2);
+    text(g, 40, 84, tr("Einzelmatch oder Turnier mit Freunden.", "A match or a tournament with friends."),
+         20);
+    m.navigation.begin(in, 8, interactive && !m.quitting);
+    const char* labelsDE[] = {"Lokales Spiel", "Online spielen", "Im LAN spielen", "Optionen",
+                              "Replays",       "Mitwirkende",    "Profil",         "Beenden"};
+    const char* labelsEN[] = {"Local game", "Play online", "Play on LAN", "Options",
+                              "Replays",    "Credits",     "Profile",     "Quit"};
+    panel(g, 390, 160, 370, 240, Color(37, 29, 23), .94f);
+    panel(g, 390, 424, 370, 85);
+    const auto& profile = m.profiles.players.at(m.profiles.selected);
+    text(g, 450, 435, profile.name, 22);
+    g.doBlob(GEN_ID, Vector2(420, 465),
+             profile.cycling ? getApp().getRenderManager().getOscillationColor() : Color(profile.color), .4f);
     int action = -1;
-    for (int i = 0; i < 7; ++i)
+    for (int i = 0; i < 8; ++i)
     {
-        if (m.navigation.button(g, in, i, 40, 212.f + i * 40.f, 350, 34, tr(labelsDE[i], labelsEN[i]), false,
+        const float xs[] = {40, 195, 40, 40, 40, 195, 450, 40};
+        const float ys[] = {160, 214, 214, 326, 270, 326, 466, 388};
+        const float widths[] = {300, 145, 145, 145, 300, 145, 290, 300};
+        if (m.navigation.button(g, in, i, xs[i], ys[i], widths[i], 38, tr(labelsDE[i], labelsEN[i]), false,
                                 true))
         {
             action = i;
@@ -157,33 +171,42 @@ void MainMenuState::draw(bool interactive)
                         "Dein Spiel, deine Einstellungen",
                         "Deine besten Ballwechsel",
                         "Das Team hinter Blobby Volley",
+                        "Dein Profil",
                         "Bis zum n\xC3\xA4"
                         "chsten Match"};
-    const char* en[] = {"Back to the beach!",       "Play together online", "A match on your local network",
-                        "Your game, your settings", "Your best rallies",    "The team behind Blobby Volley",
+    const char* en[] = {"Back to the beach!",
+                        "Play together online",
+                        "A match on your local network",
+                        "Your game, your settings",
+                        "Your best rallies",
+                        "The team behind Blobby Volley",
+                        "Your profile",
                         "See you next match"};
-    text(g, 420, 406, tr(de[m.navigation.focus], en[m.navigation.focus]), 31, 2);
+    text(g, 410, 188, tr(de[m.navigation.focus], en[m.navigation.focus]), 31, 2);
     const char* detailsDE[] = {"Starte ein Match gegen Freunde",
                                "Finde Mitspieler im Internet.",
                                "Spiele mit Freunden im selben Netz.",
                                "Passe Spiel, Spieler und Anzeige an.",
                                "Sieh dir gespeicherte Spiele an.",
                                "Ideen, Entwicklung und Gestaltung.",
+                               "Name und Blob bearbeiten.",
                                "Schlie\xC3\x9F"
                                "e Blobby Volley 2 HD."};
     const char* detailsEN[] = {"Start a match against friends",      "Find other players online.",
                                "Play with friends on your network.", "Adjust gameplay, players and display.",
                                "Watch your saved matches.",          "Ideas, development and artwork.",
-                               "Close Blobby Volley 2 HD."};
-    text(g, 420, 443, tr(detailsDE[m.navigation.focus], detailsEN[m.navigation.focus]), 22);
+                               "Edit your name and blob.",           "Close Blobby Volley 2 HD."};
+    text(g, 410, 248, tr(detailsDE[m.navigation.focus], detailsEN[m.navigation.focus]), 22);
     if (m.navigation.focus == 0)
     {
-        text(g, 420, 464, tr("oder den Computer.", "or the computer."), 22);
+        text(g, 410, 279, tr("oder den Computer.", "or the computer."), 22);
     }
+    text(g, 410, 343,
+         tr("Gemeinsam an einem PC oder im Netzwerk.", "Together on one PC or over the network."), 17);
     text(g, 40, 571,
          tr("A / Enter  Ausw\xC3\xA4hlen     B / Esc  Beenden", "A / Enter  Select     B / Esc  Quit"), 18);
     text(g, 760, 571, "Blobby Volley 2 HD", 18, 2, 2);
-    bool opening = interactive && !m.quitting && (action == 6 || in.exit());
+    bool opening = interactive && !m.quitting && (action == 7 || in.exit());
     if (opening)
     {
         m.quitting = true;
@@ -214,7 +237,7 @@ void MainMenuState::draw(bool interactive)
         case 0:
             try
             {
-                switchState(new LocalGameState());
+                switchState(new LocalSetupState());
             }
             catch (const ScriptException& e)
             {
@@ -222,10 +245,10 @@ void MainMenuState::draw(bool interactive)
             }
             break;
         case 1:
-            switchState(new OnlineSearchState());
+            switchState(new LocalSetupState(2));
             break;
         case 2:
-            switchState(new LANSearchState());
+            switchState(new LocalSetupState(1));
             break;
         case 3:
             switchState(new OptionState());
@@ -235,6 +258,9 @@ void MainMenuState::draw(bool interactive)
             break;
         case 5:
             switchState(new CreditsState());
+            break;
+        case 6:
+            switchState(new LocalSetupState(0));
             break;
         default:
             break;

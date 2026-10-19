@@ -1,4 +1,4 @@
-﻿/*=============================================================================
+/*=============================================================================
 Blobby Volley 2
 Copyright (C) 2006 Jonathan Sieber (jonathan_sieber@yahoo.de)
 Copyright (C) 2006 Daniel Knobe (daniel-knobe@web.de)
@@ -60,7 +60,7 @@ InputManager::InputManager(BlobbyApp* app) : mApp(app)
 
 InputManager::~InputManager() = default;
 
-std::unique_ptr<InputDevice> InputManager::beginGame(PlayerSide side)
+std::unique_ptr<InputDevice> InputManager::beginGame(PlayerSide side, const IUserConfigReader* bindings)
 {
     // Move Mouse to center of window
     int windowX = 0;
@@ -79,9 +79,10 @@ std::unique_ptr<InputDevice> InputManager::beginGame(PlayerSide side)
         prefix = "right_blobby_";
     }
 
-    UserConfig config;
+    UserConfig defaults;
     ///  \todo we need only read only access here!
-    config.loadFile("inputconfig.xml");
+    defaults.loadFile("inputconfig.xml");
+    const IUserConfigReader& config = bindings ? *bindings : defaults;
     // determine which device is to be used
     std::string device = config.getString(prefix + "device");
 

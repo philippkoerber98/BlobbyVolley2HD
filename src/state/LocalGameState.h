@@ -21,6 +21,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #pragma once
 
 #include "GameState.h"
+#include "LocalSession.h"
 
 class ReplayRecorder;
 class InputSource;
@@ -33,6 +34,7 @@ class LocalGameState : public GameState
 {
   public:
     LocalGameState();
+    LocalGameState(std::shared_ptr<LocalSession> session, const UserConfig& bindings);
     ~LocalGameState() override;
 
     // implementation of the State Interface
@@ -45,6 +47,8 @@ class LocalGameState : public GameState
                                                    const DuelMatch* match);
 
     bool mWinner;
+    std::shared_ptr<LocalSession> mSession;
+    UserConfig mBindings;
 
     std::unique_ptr<ReplayRecorder> mRecorder;
 };

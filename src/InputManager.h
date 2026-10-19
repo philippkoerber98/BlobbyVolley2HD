@@ -46,6 +46,7 @@ class JoystickPool;
 class ReleaseGate;
 class InputDevice;
 class BlobbyApp;
+class IUserConfigReader;
 struct _SDL_Joystick;
 typedef struct _SDL_Joystick SDL_Joystick;
 struct JoystickAction;
@@ -57,7 +58,7 @@ class InputManager : public ObjectCounter<InputManager>
     InputManager(BlobbyApp* app);
     ~InputManager();
 
-    std::unique_ptr<InputDevice> beginGame(PlayerSide side);
+    std::unique_ptr<InputDevice> beginGame(PlayerSide side, const IUserConfigReader* bindings = nullptr);
 
     float courtWidth() const;
     bool running() const;

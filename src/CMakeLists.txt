@@ -49,6 +49,8 @@ set(BLOBBY_COMMON_SOURCES
 	)
 
 set (BLOBBY_CLIENT_SOURCES ${BLOBBY_COMMON_SOURCES}
+    LocalSession.cpp LocalSession.h
+    state/LocalSetupState.cpp state/LocalSetupState.h
 	ApplicationLoop.cpp ApplicationLoop.h
 	Blood.cpp Blood.h
 	TextManager.cpp TextManager.h
@@ -134,7 +136,7 @@ endif ()
 target_link_libraries(blobby ${BLOBBY_COMMON_LIBS} ${BLOBBY_AUDIO_LIBRARY} ${OPENGL_LIBRARIES})
 
 add_executable(assets-smoke-test EXCLUDE_FROM_ALL ../test/AssetsSmokeTest.cpp ../test/FrameTimingTest.cpp ${BLOBBY_CLIENT_SOURCES})
-target_sources(assets-smoke-test PRIVATE ../test/LevelAudioTest.cpp ../test/LANTest.cpp ../test/TournamentLANTest.cpp ../test/TournamentCapacityTest.cpp ../test/TournamentUITest.cpp ../test/TournamentClientTest.cpp)
+target_sources(assets-smoke-test PRIVATE ../test/LocalSessionTest.cpp ../test/LevelAudioTest.cpp ../test/LANTest.cpp ../test/TournamentLANTest.cpp ../test/TournamentCapacityTest.cpp ../test/TournamentUITest.cpp ../test/TournamentClientTest.cpp)
 target_compile_definitions(assets-smoke-test PRIVATE BLOBBY_TEST_SOURCE_DIR="${PROJECT_SOURCE_DIR}/test")
 target_link_libraries(assets-smoke-test PRIVATE ${BLOBBY_COMMON_LIBS} ${BLOBBY_AUDIO_LIBRARY} ${OPENGL_LIBRARIES})
 

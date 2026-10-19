@@ -277,8 +277,7 @@ void UserConfig::setValue(const std::string& name, std::string value)
     UserConfigVar* var = findByName(mVars, name);
     if (!var)
     {
-        std::cerr << "Warning: impossible to set value of " << "unknown configuration variable " << name
-                  << "\n Creating new variable" << std::endl;
+        // New profiles and session snapshots deliberately introduce dynamic keys.
         createVar(name, std::move(value));
         return;
     }

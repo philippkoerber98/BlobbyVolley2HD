@@ -68,15 +68,6 @@ void OptionState::Menu::captureInput(Capture kind, const std::string& key)
     }
 }
 
-void OptionState::Menu::nameRow(float x, float y, int player)
-{
-    const auto key = sidePrefix(player) + "player_name";
-    if (row(y, tr("Name"), config.getString(key), tr("Enter a name; Enter confirms, Esc cancels."), x, 350))
-    {
-        captureInput(NAME, key);
-    }
-}
-
 void OptionState::Menu::apply()
 {
     try
@@ -147,7 +138,7 @@ void OptionState::Menu::back()
     {
         apply();
     }
-    owner.switchState(new MainMenuState());
+    owner.switchState(owner.mReturnTo ? owner.mReturnTo() : new MainMenuState());
 }
 
 void OptionState::Menu::resetDefaults()
@@ -158,6 +149,34 @@ void OptionState::Menu::resetDefaults()
         if (!defaults.loadFile("default-config.xml") || !defaultInput.loadFile("default-inputconfig.xml"))
         {
             throw std::runtime_error("Default settings are unavailable");
+        }
+        // Session defaults and participant identities are independent of PC settings.
+        const char* retained[] = {"background",
+                                  "court_widescreen",
+                                  "rules",
+                                  "scoretowin",
+                                  "gamefps",
+                                  "network_side",
+                                  "network_input",
+                                  "left_player_name",
+                                  "right_player_name",
+                                  "left_player_human",
+                                  "right_player_human",
+                                  "left_script_name",
+                                  "right_script_name",
+                                  "left_script_strength",
+                                  "right_script_strength",
+                                  "left_blobby_color_r",
+                                  "left_blobby_color_g",
+                                  "left_blobby_color_b",
+                                  "right_blobby_color_r",
+                                  "right_blobby_color_g",
+                                  "right_blobby_color_b",
+                                  "left_blobby_oscillate",
+                                  "right_blobby_oscillate"};
+        for (const auto* key : retained)
+        {
+            defaults.setString(key, config.getString(key));
         }
         config = defaults;
         input = defaultInput;
@@ -329,9 +348,9 @@ void OptionState::Menu::step(bool interactive)
     text(40, 28, tr("Options"), 36);
     gui().doImage(gui().getNextId(), Vector2(700, 43), "gfx/titel.bmp", Vector2(120, 69));
 
-    const char* english[] = {"Game", "Players", "Controls", "Graphics", "Audio"};
+    const char* english[] = {"General", "Controls", "Graphics", "Audio"};
     float x = 40;
-    for (int i = 0; i < 5; ++i)
+    for (int i = 0; i < 4; ++i)
     {
         std::string label = tr(english[i]);
         float w = RenderManager::menuTextWidth(label, 22) + 24;
@@ -349,13 +368,9 @@ void OptionState::Menu::step(bool interactive)
     }
     else if (tab == 1)
     {
-        players();
-    }
-    else if (tab == 2)
-    {
         controls();
     }
-    else if (tab == 3)
+    else if (tab == 2)
     {
         graphics();
     }
@@ -363,7 +378,7 @@ void OptionState::Menu::step(bool interactive)
     {
         audio();
     }
-    if (tab != 1 && !helpText.empty())
+    if (!helpText.empty())
     {
         panel(410, 140, 350, 210);
         text(425, 152, helpTitle, 27, 2);

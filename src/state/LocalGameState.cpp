@@ -20,6 +20,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 /* header include */
 #include "LocalGameState.h"
+#include "LocalSetupState.h"
 
 /* includes */
 #include "BlobbyApp.h"
@@ -39,6 +40,10 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 LocalGameState::~LocalGameState() = default;
 
 LocalGameState::LocalGameState() : mWinner(false), mRecorder(new ReplayRecorder()) {}
+LocalGameState::LocalGameState(std::shared_ptr<LocalSession> session, const UserConfig& bindings)
+    : mWinner(false), mSession(std::move(session)), mBindings(bindings), mRecorder(new ReplayRecorder())
+{
+}
 
 std::shared_ptr<InputSource> LocalGameState::createInputSource(IUserConfigReader& config, PlayerSide side,
                                                                const DuelMatch* match)
@@ -50,7 +55,8 @@ std::shared_ptr<InputSource> LocalGameState::createInputSource(IUserConfigReader
         //  or has errors
         if (config.getBool(prefix + "_player_human"))
         {
-            return std::make_shared<LocalInputSource>(getInputMgr().beginGame(side));
+            return std::make_shared<LocalInputSource>(
+                getInputMgr().beginGame(side, mSession ? &mBindings : nullptr));
         }
         else
         {
@@ -70,8 +76,34 @@ std::shared_ptr<InputSource> LocalGameState::createInputSource(IUserConfigReader
 void LocalGameState::init()
 {
     std::shared_ptr<IUserConfigReader> config = IUserConfigReader::createUserConfigReader("config.xml");
-    PlayerIdentity leftPlayer = config->loadPlayerIdentity(LEFT_PLAYER, false);
-    PlayerIdentity rightPlayer = config->loadPlayerIdentity(RIGHT_PLAYER, false);
+    std::shared_ptr<UserConfig> sessionConfig;
+    PlayerIdentity leftPlayer, rightPlayer;
+    if (mSession)
+    {
+        mSession->beginMatch();
+        sessionConfig = std::make_shared<UserConfig>(mSession->settings);
+        auto pair = mSession->nextPlayers();
+        const int ids[] = {pair.first, pair.second};
+        for (int i = 0; i < 2; ++i)
+        {
+            const auto& p = mSession->players.at(ids[i]);
+            const std::string k = i ? "right_" : "left_";
+            sessionConfig->setBool(k + "player_human", p.human);
+            sessionConfig->setString(k + "script_name", p.script);
+            sessionConfig->setInteger(k + "script_strength", p.delay);
+        }
+        config = sessionConfig;
+        leftPlayer = mSession->players.at(pair.first).identity(LEFT_PLAYER);
+        rightPlayer = mSession->players.at(pair.second).identity(RIGHT_PLAYER);
+    }
+    else
+    {
+        leftPlayer = config->loadPlayerIdentity(LEFT_PLAYER, false);
+        rightPlayer = config->loadPlayerIdentity(RIGHT_PLAYER, false);
+    }
+    getApp().getRenderManager().setBackground("backgrounds/" +
+                                              config->getString("background", "strand1.bmp"));
+    getApp().getSoundManager().selectLevel(config->getString("background", "strand1.bmp"));
 
     // create default replay name
     setDefaultReplayName(leftPlayer.getName(), rightPlayer.getName());
@@ -81,7 +113,7 @@ void LocalGameState::init()
 
     playSound(SoundManager::WHISTLE, ROUND_START_SOUND_VOLUME);
 
-    mMatch.reset(new DuelMatch(false, config->getString("rules"), 0,
+    mMatch.reset(new DuelMatch(false, config->getString("rules"), config->getInteger("scoretowin", 15),
                                config->getBool("court_widescreen", false) ? 3200.f / 3.f : 800.f));
     std::shared_ptr<InputSource> leftInput = createInputSource(*config, LEFT_PLAYER, mMatch.get());
     std::shared_ptr<InputSource> rightInput = createInputSource(*config, RIGHT_PLAYER, mMatch.get());
@@ -115,29 +147,38 @@ void LocalGameState::step_impl()
     }
     else if (mMatch->isPaused())
     {
-        displayQueryPrompt(200, TextManager::LBL_CONF_QUIT,
-                           std::make_tuple(TextManager::LBL_YES, [&]() { switchState(new MainMenuState); }),
-                           std::make_tuple(TextManager::LBL_NO, [&]() { mMatch->unpause(); }),
-                           std::make_tuple(TextManager::RP_SAVE,
-                                           [&]()
-                                           {
-                                               mSaveReplay = true;
-                                               imgui.resetSelection();
-                                           }));
+        displayQueryPrompt(
+            200, TextManager::LBL_CONF_QUIT,
+            std::make_tuple(TextManager::LBL_YES,
+                            [&]()
+                            {
+                                switchState(mSession ? static_cast<State*>(new LocalSetupState(mSession))
+                                                     : static_cast<State*>(new MainMenuState));
+                            }),
+            std::make_tuple(TextManager::LBL_NO, [&]() { mMatch->unpause(); }),
+            std::make_tuple(TextManager::RP_SAVE,
+                            [&]()
+                            {
+                                mSaveReplay = true;
+                                imgui.resetSelection();
+                            }));
 
         imgui.doCursor();
     }
     else if (mWinner)
     {
         displayWinningPlayerScreen(mMatch->winningPlayer());
-        const int action = displayVictoryActions(true);
+        const bool cup = mSession && mSession->tournament;
+        const int action = displayVictoryActions(
+            !cup, false, cup ? WarmUI::tr("Turnierübersicht", "Tournament overview") : "");
         if (action == 1)
         {
-            switchState(new LocalGameState());
+            switchState(mSession ? new LocalGameState(mSession, mBindings) : new LocalGameState());
         }
         if (action == 2)
         {
-            switchState(new MainMenuState());
+            switchState(mSession ? static_cast<State*>(new LocalSetupState(mSession))
+                                 : static_cast<State*>(new MainMenuState()));
         }
         if (action == 3)
         {
@@ -154,7 +195,8 @@ void LocalGameState::step_impl()
         }
         else if (mMatch->isPaused())
         {
-            switchState(new MainMenuState);
+            switchState(mSession ? static_cast<State*>(new LocalSetupState(mSession))
+                                 : static_cast<State*>(new MainMenuState));
         }
         else
         {
@@ -169,6 +211,11 @@ void LocalGameState::step_impl()
         if (mMatch->winningPlayer() != NO_PLAYER)
         {
             mWinner = true;
+            if (mSession && mSession->tournament)
+            {
+                mSession->finish(mMatch->winningPlayer(), mMatch->getScore(LEFT_PLAYER),
+                                 mMatch->getScore(RIGHT_PLAYER));
+            }
             mRecorder->record(mMatch->getState());
             mRecorder->finalize(mMatch->getScore(LEFT_PLAYER), mMatch->getScore(RIGHT_PLAYER));
         }
