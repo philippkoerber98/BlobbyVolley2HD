@@ -154,3 +154,7 @@ job. No personal access token is required. Repository or organization policies
 must permit Actions and release creation. A first hosted run is only possible
 after the workflow is merged into the mainline (or manually dispatched once
 GitHub has registered it there).
+
+## Development assistance
+
+This project was developed with assistance from OpenAI Codex (ChatGPT AI).
