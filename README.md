@@ -123,3 +123,34 @@ ball. Use a square transparent image with a centered ball, ideally 512 x 512 or
 larger. Ball size and physics remain unchanged.
 No per-level configuration files are needed. Reopen options to discover new levels.
 See [custom levels and audio](doc/CUSTOM-LEVELS.md) for details.
+
+## Automatic Windows builds
+
+The `Windows build` GitHub Actions workflow runs on every push to `main` or
+`master`, including merges. Other branches do not publish builds. It can also
+be started manually from Actions; a manual run creates artifacts only.
+
+Each build uses the base version in `CMakeLists.txt` and appends the workflow
+run number and attempt, for example `1.1.1-build.17.1`. Bump the CMake project
+version when starting a new release series. CI does not commit version changes
+back to the repository. The version appears in the executable's Windows
+properties, application title, `VERSION.txt` and `build-info.json`. Replay and
+network protocol versions are independent and remain unchanged.
+
+The workflow builds the Windows x64 game and dedicated server with Visual
+Studio 2022, checks controller/viewport behavior and packaged audio, and
+validates assets, translations and distribution licenses. Dependencies use the
+vcpkg baseline pinned in `vcpkg.json`; its binary cache speeds up later runs.
+Hardware rendering tests still require a local interactive desktop.
+
+Successful automatic builds publish a GitHub prerelease tagged with their
+version. Download the Windows ZIP from Releases, extract it completely and run
+`Start-Blobby.cmd`; no installer is required. Matching source and SHA-256
+checksums are included in the release. Actions artifacts are retained for
+30 days; release attachments persist until the release is deleted.
+
+Publishing uses GitHub's built-in token with write access only in the release
+job. No personal access token is required. Repository or organization policies
+must permit Actions and release creation. A first hosted run is only possible
+after the workflow is merged into the mainline (or manually dispatched once
+GitHub has registered it there).
