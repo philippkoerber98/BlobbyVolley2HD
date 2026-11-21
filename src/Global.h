@@ -54,7 +54,10 @@ const int BLOBBY_PORT = 1234;
 const int BLOBBY_VERSION_MAJOR = 0;
 const int BLOBBY_VERSION_MINOR = 107;
 
-const char AppTitle[] = "Blobby Volley 2 Version 1.1.1";
+#ifndef BLOBBY_BUILD_VERSION
+#define BLOBBY_BUILD_VERSION "1.1.1"
+#endif
+const char AppTitle[] = "Blobby Volley 2 HD " BLOBBY_BUILD_VERSION;
 const int BASE_RESOLUTION_X = 800;
 const int BASE_RESOLUTION_Y = 600;
 

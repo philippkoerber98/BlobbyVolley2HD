@@ -1,4 +1,5 @@
 set(CMAKE_CXX_STANDARD 11)
+add_compile_definitions(BLOBBY_BUILD_VERSION="${BLOBBY_BUILD_VERSION}")
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
@@ -162,8 +163,8 @@ endif ()
 
 if (MSVC)
 	# set application icon
-	target_sources(blobby PRIVATE ../win/res.rc)
-	target_sources(blobby-server PRIVATE ../win/res.rc)
+	target_sources(blobby PRIVATE ../win/res.rc "${PROJECT_BINARY_DIR}/version.rc")
+	target_sources(blobby-server PRIVATE ../win/res.rc "${PROJECT_BINARY_DIR}/version.rc")
 endif(MSVC)
 
 # Header Checks
